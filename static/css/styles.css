@@ -1,0 +1,223 @@
+:root {
+    --primary-green: #108910;
+    --primary-green-hover: #0d6e0d;
+    --bg-soft: #F2F5F7;
+    --card-bg: #FFFFFF;
+    --text-primary: #343538;
+    --text-secondary: #72767E;
+    --border-color: #E8E9EB;
+    --error-red: #D22828;
+    --success-green: #108910;
+    --pill-radius: 25px;
+    --card-radius: 12px;
+    --font-main: 'Inter', sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-main);
+    background-color: var(--bg-soft);
+    color: var(--text-primary);
+    line-height: 1.5;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Navbar */
+.navbar {
+    background-color: var(--card-bg);
+    padding: 15px 0;
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.navbar .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo-text {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--primary-green);
+    text-decoration: none;
+}
+
+.nav-links {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+/* Typography */
+h1, h2, h3 {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* Buttons */
+.btn {
+    padding: 10px 24px;
+    border-radius: var(--pill-radius);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+}
+
+.btn-primary {
+    background-color: var(--primary-green);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-green-hover);
+}
+
+.btn-secondary {
+    background-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.btn-secondary:hover {
+    background-color: #d8d9db;
+}
+
+/* Forms & Cards */
+.auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 80px);
+    padding: 40px 20px;
+}
+
+.auth-card {
+    background: var(--card-bg);
+    width: 100%;
+    max-width: 440px;
+    padding: 40px;
+    border-radius: var(--card-radius);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.auth-card h1 {
+    font-size: 28px;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.auth-card p.subtitle {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.form-control:focus {
+    border-color: var(--primary-green);
+}
+
+.btn-block {
+    width: 100%;
+    margin-top: 10px;
+}
+
+.footer-link {
+    margin-top: 25px;
+    text-align: center;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.footer-link a {
+    color: var(--primary-green);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+/* Hidden elements */
+.hidden {
+    display: none;
+}
+
+/* Role Selector Styles */
+.role-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 25px;
+}
+
+.role-tab {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.role-tab.active {
+    background-color: #E8F5E9;
+    border-color: var(--primary-green);
+    color: var(--primary-green);
+}
+
+/* Feedback messages */
+.feedback {
+    margin-top: 20px;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    text-align: center;
+}
+
+.feedback-error {
+    background: #FFEBEE;
+    color: var(--error-red);
+}
+
+.feedback-success {
+    background: #E8F5E9;
+    color: var(--success-green);
+}

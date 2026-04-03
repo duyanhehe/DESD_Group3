@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Sign up - Food Network{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <h1>Sign up</h1>
+        <p class="subtitle">Join our multi-vendor food marketplace today.</p>
+
+        <div class="role-selector">
+            <p class="form-label">I want to be a:</p>
+            <div class="role-tabs">
+                <div class="role-tab active" data-role="customer">Customer</div>
+                <div class="role-tab" data-role="producer">Producer</div>
+            </div>
+        </div>
+
+        <form id="register-form">
+            {% csrf_token %}
+            <input type="hidden" id="is_customer" name="is_customer" value="true">
+            <input type="hidden" id="is_producer" name="is_producer" value="false">
+
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" class="form-control" placeholder="Choose a username" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" class="form-control" placeholder="Enter your email" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" class="form-control" placeholder="Create a password" required>
+            </div>
+
+            <div class="row" style="display: flex; gap: 10px;">
+                <div class="form-group" style="flex: 1;">
+                    <label for="first_name">First Name</label>
+                    <input type="text" id="first_name" name="first_name" class="form-control" placeholder="First name">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label for="last_name">Last Name</label>
+                    <input type="text" id="last_name" name="last_name" class="form-control" placeholder="Last name">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="phone_number">Phone Number</label>
+                <input type="text" id="phone_number" name="phone_number" class="form-control" placeholder="Phone number">
+            </div>
+
+            <!-- Customer specific -->
+            <div id="customer-fields">
+                <div class="form-group">
+                    <label for="delivery_address">Delivery Address</label>
+                    <textarea id="delivery_address" name="delivery_address" class="form-control" placeholder="Your delivery address"></textarea>
+                </div>
+            </div>
+
+            <!-- Producer specific -->
+            <div id="producer-fields" class="hidden">
+                <div class="form-group">
+                    <label for="business_name">Business Name</label>
+                    <input type="text" id="business_name" name="business_name" class="form-control" placeholder="Legal business name">
+                </div>
+                <div class="form-group">
+                    <label for="business_address">Business Address</label>
+                    <textarea id="business_address" name="business_address" class="form-control" placeholder="Where is your farm or kitchen?"></textarea>
+                </div>
+                <div class="row" style="display: flex; gap: 10px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label for="tax_id">Tax ID</label>
+                        <input type="text" id="tax_id" name="tax_id" class="form-control" placeholder="Tax identification">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label for="farm_origin">Farm Origin</label>
+                        <input type="text" id="farm_origin" name="farm_origin" class="form-control" placeholder="Where do your products come from?">
+                    </div>
+                </div>
+            </div>
+
+            <div id="register-feedback" class="feedback hidden"></div>
+
+            <button type="submit" class="btn btn-primary btn-block">Sign up</button>
+        </form>
+
+        <div class="footer-link">
+            Already have an account? <a href="/accounts/login/">Log in</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Simple role switching logic
+    document.querySelectorAll('.role-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.role-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            
+            const role = tab.dataset.role;
+            const isCustomer = role === 'customer';
+            
+            document.getElementById('is_customer').value = isCustomer;
+            document.getElementById('is_producer').value = !isCustomer;
+            
+            if (isCustomer) {
+                document.getElementById('customer-fields').classList.remove('hidden');
+                document.getElementById('producer-fields').classList.add('hidden');
+            } else {
+                document.getElementById('customer-fields').classList.add('hidden');
+                document.getElementById('producer-fields').classList.remove('hidden');
+            }
+        });
+    });
+</script>
+{% endblock %}

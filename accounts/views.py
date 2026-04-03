@@ -2,7 +2,8 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authtoken.models import Token
-from django.contrib.auth import authenticate, logout
+from django.contrib.auth import authenticate, logout, login as auth_login
+from django.shortcuts import render, redirect
 from .models import User
 from .serializers import UserRegistrationSerializer
 
@@ -16,6 +17,9 @@ class RegistrationView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
+
+        # Log the user in for session-based auth (templates)
+        auth_login(request, user)
 
         # Generate token
         token, created = Token.objects.get_or_create(user=user)
@@ -31,6 +35,18 @@ class RegistrationView(generics.CreateAPIView):
         )
 
 
+def login_page(request):
+    if request.user.is_authenticated:
+        return redirect("/")
+    return render(request, "accounts/login.html")
+
+
+def register_page(request):
+    if request.user.is_authenticated:
+        return redirect("/")
+    return render(request, "accounts/register.html")
+
+
 class LoginView(generics.GenericAPIView):
     authentication_classes = []
     permission_classes = [AllowAny]
@@ -43,6 +59,9 @@ class LoginView(generics.GenericAPIView):
         user = authenticate(request, username=username, password=password)
 
         if user:
+            # Log the user in for session-based auth (templates)
+            auth_login(request, user)
+            
             token, created = Token.objects.get_or_create(user=user)
             return Response(
                 {
