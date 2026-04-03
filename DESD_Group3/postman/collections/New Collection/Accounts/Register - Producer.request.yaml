@@ -1,0 +1,42 @@
+$kind: http-request
+name: 'Register - Producer'
+method: POST
+url: '{{base_url}}/api/v1/accounts/register/'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "username": "testproducer",
+      "email": "producer@test.com",
+      "password": "TestPass123!",
+      "first_name": "Test",
+      "last_name": "Producer",
+      "phone_number": "0907654321",
+      "is_customer": false,
+      "is_producer": true,
+      "producer_profile": {
+        "business_name": "Test Farm",
+        "business_address": "456 Farm Road, Hanoi",
+        "tax_id": "TAX123456",
+        "farm_origin": "Hanoi"
+      }
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Status code is 201", function () {
+        pm.response.to.have.status(201);
+      });
+
+      pm.test("Response has message and user_id", function () {
+        var jsonData = pm.response.json();
+        pm.expect(jsonData).to.have.property("message");
+        pm.expect(jsonData).to.have.property("user_id");
+        pm.expect(jsonData.message).to.eql("Registration successful");
+      });
+
+      pm.collectionVariables.set("producer_user_id", pm.response.json().user_id);

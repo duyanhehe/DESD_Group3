@@ -1,0 +1,22 @@
+$kind: http-request
+name: 'Get Profile - Authenticated'
+method: GET
+url: '{{base_url}}/api/v1/accounts/profile/'
+headers:
+  - key: Content-Type
+    value: application/json
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Status code is 200", function () {
+        pm.response.to.have.status(200);
+      });
+
+      pm.test("Response has user profile fields", function () {
+        var jsonData = pm.response.json();
+        pm.expect(jsonData).to.have.property("username");
+        pm.expect(jsonData).to.have.property("email");
+        pm.expect(jsonData).to.have.property("is_customer");
+        pm.expect(jsonData).to.have.property("is_producer");
+      });
