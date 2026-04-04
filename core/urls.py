@@ -25,5 +25,6 @@ def home(request):
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("accounts/", include("accounts.urls")), # Templates and API
+    path("api/v1/products/", include("products.urls")), # From duyanh
     path("", home, name="home"),
 ]
