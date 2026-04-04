@@ -14,6 +14,7 @@ class CustomerProfile(models.Model):
         User, on_delete=models.CASCADE, related_name="customer_profile"
     )
     delivery_address = models.TextField(blank=True, null=True)
+    postcode = models.CharField(max_length=10, blank=True, null=True)
 
 
 class ProducerProfile(models.Model):
@@ -24,3 +25,4 @@ class ProducerProfile(models.Model):
     business_address = models.TextField()
     tax_id = models.CharField(max_length=50, blank=True, null=True)
     farm_origin = models.CharField(max_length=255, blank=True, null=True)
+    postcode = models.CharField(max_length=10, blank=True, null=True)

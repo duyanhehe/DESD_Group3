@@ -20,64 +20,77 @@
             {% csrf_token %}
             <input type="hidden" id="is_customer" name="is_customer" value="true">
             <input type="hidden" id="is_producer" name="is_producer" value="false">
-
             <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" class="form-control" placeholder="Choose a username" required>
+                <label for="username">Choose a Username</label>
+                <input type="text" id="username" name="username" class="form-control" placeholder="e.g. jdoe123" required minlength="4">
             </div>
 
             <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" class="form-control" placeholder="Enter your email" required>
-            </div>
-
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" class="form-control" placeholder="Create a password" required>
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" class="form-control" placeholder="name@example.com" required>
             </div>
 
             <div class="row" style="display: flex; gap: 10px;">
                 <div class="form-group" style="flex: 1;">
-                    <label for="first_name">First Name</label>
-                    <input type="text" id="first_name" name="first_name" class="form-control" placeholder="First name">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="Min. 8 characters" required minlength="8">
+                    <div id="password-strength" class="password-strength-text hidden">Password is too weak</div>
                 </div>
                 <div class="form-group" style="flex: 1;">
-                    <label for="last_name">Last Name</label>
-                    <input type="text" id="last_name" name="last_name" class="form-control" placeholder="Last name">
+                    <label for="confirm_password">Confirm Password</label>
+                    <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="Repeat password" required minlength="8">
+                </div>
+            </div>
+
+            <div class="row" style="display: flex; gap: 10px;">
+                <div class="form-group" style="flex: 1;">
+                    <label for="first_name">Full Name (First)</label>
+                    <input type="text" id="first_name" name="first_name" class="form-control" placeholder="First name" required>
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label for="last_name">Full Name (Last)</label>
+                    <input type="text" id="last_name" name="last_name" class="form-control" placeholder="Last name" required>
                 </div>
             </div>
 
             <div class="form-group">
                 <label for="phone_number">Phone Number</label>
-                <input type="text" id="phone_number" name="phone_number" class="form-control" placeholder="Phone number">
+                <input type="tel" id="phone_number" name="phone_number" class="form-control" placeholder="e.g. (555) 000-0000" required>
             </div>
 
-            <!-- Customer specific -->
+            <!-- Role Specific Fields -->
             <div id="customer-fields">
                 <div class="form-group">
                     <label for="delivery_address">Delivery Address</label>
-                    <textarea id="delivery_address" name="delivery_address" class="form-control" placeholder="Your delivery address"></textarea>
+                    <textarea id="delivery_address" name="delivery_address" class="form-control" rows="2" placeholder="Street, City, State"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="customer_postcode">Postcode (ZIP)</label>
+                    <input type="text" id="customer_postcode" name="customer_postcode" class="form-control" placeholder="e.g. 90210" pattern="^\d{5}(-\d{4})?$">
                 </div>
             </div>
 
-            <!-- Producer specific -->
             <div id="producer-fields" class="hidden">
                 <div class="form-group">
                     <label for="business_name">Business Name</label>
-                    <input type="text" id="business_name" name="business_name" class="form-control" placeholder="Legal business name">
+                    <input type="text" id="business_name" name="business_name" class="form-control" placeholder="Enter your business name">
                 </div>
                 <div class="form-group">
                     <label for="business_address">Business Address</label>
-                    <textarea id="business_address" name="business_address" class="form-control" placeholder="Where is your farm or kitchen?"></textarea>
+                    <textarea id="business_address" name="business_address" class="form-control" rows="2" placeholder="Street, City, State"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="producer_postcode">Business Postcode (ZIP)</label>
+                    <input type="text" id="producer_postcode" name="producer_postcode" class="form-control" placeholder="e.g. 90210" pattern="^\d{5}(-\d{4})?$">
                 </div>
                 <div class="row" style="display: flex; gap: 10px;">
                     <div class="form-group" style="flex: 1;">
-                        <label for="tax_id">Tax ID</label>
-                        <input type="text" id="tax_id" name="tax_id" class="form-control" placeholder="Tax identification">
+                        <label for="tax_id">Tax ID (Optional)</label>
+                        <input type="text" id="tax_id" name="tax_id" class="form-control" placeholder="EIN/SSN">
                     </div>
                     <div class="form-group" style="flex: 1;">
                         <label for="farm_origin">Farm Origin</label>
-                        <input type="text" id="farm_origin" name="farm_origin" class="form-control" placeholder="Where do your products come from?">
+                        <input type="text" id="farm_origin" name="farm_origin" class="form-control" placeholder="e.g. California, US">
                     </div>
                 </div>
             </div>
@@ -107,13 +120,27 @@
             
             document.getElementById('is_customer').value = isCustomer;
             document.getElementById('is_producer').value = !isCustomer;
+
+            // Update Name Labels based on role
+            const firstNameLabel = document.querySelector('label[for="first_name"]');
+            const lastNameLabel = document.querySelector('label[for="last_name"]');
             
             if (isCustomer) {
+                firstNameLabel.innerText = 'Full Name (First)';
+                lastNameLabel.innerText = 'Full Name (Last)';
                 document.getElementById('customer-fields').classList.remove('hidden');
                 document.getElementById('producer-fields').classList.add('hidden');
+                // Make producer fields optional when not in use
+                document.getElementById('business_name').required = false;
+                document.getElementById('business_address').required = false;
             } else {
+                firstNameLabel.innerText = 'Contact First Name';
+                lastNameLabel.innerText = 'Contact Last Name';
                 document.getElementById('customer-fields').classList.add('hidden');
                 document.getElementById('producer-fields').classList.remove('hidden');
+                // Make producer fields required when in use
+                document.getElementById('business_name').required = true;
+                document.getElementById('business_address').required = true;
             }
         });
     });

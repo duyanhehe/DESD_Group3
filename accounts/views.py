@@ -4,6 +4,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate, logout, login as auth_login
 from django.shortcuts import render, redirect
+from django.db.models import Q
 from .models import User
 from .serializers import UserRegistrationSerializer
 
@@ -53,8 +54,19 @@ class LoginView(generics.GenericAPIView):
     serializer_class = UserRegistrationSerializer
 
     def post(self, request):
-        username = request.data.get("username")
+        login_input = request.data.get("username")  # This could be username or email
         password = request.data.get("password")
+
+        # Basic server-side validation
+        if not login_input or not password:
+            return Response(
+                {"error": "Please provide both credentials."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Resolve username if email was provided
+        user_obj = User.objects.filter(Q(username=login_input) | Q(email=login_input)).first()
+        username = user_obj.username if user_obj else login_input
 
         user = authenticate(request, username=username, password=password)
 
@@ -72,7 +84,8 @@ class LoginView(generics.GenericAPIView):
             )
         else:
             return Response(
-                {"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED
+                {"error": "Invalid email/username or password."}, 
+                status=status.HTTP_401_UNAUTHORIZED
             )
 
 

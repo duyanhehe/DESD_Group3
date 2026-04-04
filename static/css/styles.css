@@ -221,3 +221,13 @@ h1, h2, h3 {
     background: #E8F5E9;
     color: var(--success-green);
 }
+
+.password-strength-text {
+    font-size: 11px;
+    margin-top: 4px;
+    font-weight: 500;
+}
+
+.strength-weak { color: var(--error-red); }
+.strength-medium { color: #FFA000; }
+.strength-strong { color: var(--success-green); }

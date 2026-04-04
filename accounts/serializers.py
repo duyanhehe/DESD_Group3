@@ -5,13 +5,13 @@ from .models import User, CustomerProfile, ProducerProfile
 class CustomerProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomerProfile
-        fields = ["delivery_address"]
+        fields = ["delivery_address", "postcode"]
 
 
 class ProducerProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProducerProfile
-        fields = ["business_name", "business_address", "tax_id", "farm_origin"]
+        fields = ["business_name", "business_address", "tax_id", "farm_origin", "postcode"]
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
