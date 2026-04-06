@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.utils.timezone import now
 from categories.models import Category
+from allergens.models import Allergen
 
 
 class Product(models.Model):
@@ -31,6 +32,9 @@ class Product(models.Model):
     available_to = models.DateField(null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
+
+    # allergens
+    allergens = models.ManyToManyField(Allergen, blank=False, related_name="products")
 
     class Meta:
         ordering = ["-created_at"]

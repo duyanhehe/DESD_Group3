@@ -1,12 +1,21 @@
 from rest_framework import serializers
-from .models import Product
+from .models import Product, Allergen
 
 
 class ProductSerializer(serializers.ModelSerializer):
     producer_name = serializers.CharField(source="producer.username", read_only=True)
     status = serializers.SerializerMethodField()
+
     category_name = serializers.CharField(source="category.name", read_only=True)
     category_slug = serializers.CharField(source="category.slug", read_only=True)
+
+    # 👇 WRITE: accept allergen IDs
+    allergens = serializers.PrimaryKeyRelatedField(
+        queryset=Allergen.objects.all(), many=True, required=True
+    )
+
+    # 👇 READ: show allergen names
+    allergen_names = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -21,6 +30,8 @@ class ProductSerializer(serializers.ModelSerializer):
             "category",
             "category_name",
             "category_slug",
+            "allergens",
+            "allergen_names",
             "status",
             "is_available",
             "available_from",
@@ -31,3 +42,30 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def get_status(self, obj):
         return obj.get_status()
+
+    def get_allergen_names(self, obj):
+        return [a.name for a in obj.allergens.all()]
+
+    # enforce requirement
+    def validate_allergens(self, value):
+        if not value or len(value) == 0:
+            raise serializers.ValidationError("You must specify at least one allergen.")
+        return value
+
+    def create(self, validated_data):
+        allergens = validated_data.pop("allergens")
+        product = Product.objects.create(**validated_data)
+        product.allergens.set(allergens)
+        return product
+
+    def update(self, instance, validated_data):
+        allergens = validated_data.pop("allergens", None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        if allergens is not None:
+            instance.allergens.set(allergens)
+
+        instance.save()
+        return instance

@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "accounts",
     "products",
     "categories",
+    "allergens",
     "orders",
     "payments",
     "logistics",
