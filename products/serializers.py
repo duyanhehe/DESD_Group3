@@ -9,12 +9,12 @@ class ProductSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source="category.name", read_only=True)
     category_slug = serializers.CharField(source="category.slug", read_only=True)
 
-    # 👇 WRITE: accept allergen IDs
+    # accept allergen IDs
     allergens = serializers.PrimaryKeyRelatedField(
         queryset=Allergen.objects.all(), many=True, required=True
     )
 
-    # 👇 READ: show allergen names
+    # show allergen names
     allergen_names = serializers.SerializerMethodField()
 
     class Meta:
