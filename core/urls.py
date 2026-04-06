@@ -19,12 +19,15 @@ from django.contrib import admin
 from django.urls import path, include
 from django.shortcuts import render
 
+
 def home(request):
     return render(request, "index.html")
 
+
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("accounts/", include("accounts.urls")), # Templates and API
-    path("api/v1/products/", include("products.urls")), # From duyanh
+    path("accounts/", include("accounts.urls")),
+    path("products/", include("products.urls")),
+    path("categories/", include("categories.urls")),
     path("", home, name="home"),
 ]

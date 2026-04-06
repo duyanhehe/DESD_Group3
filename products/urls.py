@@ -5,14 +5,28 @@ from .views import (
     ProductDetailView,
     EditProductView,
     DeleteProductView,
+    CategoryProductsView,
+    product_list_page,
+    product_detail_page,
 )
 
-app_name = "products"
-
 urlpatterns = [
-    path("", ProductListView.as_view(), name="list"),
-    path("create/", CreateProductView.as_view(), name="create"),
-    path("<int:id>/", ProductDetailView.as_view(), name="detail"),
-    path("<int:id>/edit/", EditProductView.as_view(), name="edit"),
-    path("<int:id>/delete/", DeleteProductView.as_view(), name="delete"),
+    # Template views
+    path("", product_list_page, name="product_page"),
+    path("<int:id>/", product_detail_page, name="product_detail_page"),
+    # API endpoints
+    path("api/v1/", ProductListView.as_view(), name="product_list"),
+    path("api/v1/create/", CreateProductView.as_view(), name="product_create"),
+    path("api/v1/<int:id>/", ProductDetailView.as_view(), name="product_detail"),
+    path("api/v1/<int:id>/edit/", EditProductView.as_view(), name="product_edit"),
+    path(
+        "api/v1/<int:id>/delete/",
+        DeleteProductView.as_view(),
+        name="product_delete",
+    ),
+    path(
+        "api/v1/category/<slug:slug>/",
+        CategoryProductsView.as_view(),
+        name="product_by_category",
+    ),
 ]

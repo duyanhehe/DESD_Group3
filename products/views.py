@@ -6,7 +6,7 @@ from rest_framework import status
 from django.shortcuts import get_object_or_404
 from django.utils.timezone import now
 from django.db.models import Q
-from django.db import transaction
+from django.shortcuts import render
 
 from .models import Product
 from .serializers import ProductSerializer
@@ -65,6 +65,20 @@ class ProductDetailView(APIView):
         return Response(serializer.data)
 
 
+class CategoryProductsView(APIView):
+    def get(self, request, slug):
+        today = now().date()
+
+        products = Product.objects.filter(
+            category__slug=slug, stock_quantity__gt=0
+        ).filter(
+            Q(is_available=True) | Q(available_from__lte=today, available_to__gte=today)
+        )
+
+        serializer = ProductSerializer(products, many=True)
+        return Response(serializer.data)
+
+
 class EditProductView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -96,3 +110,11 @@ class DeleteProductView(APIView):
 
         product.delete()
         return Response({"message": "Product deleted successfully"}, status=204)
+
+
+def product_list_page(request):
+    return render(request, "products/list.html")
+
+
+def product_detail_page(request, id):
+    return render(request, "products/detail.html", {"product_id": id})
