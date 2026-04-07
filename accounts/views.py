@@ -90,13 +90,28 @@ class LoginView(generics.GenericAPIView):
 
 
 class LogoutView(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated]
+    authentication_classes = []
+    permission_classes = [AllowAny]
 
     def post(self, request):
-        if hasattr(request.user, "auth_token"):
-            request.user.auth_token.delete()  # Delete token to invalidate it
-        logout(request)  # Destroy session if using session authentication
+        if request.user.is_authenticated:
+            if hasattr(request.user, "auth_token"):
+                request.user.auth_token.delete()
+            logout(request)
         return Response({"message": "Logout successful"})
+
+
+def logout_view(request):
+    if request.method == "POST":
+        if request.user.is_authenticated:
+            # Try to delete token if exists
+            try:
+                if hasattr(request.user, "auth_token"):
+                    request.user.auth_token.delete()
+            except:
+                pass
+            logout(request)
+    return redirect("login_page")
 
 
 class UserProfileView(generics.RetrieveAPIView):

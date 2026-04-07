@@ -34,7 +34,10 @@
                         {% if user.is_producer %}
                             <a href="{% url 'producer_dashboard' %}" class="btn btn-secondary btn-sm">Dashboard</a>
                         {% endif %}
-                        <button id="logout-btn" class="btn btn-ghost">Log out</button>
+                        <form action="{% url 'logout' %}" method="post" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-ghost">Log out</button>
+                        </form>
                     </div>
                 {% else %}
                     <a href="/accounts/login/" class="btn btn-ghost">Log in</a>

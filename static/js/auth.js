@@ -232,32 +232,4 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
-    // Handle Logout
-    const logoutBtn = document.getElementById('logout-btn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', async () => {
-            const token = localStorage.getItem('auth_token');
-            const feedbackId = 'logout-feedback'; // Optional global feedback
-            
-            try {
-                const response = await fetch('/accounts/api/v1/logout/', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Token ${token}`,
-                        'X-CSRFToken': csrftoken
-                    }
-                });
-
-                if (response.ok || response.status === 401) {
-                    localStorage.clear();
-                    window.location.href = '/accounts/login/';
-                }
-            } catch (error) {
-                console.error('Logout error:', error);
-                localStorage.clear();
-                window.location.href = '/accounts/login/';
-            }
-        });
-    }
 });

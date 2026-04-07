@@ -122,8 +122,52 @@ h1, h2, h3 {
 }
 
 /* Buttons Update */
-.btn-sm { padding: 6px 16px; font-size: 14px; }
-.btn-ghost { background: transparent; color: var(--text-primary); border: 1px solid transparent; }
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 28px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
+    text-decoration: none;
+    gap: 10px;
+    outline: none;
+    font-family: var(--font-main);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-green) 0%, #008a1c 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(0, 166, 34, 0.2);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 166, 34, 0.3);
+    filter: brightness(1.1);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+.btn-secondary {
+    background: white;
+    color: var(--primary-green);
+    border: 1px solid var(--primary-green);
+}
+
+.btn-secondary:hover {
+    background: #f0fdf4;
+}
+
+.btn-sm { padding: 8px 16px; font-size: 14px; border-radius: 8px; }
+
+.btn-ghost { background: transparent; color: var(--text-primary); }
 .btn-ghost:hover { background: #F0F2F5; }
 
 /* Homepage Layout */
@@ -496,6 +540,14 @@ h1, h2, h3 {
 
 .btn-premium:active {
     transform: translateY(0);
+}
+
+.auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 160px); /* Centers based on available viewport height minus header/footer */
+    padding: 40px 20px;
 }
 
 .auth-card {
