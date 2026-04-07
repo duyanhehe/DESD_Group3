@@ -36,6 +36,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "is_available",
             "available_from",
             "available_to",
+            "unit",
             "created_at",
         ]
         read_only_fields = ["producer", "created_at"]

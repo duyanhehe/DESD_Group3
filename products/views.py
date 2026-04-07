@@ -6,10 +6,13 @@ from rest_framework import status
 from django.shortcuts import get_object_or_404
 from django.utils.timezone import now
 from django.db.models import Q
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 
 from .models import Product
 from .serializers import ProductSerializer
+from .forms import ProductForm
 
 
 class CreateProductView(APIView):
@@ -118,3 +121,34 @@ def product_list_page(request):
 
 def product_detail_page(request, id):
     return render(request, "products/detail.html", {"product_id": id})
+
+
+@login_required
+def producer_dashboard(request):
+    if not request.user.is_producer:
+        messages.error(request, "Only producers can access the dashboard.")
+        return redirect("/")
+
+    products = Product.objects.filter(producer=request.user)
+    return render(request, "products/producer_dashboard.html", {"products": products})
+
+
+@login_required
+def add_product(request):
+    if not request.user.is_producer:
+        messages.error(request, "Only producers can add products.")
+        return redirect("/")
+
+    if request.method == "POST":
+        form = ProductForm(request.POST)
+        if form.is_valid():
+            product = form.save(commit=False)
+            product.producer = request.user
+            product.save()
+            form.save_m2m()  # Important for allergens
+            messages.success(request, f"Product '{product.name}' added successfully!")
+            return redirect("producer_dashboard")
+    else:
+        form = ProductForm()
+
+    return render(request, "products/add_product.html", {"form": form})

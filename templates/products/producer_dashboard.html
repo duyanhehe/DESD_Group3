@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Producer Dashboard - Food Network{% endblock %}
+
+{% block content %}
+<div class="container">
+    {% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+        <li class="alert alert-{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <div class="dashboard-header">
+        <div>
+            <h1>Dashboard</h1>
+            <p class="subtitle">Manage your products and inventory</p>
+        </div>
+        <a href="{% url 'add_product' %}" class="btn btn-primary">+ Add New Product</a>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>Total Products</h3>
+            <p>{{ products.count }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Total Stock</h3>
+            <p>
+                {% with total_stock=0 %}
+                    {% for p in products %}
+                        {# This is a simple counter, ideally done in the view #}
+                    {% endfor %}
+                {% endwith %}
+                {{ products.all|length }} items
+            </p>
+        </div>
+    </div>
+
+    <!-- Product List -->
+    <div class="product-management">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Product Name</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    <tr>
+                        <td><strong>{{ product.name }}</strong></td>
+                        <td>{{ product.category.name|default:"Uncategorized" }}</td>
+                        <td>${{ product.price }} / {{ product.unit }}</td>
+                        <td>{{ product.stock_quantity }} {{ product.unit }}</td>
+                        <td>
+                            {% if product.stock_quantity > 0 %}
+                                <span class="status-badge status-available">In Stock</span>
+                            {% else %}
+                                <span class="status-badge status-out">Out of Stock</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {# Placeholders for edit/delete #}
+                            <span class="text-secondary" style="font-size: 0.9em;">Edit | Delete</span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                            No products found. Start by adding your first product!
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

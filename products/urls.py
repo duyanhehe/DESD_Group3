@@ -8,12 +8,16 @@ from .views import (
     CategoryProductsView,
     product_list_page,
     product_detail_page,
+    producer_dashboard,
+    add_product,
 )
 
 urlpatterns = [
     # Template views
     path("", product_list_page, name="product_page"),
     path("<int:id>/", product_detail_page, name="product_detail_page"),
+    path("producer/dashboard/", producer_dashboard, name="producer_dashboard"),
+    path("producer/add/", add_product, name="add_product"),
     # API endpoints
     path("api/v1/", ProductListView.as_view(), name="product_list"),
     path("api/v1/create/", CreateProductView.as_view(), name="product_create"),

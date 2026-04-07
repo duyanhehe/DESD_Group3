@@ -15,16 +15,29 @@
 </head>
 <body>
     <nav class="navbar">
-        <div class="container">
+        <div class="container navbar-inner">
             <a href="/" class="logo">
-                <span class="logo-text">Food Network</span>
+                <span class="logo-text"><span class="logo-icon">🌿</span>Food Network</span>
             </a>
+            
+            <div class="search-container">
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="global-search" placeholder="Search for local produce, dairy, bakery..." aria-label="Search">
+                </div>
+            </div>
+
             <div class="nav-links">
                 {% if user.is_authenticated %}
-                    <span class="welcome-text">Hi, {{ user.first_name|default:user.username }}</span>
-                    <button id="logout-btn" class="btn btn-secondary">Log out</button>
+                    <div class="user-menu">
+                        <span class="welcome-text">Hi, {{ user.first_name|default:user.username }}</span>
+                        {% if user.is_producer %}
+                            <a href="{% url 'producer_dashboard' %}" class="btn btn-secondary btn-sm">Dashboard</a>
+                        {% endif %}
+                        <button id="logout-btn" class="btn btn-ghost">Log out</button>
+                    </div>
                 {% else %}
-                    <a href="/accounts/login/" class="btn btn-secondary">Log in</a>
+                    <a href="/accounts/login/" class="btn btn-ghost">Log in</a>
                     <a href="/accounts/register/" class="btn btn-primary">Sign up</a>
                 {% endif %}
             </div>

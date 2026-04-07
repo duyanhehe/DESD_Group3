@@ -1,25 +1,49 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Welcome - Food Network Marketplace{% endblock %}
 
 {% block content %}
-<div class="container" style="padding-top: 60px; text-align: center;">
-    <h1 style="font-size: 48px; color: var(--primary-green); margin-bottom: 20px;">Quality food, from local producers.</h1>
-    <p style="font-size: 20px; color: var(--text-secondary); margin-bottom: 40px; max-width: 700px; margin-left: auto; margin-right: auto;">
-        Discover and buy fresh, local products directly from producers in your community.
-    </p>
+<div class="homepage-layout">
+    <!-- Category Navigation Bar -->
+    <div class="category-pills-bar">
+        <div class="container">
+            <div id="category-pills" class="category-pills">
+                <!-- Loaded via JS -->
+                <div class="pill skeleton"></div>
+                <div class="pill skeleton"></div>
+                <div class="pill skeleton"></div>
+                <div class="pill skeleton"></div>
+                <div class="pill skeleton"></div>
+            </div>
+        </div>
+    </div>
 
-    {% if user.is_authenticated %}
-        <div class="welcome-box" style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); max-width: 400px; margin: 0 auto;">
-            <h3>Welcome back, {{ user.username }}!</h3>
-            <p style="margin-top: 10px; color: var(--text-secondary);">You are logged in as a <strong>{% if user.is_customer %}Customer{% else %}Producer{% endif %}</strong>.</p>
-            <a href="/accounts/profile/" class="btn btn-primary" style="margin-top: 20px;">Go to Profile</a>
+    <!-- Main Content Area -->
+    <div class="container main-container">
+        <!-- Hero Section (Optional, subtle in Instacart) -->
+        <section class="store-hero">
+            <h1>Fresh from local farms to your door</h1>
+            <p>Shop seasonal produce, dairy, and artisanal goods.</p>
+        </section>
+
+        <!-- Dynamic Product Sections -->
+        <div id="marketplace-content">
+            <!-- Loading state -->
+            <div class="section-loader">
+                <div class="skeleton-row"></div>
+                <div class="skeleton-grid">
+                    <div class="card skeleton"></div>
+                    <div class="card skeleton"></div>
+                    <div class="card skeleton"></div>
+                    <div class="card skeleton"></div>
+                </div>
+            </div>
         </div>
-    {% else %}
-        <div class="cta-buttons" style="display: flex; gap: 20px; justify-content: center;">
-            <a href="/accounts/register/" class="btn btn-primary" style="padding: 15px 40px; font-size: 18px;">Get Started</a>
-            <a href="/accounts/login/" class="btn btn-secondary" style="padding: 15px 40px; font-size: 18px;">Log in</a>
-        </div>
-    {% endif %}
+    </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/home.js' %}"></script>
 {% endblock %}
