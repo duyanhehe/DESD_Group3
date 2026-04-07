@@ -67,9 +67,10 @@
                                 <span class="status-badge status-out">Out of Stock</span>
                             {% endif %}
                         </td>
-                        <td>
-                            {# Placeholders for edit/delete #}
-                            <span class="text-secondary" style="font-size: 0.9em;">Edit | Delete</span>
+                        <td class="table-actions">
+                            <a href="{% url 'edit_product' product.id %}" class="action-link edit-link">Edit</a>
+                            <span class="divider">|</span>
+                            <a href="{% url 'delete_product' product.id %}" class="action-link delete-link">Delete</a>
                         </td>
                     </tr>
                     {% empty %}

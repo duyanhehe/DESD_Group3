@@ -20,13 +20,27 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize
     async function init() {
         try {
-            const [categories, products] = await Promise.all([
-                fetch('/categories/api/v1/').then(res => res.json()),
-                fetch('/products/api/v1/').then(res => res.json())
+            const [catRes, prodRes] = await Promise.all([
+                fetch('/categories/api/v1/'),
+                fetch('/products/api/v1/')
             ]);
+
+            if (!catRes.ok || !prodRes.ok) {
+                console.error('API Error:', catRes.status, prodRes.status);
+                throw new Error('Failed to fetch marketplace data');
+            }
+
+            const categories = await catRes.json();
+            const products = await prodRes.json();
 
             allCategories = categories;
             allProducts = products;
+
+            // Ensure we have arrays
+            if (!Array.isArray(categories) || !Array.isArray(products)) {
+                console.error('Data format error:', categories, products);
+                throw new Error('Invalid data format received from server');
+            }
 
             renderCategories(categories);
             renderMarketplace(categories, products);
@@ -39,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             console.error('Error fetching marketplace data:', error);
-            marketplaceContent.innerHTML = '<p class="error">Failed to load marketplace. Please try again later.</p>';
+            marketplaceContent.innerHTML = `<div class="error" style="padding: 40px; text-align: center;"><h3>Oops! Something went wrong</h3><p>${error.message}</p></div>`;
         }
     }
 

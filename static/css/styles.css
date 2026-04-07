@@ -414,6 +414,90 @@ h1, h2, h3 {
     margin-bottom: 20px;
 }
 
+/* Dashboard Actions */
+.table-actions {
+    font-size: 0.9em;
+}
+
+.action-link {
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s;
+}
+
+.edit-link { color: var(--primary-green); }
+.edit-link:hover { color: #006414; }
+
+.delete-link { color: #d32f2f; }
+.delete-link:hover { color: #b71c1c; }
+
+.btn-link-styled {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.divider {
+    color: var(--border-color);
+    margin: 0 4px;
+}
+
+/* Alerts / Messages */
+.messages {
+    list-style: none;
+    margin-bottom: 20px;
+}
+
+.alert {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+.alert-success { background: #E8F5E9; color: #2E7D32; border: 1px solid #C8E6C9; }
+.alert-error { background: #FFEBEE; color: #C62828; border: 1px solid #FFCDD2; }
+.alert-info { background: #E3F2FD; color: #1565C0; border: 1px solid #BBDEFB; }
+
+/* Premium Buttons & Form Actions */
+.form-actions-centered {
+    display: flex;
+    justify-content: center;
+    margin-top: 50px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.btn-premium {
+    background: linear-gradient(135deg, var(--primary-green) 0%, #008a1c 100%);
+    color: white;
+    padding: 14px 48px;
+    font-size: 16px;
+    font-weight: 700;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(0, 166, 34, 0.2);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-premium:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 166, 34, 0.3);
+    filter: brightness(1.1);
+}
+
+.btn-premium:active {
+    transform: translateY(0);
+}
+
 .auth-card {
     background: var(--card-bg);
     width: 100%;

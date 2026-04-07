@@ -10,6 +10,8 @@ from .views import (
     product_detail_page,
     producer_dashboard,
     add_product,
+    edit_product,
+    delete_product,
 )
 
 urlpatterns = [
@@ -18,6 +20,8 @@ urlpatterns = [
     path("<int:id>/", product_detail_page, name="product_detail_page"),
     path("producer/dashboard/", producer_dashboard, name="producer_dashboard"),
     path("producer/add/", add_product, name="add_product"),
+    path("producer/edit/<int:id>/", edit_product, name="edit_product"),
+    path("producer/delete/<int:id>/", delete_product, name="delete_product"),
     # API endpoints
     path("api/v1/", ProductListView.as_view(), name="product_list"),
     path("api/v1/create/", CreateProductView.as_view(), name="product_create"),

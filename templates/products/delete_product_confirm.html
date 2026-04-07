@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Confirm Deletion - {{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 600px; margin-top: 80px; text-align: center;">
+    <div class="card" style="padding: 40px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.05); background: #fff;">
+        <div style="margin-bottom: 30px;">
+            <div style="background: #FFF5F5; width: 80px; height: 80px; border-radius: 40px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#E53E3E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m-6 9 2 2 4-4"></path></svg>
+            </div>
+            <h1 style="font-size: 28px; margin-bottom: 10px; color: #1A202C;">Confirm Deletion</h1>
+            <p style="color: #4A5568; font-size: 16px; line-height: 1.6;">
+                Are you sure you want to delete <strong style="color: #2D3748;">'{{ product.name }}'</strong>?<br>
+                This action cannot be undone. All product data will be permanently removed.
+            </p>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn-premium" style="background: linear-gradient(135deg, #E53E3E 0%, #C53030 100%); box-shadow: 0 4px 15px rgba(229, 62, 62, 0.2); width: 100%; justify-content: center;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    Yes, Delete Product Permanently
+                </button>
+            </form>
+            
+            <a href="{% url 'producer_dashboard' %}" class="btn" style="background: #F7FAFC; color: #4A5568; border: 1px solid #E2E8F0; padding: 14px; border-radius: 12px; font-weight: 600; text-decoration: none; transition: all 0.2s;">
+                No, Keep My Product
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .btn:hover {
+        background: #EDF2F7 !important;
+        border-color: #CBD5E0 !important;
+        transform: translateY(-1px);
+    }
+</style>
+{% endblock %}

@@ -5,6 +5,7 @@ from allergens.models import Allergen
 
 class ProductForm(forms.ModelForm):
     UNIT_CHOICES = [
+        ('unit', 'Unit'),
         ('kg', 'Kilogram (kg)'),
         ('g', 'Gram (g)'),
         ('bunch', 'Bunch'),
@@ -14,7 +15,7 @@ class ProductForm(forms.ModelForm):
         ('liter', 'Liter (L)'),
     ]
 
-    unit = forms.ChoiceField(choices=UNIT_CHOICES, initial='kg', widget=forms.Select(attrs={'class': 'form-control'}))
+    unit = forms.ChoiceField(choices=UNIT_CHOICES, initial='unit', widget=forms.Select(attrs={'class': 'form-control'}))
     
     available_from = forms.DateField(
         required=False,

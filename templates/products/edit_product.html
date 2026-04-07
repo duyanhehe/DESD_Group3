@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Add New Product - Food Network{% endblock %}
+{% block title %}Edit Product - {{ product.name }}{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -12,9 +12,9 @@
         <form method="post" class="farmer-form">
             {% csrf_token %}
             
-            <h1>Add New Product</h1>
+            <h1>Edit Product: {{ product.name }}</h1>
             <p class="subtitle" style="text-align: center; margin-bottom: 40px;">
-                Fill in the details below to list your fresh product for customers.
+                Update your product details below.
             </p>
 
             <!-- Basic Information -->
@@ -27,7 +27,6 @@
                     {% if form.name.errors %}
                         <div class="feedback feedback-error">{{ form.name.errors }}</div>
                     {% endif %}
-                    <small class="help-text">Give your product a clear, catchy name.</small>
                 </div>
 
                 <div class="form-group">
@@ -38,7 +37,6 @@
                 <div class="form-group">
                     <label for="{{ form.description.id_for_label }}">Description</label>
                     {{ form.description }}
-                    <small class="help-text">Tell customers about your product's quality, origin, or harvest date.</small>
                 </div>
             </div>
 
@@ -60,21 +58,20 @@
                 <div class="form-group" style="max-width: 300px;">
                     <label for="{{ form.stock_quantity.id_for_label }}">Stock Quantity</label>
                     {{ form.stock_quantity }}
-                    <small class="help-text">How much do you have available right now?</small>
                 </div>
             </div>
 
-            <!-- Availability & Allergens -->
+            <!-- Availability & Health -->
             <div class="form-section">
                 <h2 class="form-section-title">3. Availability & Health</h2>
                 
                 <div style="display: flex; gap: 20px; flex-wrap: wrap;">
                     <div class="form-group" style="flex: 1; min-width: 240px;">
-                        <label for="{{ form.available_from.id_for_label }}">Available From (Start date)</label>
+                        <label for="{{ form.available_from.id_for_label }}">Available From</label>
                         {{ form.available_from }}
                     </div>
                     <div class="form-group" style="flex: 1; min-width: 240px;">
-                        <label for="{{ form.available_to.id_for_label }}">Available To (End date)</label>
+                        <label for="{{ form.available_to.id_for_label }}">Available To</label>
                         {{ form.available_to }}
                     </div>
                 </div>
@@ -124,8 +121,8 @@
 
             <div class="form-actions-centered">
                 <button type="submit" class="btn-premium">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    List Product Now
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                    Save Product Changes
                 </button>
             </div>
         </form>
