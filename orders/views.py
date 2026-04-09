@@ -1,3 +1,4 @@
+from django.shortcuts import redirect
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -15,6 +16,20 @@ from .serializers import (
     ProducerOrderSerializer,
 )
 from products.models import Product
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+
+
+@login_required
+def cart_page(request):
+    return render(request, "orders/cart.html")
+
+
+@login_required
+def producer_orders_page(request):
+    if not request.user.is_producer:
+        return redirect("/")
+    return render(request, "orders/producer_order_list.html")
 
 
 # ─── Cart Views (DESD-55, 56, 57, 58) ──────────────────────

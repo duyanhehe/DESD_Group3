@@ -110,6 +110,10 @@ def product_detail_page(request, id):
     return render(request, "products/detail.html", {"product_id": id})
 
 
+def search_results_page(request):
+    return render(request, "products/search_results.html")
+
+
 @login_required
 def producer_dashboard(request):
     if not request.user.is_producer:

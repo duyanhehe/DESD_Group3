@@ -13,11 +13,13 @@ from .views import (
     edit_product,
     delete_product,
     ProductSearchView,
+    search_results_page,
 )
 
 urlpatterns = [
     # Template views
     path("", product_list_page, name="product_page"),
+    path("search/", search_results_page, name="search_page"),
     path("<int:id>/", product_detail_page, name="product_detail_page"),
     path("producer/dashboard/", producer_dashboard, name="producer_dashboard"),
     path("producer/add/", add_product, name="add_product"),

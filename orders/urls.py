@@ -1,5 +1,8 @@
 from django.urls import path
 from .views import (
+    # template views
+    cart_page,
+    producer_orders_page,
     # cart
     CartDetailView,
     AddToCartView,
@@ -18,6 +21,10 @@ from .views import (
 )
 
 urlpatterns = [
+    # ── Template Views ──
+    path("cart/", cart_page, name="cart_page"),
+    path("producer/", producer_orders_page, name="producer_orders_page"),
+
     # ── Cart ──
     path("api/v1/cart/", CartDetailView.as_view(), name="cart_detail"),
     path("api/v1/cart/add/", AddToCartView.as_view(), name="cart_add"),

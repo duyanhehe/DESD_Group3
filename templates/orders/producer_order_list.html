@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Producer Orders - Food Network{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2rem;">
+    <!-- Dashboard Header Navigation inside Orders -->
+    <div style="display: flex; gap: 20px; align-items: center; margin-bottom: 2rem;">
+        <h1 style="margin: 0;">Orders Dashboard</h1>
+        <a href="{% url 'producer_dashboard' %}" class="btn btn-ghost" style="border: 1px solid var(--border-light);">Back to Products</a>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="stats-grid" id="order-stats-grid" style="display: flex; gap: 20px; margin-bottom: 2rem;">
+        <!-- Filled dynamically via JS -->
+    </div>
+
+    <div class="product-management">
+        <div class="table-responsive">
+            <table class="table" id="orders-table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Total Items (Mine)</th>
+                        <th>My Revenue</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="orders-tbody">
+                    <tr><td colspan="7" style="text-align: center; padding: 40px;">Loading orders...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Audit History Modal Overlay -->
+<div id="audit-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-light); padding-bottom: 12px; margin-bottom: 20px;">
+            <h2 style="margin: 0;">Status History</h2>
+            <button onclick="document.getElementById('audit-modal').classList.add('hidden')" class="modal-close">&times;</button>
+        </div>
+        <div id="audit-content">Loading...</div>
+    </div>
+</div>
+
+<!-- Status Update Modal -->
+<div id="status-modal" class="modal-overlay hidden">
+    <div class="modal-content" style="width: 440px;">
+        <button onclick="document.getElementById('status-modal').classList.add('hidden')" class="modal-close">&times;</button>
+        <h2 id="status-modal-title" style="margin: 0 0 8px 0; color: var(--text-primary);">Update Status</h2>
+        <p style="margin-bottom: 24px; color: var(--text-secondary);">Change status of Order <strong>#<span id="display-order-id"></span></strong> to <strong id="status-modal-target" style="color: var(--primary-green);"></strong></p>
+        <textarea id="status-note" class="form-input" placeholder="Optional note for this status change..." rows="3"></textarea>
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+            <button onclick="document.getElementById('status-modal').classList.add('hidden')" class="btn btn-ghost">Cancel</button>
+            <button id="status-modal-confirm" class="btn btn-primary">Confirm</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/producer_orders.js' %}"></script>
+{% endblock %}
