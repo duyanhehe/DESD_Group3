@@ -8,30 +8,7 @@ wheels/
 
 # Virtual environments
 .venv
+.agent
 
 # Environment variables
 .env
-
-# History log
-history_log.txt
-rule.txt
-
-# Local folders & files
-.postman/
-test_output.txt
-
-# OS & IDEs
-.DS_Store
-Thumbs.db
-.vscode/
-.idea/
-
-# Django specifics
-db.sqlite3
-media/
-staticfiles/
-
-# Testing & Coverage
-.pytest_cache/
-.coverage
-htmlcov/

@@ -132,12 +132,14 @@ http://127.0.0.1:8000/admin/
 
 # Development Workflow
 
-| Task             | Command                                  |
-| ---------------- | ---------------------------------------- |
-| Run server       | `uv run python manage.py runserver`      |
-| Migrations       | `uv run python manage.py makemigrations` |
-| Apply migrations | `uv run python manage.py migrate`        |
-| Install package  | `uv add <package>`                       |
+| Task              | Command                                  |
+| ----------------  | ---------------------------------------- |
+| Run server        | `uv run python manage.py runserver`      |
+| Migrations        | `uv run python manage.py makemigrations` |
+| Apply migrations  | `uv run python manage.py migrate`        |
+| Install package   | `uv add <package>`                       |
+| Add app           | `uv run python manage.py startapp <app>` |
+| Load data into db | `uv run python manage.py loaddata <app>` |
 
 ---
 #  Notes

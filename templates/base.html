@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Food Network Marketplace{% endblock %}</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom Styles -->
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container navbar-inner">
+            <a href="/" class="logo">
+                <span class="logo-text"><span class="logo-icon">🌿</span>Food Network</span>
+            </a>
+            
+            <div class="search-container">
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="global-search" placeholder="Search for local produce, dairy, bakery..." aria-label="Search">
+                </div>
+            </div>
+
+            <div class="nav-links">
+                {% if user.is_authenticated %}
+                    <div class="user-menu">
+                        <span class="welcome-text">Hi, {{ user.first_name|default:user.username }}</span>
+                        {% if user.is_producer %}
+                            <a href="{% url 'producer_dashboard' %}" class="btn btn-secondary btn-sm">Dashboard</a>
+                        {% endif %}
+                        <form action="{% url 'logout' %}" method="post" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-ghost">Log out</button>
+                        </form>
+                    </div>
+                {% else %}
+                    <a href="/accounts/login/" class="btn btn-ghost">Log in</a>
+                    <a href="/accounts/register/" class="btn btn-primary">Sign up</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Global JS -->
+    <script src="{% static 'js/auth.js' %}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

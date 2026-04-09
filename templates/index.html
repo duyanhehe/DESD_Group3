@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Welcome - Food Network Marketplace{% endblock %}
+
+{% block content %}
+<div class="homepage-layout">
+    <!-- Category Navigation Bar -->
+    <div class="category-pills-bar">
+        <div class="container">
+            <div id="category-pills" class="category-pills">
+                <!-- Loaded via JS -->
+                <div class="pill skeleton"></div>
+                <div class="pill skeleton"></div>
+                <div class="pill skeleton"></div>
+                <div class="pill skeleton"></div>
+                <div class="pill skeleton"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="container main-container">
+        <!-- Hero Section (Optional, subtle in Instacart) -->
+        <section class="store-hero">
+            <h1>Fresh from local farms to your door</h1>
+            <p>Shop seasonal produce, dairy, and artisanal goods.</p>
+        </section>
+
+        <!-- Dynamic Product Sections -->
+        <div id="marketplace-content">
+            <!-- Loading state -->
+            <div class="section-loader">
+                <div class="skeleton-row"></div>
+                <div class="skeleton-grid">
+                    <div class="card skeleton"></div>
+                    <div class="card skeleton"></div>
+                    <div class="card skeleton"></div>
+                    <div class="card skeleton"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/home.js' %}"></script>
+{% endblock %}

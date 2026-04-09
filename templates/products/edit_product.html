@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Product - {{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="margin-bottom: 20px;">
+        <a href="{% url 'producer_dashboard' %}" class="btn btn-secondary">&larr; Back to Dashboard</a>
+    </div>
+
+    <div class="form-card">
+        <form method="post" class="farmer-form">
+            {% csrf_token %}
+            
+            <h1>Edit Product: {{ product.name }}</h1>
+            <p class="subtitle" style="text-align: center; margin-bottom: 40px;">
+                Update your product details below.
+            </p>
+
+            <!-- Basic Information -->
+            <div class="form-section">
+                <h2 class="form-section-title">1. Basic Information</h2>
+                
+                <div class="form-group">
+                    <label for="{{ form.name.id_for_label }}">Product Name</label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                        <div class="feedback feedback-error">{{ form.name.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.category.id_for_label }}">Category</label>
+                    {{ form.category }}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.description.id_for_label }}">Description</label>
+                    {{ form.description }}
+                </div>
+            </div>
+
+            <!-- Pricing & Stock -->
+            <div class="form-section">
+                <h2 class="form-section-title">2. Pricing & Stock</h2>
+                
+                <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                    <div class="form-group" style="flex: 1; min-width: 200px;">
+                        <label for="{{ form.price.id_for_label }}">Price ($)</label>
+                        {{ form.price }}
+                    </div>
+                    <div class="form-group" style="flex: 1; min-width: 200px;">
+                        <label for="{{ form.unit.id_for_label }}">Unit</label>
+                        {{ form.unit }}
+                    </div>
+                </div>
+
+                <div class="form-group" style="max-width: 300px;">
+                    <label for="{{ form.stock_quantity.id_for_label }}">Stock Quantity</label>
+                    {{ form.stock_quantity }}
+                </div>
+            </div>
+
+            <!-- Availability & Health -->
+            <div class="form-section">
+                <h2 class="form-section-title">3. Availability & Health</h2>
+                
+                <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                    <div class="form-group" style="flex: 1; min-width: 240px;">
+                        <label for="{{ form.available_from.id_for_label }}">Available From</label>
+                        {{ form.available_from }}
+                    </div>
+                    <div class="form-group" style="flex: 1; min-width: 240px;">
+                        <label for="{{ form.available_to.id_for_label }}">Available To</label>
+                        {{ form.available_to }}
+                    </div>
+                </div>
+
+                <div class="form-group allergen-form-group">
+                    <label>Allergen Information (Required)</label>
+                    <div id="allergens-grid" class="allergens-grid">
+                        {{ form.allergens }}
+                    </div>
+                    {% if form.allergens.errors %}
+                        <div class="feedback feedback-error">{{ form.allergens.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const allergenInputs = document.querySelectorAll('.allergen-checkbox-group input');
+                    let noneCheckbox = null;
+                    
+                    allergenInputs.forEach(input => {
+                        const labelText = input.parentElement.textContent.trim().toLowerCase();
+                        if (labelText.includes('none') || labelText.includes('not applicable')) {
+                            noneCheckbox = input;
+                        }
+                    });
+
+                    if (noneCheckbox) {
+                        noneCheckbox.addEventListener('change', function() {
+                            if (this.checked) {
+                                allergenInputs.forEach(input => {
+                                    if (input !== noneCheckbox) input.checked = false;
+                                });
+                            }
+                        });
+
+                        allergenInputs.forEach(input => {
+                            if (input !== noneCheckbox) {
+                                input.addEventListener('change', function() {
+                                    if (this.checked) noneCheckbox.checked = false;
+                                });
+                            }
+                        });
+                    }
+                });
+            </script>
+
+            <div class="form-actions-centered">
+                <button type="submit" class="btn-premium">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                    Save Product Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

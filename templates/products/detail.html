@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Product Details - Food Network{% endblock %}
+
+{% block content %}
+<div class="container main-container">
+    <div style="margin-bottom: 30px;">
+        <a href="/" class="btn btn-secondary btn-sm">&larr; Back to Marketplace</a>
+    </div>
+
+    <div id="product-detail-content">
+        <!-- Skeleton Loader -->
+        <div class="product-detail-layout">
+            <div class="detail-visual-box">
+                <div class="detail-image-card skeleton"></div>
+            </div>
+            <div class="detail-info-box">
+                <div class="skeleton-row" style="width: 150px; margin-bottom: 10px;"></div>
+                <div class="skeleton-row" style="height: 50px; width: 300px; margin-bottom: 20px;"></div>
+                <div class="skeleton-row" style="height: 40px; width: 120px; margin-bottom: 30px;"></div>
+                <div class="skeleton-row" style="height: 100px; width: 100%;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const PRODUCT_ID = "{{ product_id }}";
+</script>
+<script src="{% static 'js/product_detail.js' %}"></script>
+{% endblock %}

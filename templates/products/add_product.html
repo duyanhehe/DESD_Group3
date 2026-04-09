@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Add New Product - Food Network{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="margin-bottom: 20px;">
+        <a href="{% url 'producer_dashboard' %}" class="btn btn-secondary">&larr; Back to Dashboard</a>
+    </div>
+
+    <div class="form-card">
+        <form method="post" class="farmer-form">
+            {% csrf_token %}
+            
+            <h1>Add New Product</h1>
+            <p class="subtitle" style="text-align: center; margin-bottom: 40px;">
+                Fill in the details below to list your fresh product for customers.
+            </p>
+
+            <!-- Basic Information -->
+            <div class="form-section">
+                <h2 class="form-section-title">1. Basic Information</h2>
+                
+                <div class="form-group">
+                    <label for="{{ form.name.id_for_label }}">Product Name</label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                        <div class="feedback feedback-error">{{ form.name.errors }}</div>
+                    {% endif %}
+                    <small class="help-text">Give your product a clear, catchy name.</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.category.id_for_label }}">Category</label>
+                    {{ form.category }}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.description.id_for_label }}">Description</label>
+                    {{ form.description }}
+                    <small class="help-text">Tell customers about your product's quality, origin, or harvest date.</small>
+                </div>
+            </div>
+
+            <!-- Pricing & Stock -->
+            <div class="form-section">
+                <h2 class="form-section-title">2. Pricing & Stock</h2>
+                
+                <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                    <div class="form-group" style="flex: 1; min-width: 200px;">
+                        <label for="{{ form.price.id_for_label }}">Price ($)</label>
+                        {{ form.price }}
+                    </div>
+                    <div class="form-group" style="flex: 1; min-width: 200px;">
+                        <label for="{{ form.unit.id_for_label }}">Unit</label>
+                        {{ form.unit }}
+                    </div>
+                </div>
+
+                <div class="form-group" style="max-width: 300px;">
+                    <label for="{{ form.stock_quantity.id_for_label }}">Stock Quantity</label>
+                    {{ form.stock_quantity }}
+                    <small class="help-text">How much do you have available right now?</small>
+                </div>
+            </div>
+
+            <!-- Availability & Allergens -->
+            <div class="form-section">
+                <h2 class="form-section-title">3. Availability & Health</h2>
+                
+                <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                    <div class="form-group" style="flex: 1; min-width: 240px;">
+                        <label for="{{ form.available_from.id_for_label }}">Available From (Start date)</label>
+                        {{ form.available_from }}
+                    </div>
+                    <div class="form-group" style="flex: 1; min-width: 240px;">
+                        <label for="{{ form.available_to.id_for_label }}">Available To (End date)</label>
+                        {{ form.available_to }}
+                    </div>
+                </div>
+
+                <div class="form-group allergen-form-group">
+                    <label>Allergen Information (Required)</label>
+                    <div id="allergens-grid" class="allergens-grid">
+                        {{ form.allergens }}
+                    </div>
+                    {% if form.allergens.errors %}
+                        <div class="feedback feedback-error">{{ form.allergens.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const allergenInputs = document.querySelectorAll('.allergen-checkbox-group input');
+                    let noneCheckbox = null;
+                    
+                    allergenInputs.forEach(input => {
+                        const labelText = input.parentElement.textContent.trim().toLowerCase();
+                        if (labelText.includes('none') || labelText.includes('not applicable')) {
+                            noneCheckbox = input;
+                        }
+                    });
+
+                    if (noneCheckbox) {
+                        noneCheckbox.addEventListener('change', function() {
+                            if (this.checked) {
+                                allergenInputs.forEach(input => {
+                                    if (input !== noneCheckbox) input.checked = false;
+                                });
+                            }
+                        });
+
+                        allergenInputs.forEach(input => {
+                            if (input !== noneCheckbox) {
+                                input.addEventListener('change', function() {
+                                    if (this.checked) noneCheckbox.checked = false;
+                                });
+                            }
+                        });
+                    }
+                });
+            </script>
+
+            <div class="form-actions-centered">
+                <button type="submit" class="btn-premium">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    List Product Now
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
