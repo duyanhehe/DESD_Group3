@@ -1,8 +1,19 @@
 from django.db import models
+from django.db.models import Manager, Q
 from django.conf import settings
 from django.utils.timezone import now
 from categories.models import Category
 from allergens.models import Allergen
+
+
+class ProductManager(Manager):
+    def active(self):
+        today = now().date()
+
+        return self.filter(stock_quantity__gt=0, is_available=True).filter(
+            Q(available_from__isnull=True) | Q(available_from__lte=today),
+            Q(available_to__isnull=True) | Q(available_to__gte=today),
+        )
 
 
 class Product(models.Model):
@@ -36,6 +47,7 @@ class Product(models.Model):
 
     # allergens
     allergens = models.ManyToManyField(Allergen, blank=False, related_name="products")
+    objects = ProductManager()
 
     class Meta:
         ordering = ["-created_at"]
@@ -46,15 +58,22 @@ class Product(models.Model):
 
     def is_in_season(self):
         today = now().date()
+        # if no dates are set then its in season
+        if not self.available_from and not self.available_to:
+            return True
         if self.available_from and self.available_to:
             return self.available_from <= today <= self.available_to
-        return False
+        if self.available_from:
+            return today >= self.available_from
+        if self.available_to:
+            return today <= self.available_to
+        return True
 
     def is_active(self):
         """
         Product is visible to customers
         """
-        return self.stock_quantity > 0 and (self.is_available or self.is_in_season())
+        return self.stock_quantity > 0 and self.is_available and self.is_in_season()
 
     def get_status(self):
         if self.is_available:
@@ -62,6 +81,14 @@ class Product(models.Model):
         if self.is_in_season():
             return "In Season"
         return "Unavailable"
+
+    def update_availability(self):
+        if not self.is_in_season():
+            self.is_available = False
+
+    def save(self, *args, **kwargs):
+        self.update_availability()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name

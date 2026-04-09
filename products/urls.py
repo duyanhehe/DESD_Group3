@@ -12,6 +12,7 @@ from .views import (
     add_product,
     edit_product,
     delete_product,
+    ProductSearchView,
 )
 
 urlpatterns = [
@@ -36,5 +37,10 @@ urlpatterns = [
         "api/v1/category/<slug:slug>/",
         CategoryProductsView.as_view(),
         name="product_by_category",
+    ),
+    path(
+        "api/v1/search/",
+        ProductSearchView.as_view(),
+        name="product_search",
     ),
 ]

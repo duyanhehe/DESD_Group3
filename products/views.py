@@ -13,6 +13,9 @@ from django.contrib import messages
 from .models import Product
 from .serializers import ProductSerializer
 from .forms import ProductForm
+from .utils import validate_product_for_order
+
+from django.db import transaction
 
 
 class CreateProductView(APIView):
@@ -39,12 +42,7 @@ class ProductListView(APIView):
     def get(self, request):
         today = now().date()
 
-        products = Product.objects.filter(
-            is_available=True, stock_quantity__gt=0
-        ).filter(
-            Q(available_from__isnull=True) | Q(available_from__lte=today),
-            Q(available_to__isnull=True) | Q(available_to__gte=today),
-        )
+        products = Product.objects.active()
 
         serializer = ProductSerializer(products, many=True)
         return Response(serializer.data)
@@ -56,13 +54,7 @@ class ProductDetailView(APIView):
     def get(self, request, id):
         today = now().date()
 
-        product = get_object_or_404(
-            Product.objects.filter(is_available=True, stock_quantity__gt=0).filter(
-                Q(available_from__isnull=True) | Q(available_from__lte=today),
-                Q(available_to__isnull=True) | Q(available_to__gte=today),
-            ),
-            id=id,
-        )
+        product = get_object_or_404(Product.objects.active(), id=id)
 
         serializer = ProductSerializer(product)
         return Response(serializer.data)
@@ -72,12 +64,7 @@ class CategoryProductsView(APIView):
     def get(self, request, slug):
         today = now().date()
 
-        products = Product.objects.filter(
-            category__slug=slug, stock_quantity__gt=0
-        ).filter(
-            Q(is_available=True) | Q(available_from__lte=today, available_to__gte=today)
-        )
-
+        products = Product.objects.active().filter(category__slug=slug)
         serializer = ProductSerializer(products, many=True)
         return Response(serializer.data)
 
@@ -172,7 +159,9 @@ def edit_product(request, id):
     else:
         form = ProductForm(instance=product)
 
-    return render(request, "products/edit_product.html", {"form": form, "product": product})
+    return render(
+        request, "products/edit_product.html", {"form": form, "product": product}
+    )
 
 
 @login_required
@@ -189,5 +178,35 @@ def delete_product(request, id):
         product.delete()
         messages.success(request, f"Product '{product_name}' deleted successfully.")
         return redirect("producer_dashboard")
-    
+
     return render(request, "products/delete_product_confirm.html", {"product": product})
+
+
+class ProductSearchView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        query = request.GET.get("q", "").strip()
+
+        # Handle empty query
+        if not query:
+            return Response(
+                {"message": "Please provide a search query.", "results": []}, status=200
+            )
+
+        # Search logic (partial and case insensitive)
+        products = Product.objects.active().filter(
+            Q(name__icontains=query) | Q(description__icontains=query)
+        )
+
+        serializer = ProductSerializer(products, many=True)
+
+        # Handle no results
+        if not products.exists():
+            return Response(
+                {"message": "No products found.", "results": []}, status=200
+            )
+
+        return Response(
+            {"count": products.count(), "results": serializer.data}, status=200
+        )
