@@ -19,5 +19,12 @@
       "name": "Dairy",
       "slug": "dairy"
     }
+  },
+  {
+    "model": "categories.category",
+    "fields": {
+      "name": "Compost & Grade 2",
+      "slug": "compost"
+    }
   }
 ]

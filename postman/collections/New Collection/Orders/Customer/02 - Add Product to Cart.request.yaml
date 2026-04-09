@@ -1,0 +1,43 @@
+$kind: http-request
+name: Add Product to Cart
+method: POST
+url: "{{base_url}}/orders/api/v1/cart/add/"
+headers:
+  Content-Type: application/json
+  Authorization: "Token {{customer_token}}"
+body:
+  type: json
+  content: |-
+    {
+      "product_id": 1,
+      "quantity": 3
+    }
+scripts:
+  - type: afterResponse
+    code: |
+      pm.test("Status 200", function () {
+          pm.response.to.have.status(200);
+      });
+
+      pm.test("Cart has 1 item with producer info (DESD-55, 58)", function () {
+          var data = pm.response.json();
+          pm.expect(data.items.length).to.eql(1);
+          var item = data.items[0];
+          pm.expect(item).to.have.property("product_name");
+          pm.expect(item).to.have.property("producer_id");
+          pm.expect(item).to.have.property("producer_name");
+          pm.expect(item).to.have.property("unit_price");
+          pm.expect(item).to.have.property("subtotal");
+          pm.expect(item.quantity).to.eql(3);
+      });
+
+      pm.test("Total calculated correctly (DESD-57)", function () {
+          var data = pm.response.json();
+          pm.expect(parseFloat(data.total)).to.be.above(0);
+      });
+
+      var data = pm.response.json();
+      if (data.items.length > 0) {
+          pm.environment.set("cart_item_id", data.items[0].id);
+      }
+    language: text/javascript

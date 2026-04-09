@@ -1,0 +1,26 @@
+$kind: http-request
+name: Re-add Product for Checkout
+method: POST
+url: "{{base_url}}/orders/api/v1/cart/add/"
+headers:
+  Content-Type: application/json
+  Authorization: "Token {{customer_token}}"
+body:
+  type: json
+  content: |-
+    {
+      "product_id": 1,
+      "quantity": 2
+    }
+scripts:
+  - type: afterResponse
+    code: |
+      pm.test("Status 200", function () {
+          pm.response.to.have.status(200);
+      });
+
+      pm.test("Cart ready for checkout", function () {
+          var data = pm.response.json();
+          pm.expect(data.items.length).to.be.at.least(1);
+      });
+    language: text/javascript

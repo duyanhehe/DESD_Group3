@@ -1,0 +1,28 @@
+$kind: http-request
+name: Invalid Status Jump (Fail - DESD-71)
+method: PUT
+url: "{{base_url}}/orders/api/v1/{{order_id}}/status/"
+headers:
+  Content-Type: application/json
+  Authorization: "Token {{producer_token}}"
+body:
+  type: json
+  content: |-
+    {
+      "status": "delivered",
+      "note": "Trying to skip steps"
+    }
+scripts:
+  - type: afterResponse
+    code: |
+      pm.test("Status 400 — can't skip pending to delivered", function () {
+          pm.response.to.have.status(400);
+      });
+
+      pm.test("Shows allowed transitions", function () {
+          var data = pm.response.json();
+          pm.expect(data).to.have.property("error");
+          pm.expect(data).to.have.property("allowed_transitions");
+          pm.expect(data.allowed_transitions).to.include("confirmed");
+      });
+    language: text/javascript

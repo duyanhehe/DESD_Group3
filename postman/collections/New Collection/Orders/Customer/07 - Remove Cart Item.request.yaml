@@ -1,0 +1,19 @@
+$kind: http-request
+name: Remove Cart Item
+method: DELETE
+url: "{{base_url}}/orders/api/v1/cart/item/{{cart_item_id}}/remove/"
+headers:
+  Authorization: "Token {{customer_token}}"
+scripts:
+  - type: afterResponse
+    code: |
+      pm.test("Status 200", function () {
+          pm.response.to.have.status(200);
+      });
+
+      pm.test("Item removed (DESD-56)", function () {
+          var data = pm.response.json();
+          var found = data.items.find(i => i.id == pm.environment.get("cart_item_id"));
+          pm.expect(found).to.be.undefined;
+      });
+    language: text/javascript

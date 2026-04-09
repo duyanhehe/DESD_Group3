@@ -6,3 +6,15 @@ values:
   - key: auth_token
     value: ''
     enabled: true
+  - key: customer_token
+    value: ''
+    enabled: true
+  - key: producer_token
+    value: ''
+    enabled: true
+  - key: cart_item_id
+    value: ''
+    enabled: true
+  - key: order_id
+    value: ''
+    enabled: true
