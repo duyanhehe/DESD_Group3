@@ -1,0 +1,3 @@
+from django.conf import settings
+
+RECOMMENDATION_MODEL_PATH = settings.AI_RECOMMENDATION_MODEL_PATH

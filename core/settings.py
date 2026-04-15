@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "apps.orders",
     "apps.payments",
     "apps.logistics",
+    "apps.ai_engine",
     "rest_framework",
     "rest_framework.authtoken",
 ]

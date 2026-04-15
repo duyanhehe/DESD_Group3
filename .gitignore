@@ -15,3 +15,6 @@ wheels/
 
 # Postman
 .postman
+
+# AI Models
+ai_models/
