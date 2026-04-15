@@ -15,7 +15,7 @@ from .serializers import (
     OrderStatusLogSerializer,
     ProducerOrderSerializer,
 )
-from products.models import Product
+from apps.products.models import Product
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
@@ -34,9 +34,11 @@ def producer_orders_page(request):
 
 # ─── Cart Views (DESD-55, 56, 57, 58) ──────────────────────
 
+
 class CartDetailView(APIView):
     """GET — return the current user's cart with items, totals,
     and producer grouping. Cart is created on first access."""
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -47,6 +49,7 @@ class CartDetailView(APIView):
 
 class AddToCartView(APIView):
     """POST — add a product to cart. If already in cart, bump the quantity."""
+
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -78,14 +81,17 @@ class AddToCartView(APIView):
 
         # if product already in cart, add to existing quantity
         cart_item, created = CartItem.objects.get_or_create(
-            cart=cart, product=product,
+            cart=cart,
+            product=product,
             defaults={"quantity": quantity},
         )
         if not created:
             new_qty = cart_item.quantity + quantity
             if new_qty > product.stock_quantity:
                 return Response(
-                    {"error": f"Can't add more. Only {product.stock_quantity} in stock."},
+                    {
+                        "error": f"Can't add more. Only {product.stock_quantity} in stock."
+                    },
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             cart_item.quantity = new_qty
@@ -97,12 +103,11 @@ class AddToCartView(APIView):
 
 class UpdateCartItemView(APIView):
     """PUT — update quantity of a cart item. Send quantity=0 to remove."""
+
     permission_classes = [IsAuthenticated]
 
     def put(self, request, item_id):
-        cart_item = get_object_or_404(
-            CartItem, id=item_id, cart__customer=request.user
-        )
+        cart_item = get_object_or_404(CartItem, id=item_id, cart__customer=request.user)
         quantity = int(request.data.get("quantity", 0))
 
         if quantity < 0:
@@ -130,12 +135,11 @@ class UpdateCartItemView(APIView):
 
 class RemoveCartItemView(APIView):
     """DELETE — remove an item from the cart."""
+
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, item_id):
-        cart_item = get_object_or_404(
-            CartItem, id=item_id, cart__customer=request.user
-        )
+        cart_item = get_object_or_404(CartItem, id=item_id, cart__customer=request.user)
         cart_item.delete()
 
         cart = Cart.objects.get(customer=request.user)
@@ -145,6 +149,7 @@ class RemoveCartItemView(APIView):
 
 class ClearCartView(APIView):
     """DELETE — empty the entire cart."""
+
     permission_classes = [IsAuthenticated]
 
     def delete(self, request):
@@ -156,9 +161,11 @@ class ClearCartView(APIView):
 
 # ─── Order Views (DESD-71, 72, 73) ─────────────────────────
 
+
 class CreateOrderView(APIView):
     """POST — create an order from the current cart contents.
     Clears the cart after order is placed."""
+
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -224,6 +231,7 @@ class CreateOrderView(APIView):
 
 class CustomerOrderListView(APIView):
     """GET — list all orders for the logged-in customer."""
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -234,6 +242,7 @@ class CustomerOrderListView(APIView):
 
 class CustomerOrderDetailView(APIView):
     """GET — single order detail for the customer."""
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request, order_id):
@@ -246,6 +255,7 @@ class UpdateOrderStatusView(APIView):
     """PUT — producer updates order status.
     Enforces: PENDING → CONFIRMED → READY → DELIVERED.
     Auto-logs every change to OrderStatusLog (audit trail)."""
+
     permission_classes = [IsAuthenticated]
 
     def put(self, request, order_id):
@@ -304,6 +314,7 @@ class UpdateOrderStatusView(APIView):
 
 class OrderStatusHistoryView(APIView):
     """GET — full audit trail of status changes for an order."""
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request, order_id):
@@ -325,9 +336,11 @@ class OrderStatusHistoryView(APIView):
 
 # ─── Producer Order Views (DESD-66, 67, 68) ────────────────
 
+
 class ProducerOrderListView(APIView):
     """GET — list orders that contain this producer's products.
     Only shows items belonging to this producer (not other vendors)."""
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -339,8 +352,7 @@ class ProducerOrderListView(APIView):
 
         # find all orders that have at least one item from this producer
         order_ids = (
-            OrderItem.objects
-            .filter(producer=request.user)
+            OrderItem.objects.filter(producer=request.user)
             .values_list("order_id", flat=True)
             .distinct()
         )
@@ -354,6 +366,7 @@ class ProducerOrderListView(APIView):
 class ProducerOrderDetailView(APIView):
     """GET — single order detail from the producer's perspective.
     Includes customer contact info for delivery coordination."""
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request, order_id):
@@ -373,7 +386,5 @@ class ProducerOrderDetailView(APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        serializer = ProducerOrderSerializer(
-            order, context={"request": request}
-        )
+        serializer = ProducerOrderSerializer(order, context={"request": request})
         return Response(serializer.data)

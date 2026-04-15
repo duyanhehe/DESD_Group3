@@ -1,10 +1,11 @@
 from django.db import models
 from django.conf import settings
-from products.models import Product
+from apps.products.models import Product
 
 
 class Cart(models.Model):
     """Shopping cart — one per logged-in customer, persists across sessions."""
+
     customer = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -63,9 +64,7 @@ class Order(models.Model):
         on_delete=models.CASCADE,
         related_name="orders",
     )
-    status = models.CharField(
-        max_length=20, choices=STATUS_CHOICES, default=PENDING
-    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PENDING)
     total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -102,6 +101,7 @@ class OrderItem(models.Model):
 
 class OrderStatusLog(models.Model):
     """Audit trail — every status change gets logged here."""
+
     order = models.ForeignKey(
         Order, on_delete=models.CASCADE, related_name="status_logs"
     )

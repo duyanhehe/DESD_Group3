@@ -41,13 +41,13 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "accounts",
-    "products",
-    "categories",
-    "allergens",
-    "orders",
-    "payments",
-    "logistics",
+    "apps.accounts",
+    "apps.products",
+    "apps.categories",
+    "apps.allergens",
+    "apps.orders",
+    "apps.payments",
+    "apps.logistics",
     "rest_framework",
     "rest_framework.authtoken",
 ]
@@ -162,3 +162,7 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
     ],
 }
+
+# AI Models Configuration
+AI_MODELS_DIR = BASE_DIR / "ai_models"
+AI_RECOMMENDATION_MODEL_PATH = AI_MODELS_DIR / "recommendation" / "rules.pkl"

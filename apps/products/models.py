@@ -2,8 +2,8 @@ from django.db import models
 from django.db.models import Manager, Q
 from django.conf import settings
 from django.utils.timezone import now
-from categories.models import Category
-from allergens.models import Allergen
+from apps.categories.models import Category
+from apps.allergens.models import Allergen
 
 
 class ProductManager(Manager):
