@@ -4,44 +4,124 @@
 {% block title %}Welcome - Food Network Marketplace{% endblock %}
 
 {% block content %}
-<div class="homepage-layout">
-    <!-- Category Navigation Bar -->
-    <div class="category-pills-bar">
-        <div class="container">
-            <div id="category-pills" class="category-pills">
-                <!-- Loaded via JS -->
-                <div class="pill skeleton"></div>
-                <div class="pill skeleton"></div>
-                <div class="pill skeleton"></div>
-                <div class="pill skeleton"></div>
-                <div class="pill skeleton"></div>
+<!-- Asymmetric Hero Section -->
+<section class="relative px-6 pt-16 pb-24 lg:pt-24 lg:pb-32 overflow-hidden bg-surface-container-lowest">
+    <div class="max-w-screen-2xl mx-auto grid lg:grid-cols-12 gap-12 items-center">
+        <div class="lg:col-span-7 z-10">
+            <span class="inline-block px-4 py-1.5 rounded-full bg-secondary-container text-on-secondary-container text-[10px] font-bold tracking-widest uppercase mb-6 font-label">Bespoke digital farm-to-table</span>
+            <h1 class="font-headline text-5xl lg:text-7xl font-extrabold text-on-background leading-[1.1] mb-8 tracking-tight">
+                Organic produce, <br/>
+                <span class="text-primary italic">curated</span> for you.
+            </h1>
+            <p class="text-on-surface-variant text-lg lg:text-xl max-w-xl mb-12 leading-relaxed">
+                Skip the industrial supply chain. Connect directly with local producers and receive hand-picked seasonal bounty at your doorstep.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 p-2 bg-white rounded-2xl lg:rounded-full shadow-[0px_12px_32px_rgba(26,28,28,0.06)] border border-outline-variant/15 max-w-2xl">
+                <div class="flex-1 flex items-center px-6 py-3 sm:py-0 border-b sm:border-b-0 sm:border-r border-outline-variant/15">
+                    <span class="material-symbols-outlined text-primary mr-3">location_on</span>
+                    <input class="w-full border-none focus:ring-0 text-on-surface font-medium placeholder:text-outline/60 text-sm" placeholder="Enter your delivery zip code" type="text"/>
+                </div>
+                <button class="px-8 py-4 bg-primary text-on-primary rounded-xl lg:rounded-full font-bold text-sm hover:bg-primary-container transition-all active:scale-95 shadow-lg shadow-primary/20">
+                    Find Fresh Food
+                </button>
+            </div>
+        </div>
+        <div class="lg:col-span-5 relative">
+            <div class="relative rounded-3xl overflow-hidden aspect-[4/5] shadow-2xl">
+                <img alt="Fresh vegetables" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBTHFpoI-GZxR0LW0U46kT-lRIeM0qQCDr2W0OuVATzo9y_6neQ9w6JIBHU9ZjwfqZHLJEoAPN78WOVF0paUspCU-ZtuLLxR1QV4KqMHKTOMVUxAh4RCA5Aose9UbygXpvkeCpWxrDCR4E3byhcmKY1lNG2tSlkAERmZu_JPVdPAHAPEAGcPWauGvfXuKf2HJTiVzCg5I2GYDOFCpVMJZxByXVRKhazwK9_VJQJlSp3zxU-14H0LsvNMl46aLlL5HD-hv2QBRx0nxc"/>
+                <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+            </div>
+            <div class="absolute -bottom-8 -left-8 bg-white p-6 rounded-2xl shadow-xl max-w-[240px] hidden sm:block border border-outline-variant/10">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-12 h-12 rounded-full bg-primary-fixed flex items-center justify-center text-primary">
+                        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">eco</span>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-outline uppercase tracking-wider">Certified</p>
+                        <p class="font-bold text-on-surface text-sm">100% Organic</p>
+                    </div>
+                </div>
+                <p class="text-xs text-on-surface-variant leading-relaxed">Every farm on our platform passes a strict sustainability audit.</p>
             </div>
         </div>
     </div>
+</section>
 
-    <!-- Main Content Area -->
-    <div class="container main-container">
-        <!-- Hero Section (Optional, subtle in Instacart) -->
-        <section class="store-hero">
-            <h1>Fresh from local farms to your door</h1>
-            <p>Shop seasonal produce, dairy, and artisanal goods.</p>
-        </section>
+<!-- Category Pills Navigation -->
+<div class="sticky top-[72px] z-40 w-full bg-white/80 backdrop-blur-md border-b border-outline-variant/10">
+    <div class="max-w-screen-2xl mx-auto px-6 py-4">
+        <div id="category-pills" class="flex items-center gap-3 overflow-x-auto no-scrollbar pb-1">
+            <!-- Loaded via home.js -->
+            <div class="h-10 w-24 bg-surface-container-high rounded-full animate-pulse"></div>
+            <div class="h-10 w-32 bg-surface-container-high rounded-full animate-pulse"></div>
+            <div class="h-10 w-28 bg-surface-container-high rounded-full animate-pulse"></div>
+        </div>
+    </div>
+</div>
 
-        <!-- Dynamic Product Sections -->
-        <div id="marketplace-content">
-            <!-- Loading state -->
-            <div class="section-loader">
-                <div class="skeleton-row"></div>
-                <div class="skeleton-grid">
-                    <div class="card skeleton"></div>
-                    <div class="card skeleton"></div>
-                    <div class="card skeleton"></div>
-                    <div class="card skeleton"></div>
+<!-- Marketplace Content -->
+<div class="max-w-screen-2xl mx-auto px-6 py-12">
+    <div id="marketplace-content" class="space-y-16">
+        <!-- Skeleton Loading State -->
+        <div class="space-y-8">
+            <div class="flex items-end justify-between">
+                <div class="space-y-2">
+                    <div class="h-8 w-48 bg-surface-container-high rounded-lg animate-pulse"></div>
+                    <div class="h-4 w-64 bg-surface-container-high rounded-sm animate-pulse"></div>
                 </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="aspect-[4/5] bg-surface-container-high rounded-3xl animate-pulse"></div>
+                <div class="aspect-[4/5] bg-surface-container-high rounded-3xl animate-pulse"></div>
+                <div class="aspect-[4/5] bg-surface-container-high rounded-3xl animate-pulse"></div>
+                <div class="aspect-[4/5] bg-surface-container-high rounded-3xl animate-pulse"></div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Why Choose Us / Ethics -->
+<section class="py-24 bg-surface-container-low mt-20">
+    <div class="max-w-screen-2xl mx-auto px-6 grid lg:grid-cols-2 gap-24 items-center">
+        <div class="order-2 lg:order-1 grid grid-cols-2 gap-6">
+            <div class="pt-12 space-y-6">
+                <div class="bg-surface-container-lowest p-8 rounded-3xl shadow-sm">
+                    <span class="material-symbols-outlined text-primary text-4xl mb-4">search</span>
+                    <h4 class="font-headline font-bold text-lg mb-2 text-on-background">1. Discover</h4>
+                    <p class="text-sm text-on-surface-variant leading-relaxed">Browse what's growing right now in your regional climate.</p>
+                </div>
+                <div class="bg-surface-container-highest/50 p-8 rounded-3xl">
+                    <span class="material-symbols-outlined text-primary text-4xl mb-4">local_shipping</span>
+                    <h4 class="font-headline font-bold text-lg mb-2 text-on-background">3. Direct Delivery</h4>
+                    <p class="text-sm text-on-surface-variant leading-relaxed">Carbon-neutral delivery directly from the farm to your door.</p>
+                </div>
+            </div>
+            <div class="space-y-6">
+                <div class="bg-secondary-container p-8 rounded-3xl shadow-lg shadow-primary/5">
+                    <span class="material-symbols-outlined text-on-secondary-container text-4xl mb-4" style="font-variation-settings: 'FILL' 1;">shopping_basket</span>
+                    <h4 class="font-headline font-bold text-lg mb-2 text-on-secondary-container">2. Assemble</h4>
+                    <p class="text-sm text-on-secondary-container/80 leading-relaxed">Customize your weekly basket with products from multiple farms.</p>
+                </div>
+                <div class="bg-surface-container-lowest p-8 rounded-3xl shadow-sm">
+                    <span class="material-symbols-outlined text-primary text-4xl mb-4" style="font-variation-settings: 'FILL' 1;">favorite</span>
+                    <h4 class="font-headline font-bold text-lg mb-2 text-on-background">4. Support</h4>
+                    <p class="text-sm text-on-surface-variant leading-relaxed">100% of the profits go back to the producers in our network.</p>
+                </div>
+            </div>
+        </div>
+        <div class="order-1 lg:order-2">
+            <span class="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-4 block">How it works</span>
+            <h2 class="font-headline text-4xl lg:text-6xl font-extrabold text-on-background mb-8 leading-tight tracking-tight">A transparent <br/>way to eat.</h2>
+            <p class="text-on-surface-variant text-lg lg:text-xl mb-12 leading-relaxed">
+                We've removed the middleman, the warehouses, and the long-haul trucking. The result is fresher food, higher earnings for farmers, and a healthier planet.
+            </p>
+            <button class="flex items-center gap-3 px-10 py-5 bg-on-background text-white rounded-full font-bold hover:bg-zinc-800 transition-all shadow-xl active:scale-95 group">
+                Learn about our Ethics
+                <span class="material-symbols-outlined group-hover:rotate-12 transition-transform">menu_book</span>
+            </button>
+        </div>
+    </div>
+</section>
 {% endblock %}
 
 {% block scripts %}

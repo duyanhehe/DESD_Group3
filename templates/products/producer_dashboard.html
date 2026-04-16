@@ -4,95 +4,216 @@
 {% block title %}Producer Dashboard - Food Network{% endblock %}
 
 {% block content %}
-<div class="container" style="padding-top: 2rem;">
-    {% if messages %}
-    <ul class="messages">
-        {% for message in messages %}
-        <li class="alert alert-{{ message.tags }}">{{ message }}</li>
-        {% endfor %}
-    </ul>
-    {% endif %}
+<div class="flex flex-col md:flex-row min-h-[calc(100vh-80px)]">
+    <!-- Sidebar: Producer Suite -->
+    <aside class="w-full md:w-64 bg-surface-container-low border-r border-outline-variant/10 flex flex-col">
+        <div class="p-8 hidden md:block">
+            <h2 class="font-headline text-lg font-extrabold text-emerald-800">Producer Suite</h2>
+            <p class="text-[10px] font-bold text-outline uppercase tracking-widest mt-1">Manage your farm</p>
+        </div>
+        
+        <nav class="flex-grow">
+            <ul class="space-y-1">
+                <li>
+                    <a href="{% url 'producer_dashboard' %}" class="flex items-center gap-4 px-8 py-4 bg-primary text-on-primary font-bold shadow-lg shadow-primary/20 md:rounded-r-full transition-all">
+                        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
+                        Inventory
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'producer_orders_page' %}" class="flex items-center gap-4 px-8 py-4 text-outline font-bold hover:bg-emerald-50 hover:text-primary transition-all md:rounded-r-full group">
+                        <span class="material-symbols-outlined group-hover:scale-110 transition-transform">receipt_long</span>
+                        Orders
+                    </a>
+                </li>
 
-    <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-        <div>
-            <h1 style="margin: 0;">Dashboard</h1>
-            <p class="subtitle" style="color: var(--text-secondary);">Manage your products and inventory</p>
-        </div>
-        <div>
-            <a href="{% url 'producer_orders_page' %}" class="btn btn-secondary" style="margin-right: 10px;">Orders Dashboard</a>
-            <a href="{% url 'add_product' %}" class="btn btn-primary">+ Add New Product</a>
-        </div>
-    </div>
+            </ul>
+        </nav>
 
-    <!-- Stats Overview -->
-    <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 2rem;">
-        <div class="stat-card" style="background: white; padding: 20px; border-radius: 12px; box-shadow: var(--shadow-sm); text-align: center;">
-            <h3 style="margin-top: 0; font-size: 14px; color: var(--text-secondary); text-transform: uppercase;">Total Products</h3>
-            <p style="font-size: 24px; font-weight: 700; color: var(--primary-green); margin: 10px 0 0 0;">{{ products.count }}</p>
+        <div class="p-6 mt-auto">
+            <a href="{% url 'add_product' %}" class="w-full py-4 bg-primary text-on-primary rounded-2xl flex items-center justify-center gap-2 font-extrabold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
+                <span class="material-symbols-outlined">add</span>
+                Add Product
+            </a>
         </div>
-        <div class="stat-card" style="background: white; padding: 20px; border-radius: 12px; box-shadow: var(--shadow-sm); text-align: center;">
-            <h3 style="margin-top: 0; font-size: 14px; color: var(--text-secondary); text-transform: uppercase;">Total items</h3>
-            <p style="font-size: 24px; font-weight: 700; color: var(--primary-green); margin: 10px 0 0 0;">{{ products.all|length }} items</p>
-        </div>
-    </div>
+    </aside>
 
-    <!-- Product List -->
-    <div class="product-management">
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Product Name</th>
-                        <th>Category</th>
-                        <th>Price ($)</th>
-                        <th>Stock</th>
-                        <th>Image & AI</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for product in products %}
-                    <tr data-id="{{ product.id }}">
-                        <td><strong>{{ product.name }}</strong></td>
-                        <td>{{ product.category.name|default:"Uncategorized" }}</td>
-                        <td>
-                            $<span class="editable-cell" data-field="price" data-id="{{ product.id }}" style="cursor: pointer; border-bottom: 1px dashed var(--border-light); padding: 2px 4px;" title="Click to edit">{{ product.price }}</span> / {{ product.unit }}
-                        </td>
-                        <td>
-                            <span class="editable-cell" data-field="stock_quantity" data-id="{{ product.id }}" style="cursor: pointer; border-bottom: 1px dashed var(--border-light); padding: 2px 4px;" title="Click to edit">{{ product.stock_quantity }}</span> {{ product.unit }}
-                        </td>
-                        <td>
-                            <div style="display: flex; gap: 5px; flex-direction: column;">
-                                <button class="btn btn-sm btn-ghost" onclick="document.getElementById('file-{{ product.id }}').click()" style="padding: 4px 8px; font-size: 11px;">Upload Image</button>
-                                <input type="file" id="file-{{ product.id }}" style="display: none;" accept="image/*">
-                                <button class="btn btn-sm btn-secondary" title="Coming soon" disabled style="padding: 4px 8px; font-size: 11px; cursor: not-allowed; opacity: 0.6;">Check Ripeness (AI)</button>
-                            </div>
-                        </td>
-                        <td>
-                            {% if product.stock_quantity > 0 %}
-                                <span class="status-badge status-available">In Stock</span>
-                            {% else %}
-                                <span class="status-badge status-out">Out of Stock</span>
-                            {% endif %}
-                        </td>
-                        <td class="table-actions">
-                            <a href="{% url 'edit_product' product.id %}" class="action-link edit-link">Edit</a>
-                            <span class="divider">|</span>
-                            <a href="{% url 'delete_product' product.id %}" class="action-link delete-link">Delete</a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-secondary);">
-                            No products found. Start by adding your first product!
-                        </td>
-                    </tr>
+    <!-- Main Canvas -->
+    <main class="flex-1 p-6 md:p-12 bg-surface-container-lowest overflow-y-auto">
+        {% if messages %}
+        <div class="mb-8 space-y-4">
+            {% for message in messages %}
+            <div class="p-4 rounded-2xl flex items-center gap-4 {% if message.tags == 'success' %}bg-secondary-container text-on-secondary-container{% else %}bg-error-container text-on-error-container{% endif %} shadow-sm font-bold text-sm">
+                <span class="material-symbols-outlined">{% if message.tags == 'success' %}check_circle{% else %}error{% endif %}</span>
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Header -->
+        <div class="mb-12">
+            <span class="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-2 block">Management Hub</span>
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div>
+                    <h1 class="font-headline text-4xl lg:text-5xl font-extrabold text-on-background mb-3 tracking-tight">Stock Dashboard</h1>
+                    <p class="text-on-surface-variant font-medium">Review your real-time inventory and market performance.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bento Stats Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+            <div class="md:col-span-2 bg-primary rounded-3xl p-8 relative overflow-hidden group shadow-xl shadow-primary/20">
+                <div class="relative z-10 text-on-primary">
+                    <p class="font-bold text-[10px] uppercase tracking-widest opacity-80 mb-2">Total Product Lines</p>
+                    <h3 class="text-6xl font-black mb-4">{{ products.count }}</h3>
+                    <div class="flex items-center gap-2 text-sm font-medium opacity-90">
+                        <span class="material-symbols-outlined text-sm">trending_up</span>
+                        <span>Manage and optimize your listings</span>
+                    </div>
+                </div>
+                <div class="absolute -right-8 -bottom-8 opacity-10 group-hover:scale-110 group-hover:rotate-12 transition-all duration-700">
+                    <span class="material-symbols-outlined text-[160px]" style="font-variation-settings: 'FILL' 1;">eco</span>
+                </div>
+            </div>
+            <div class="bg-surface-container-low rounded-3xl p-8 flex flex-col justify-between border border-outline-variant/10">
+                <div>
+                    <p class="text-on-surface-variant font-bold text-[10px] uppercase tracking-widest mb-1">Stock Items</p>
+                    <h3 class="text-4xl font-extrabold text-on-background">{{ products.all|length }}</h3>
+                </div>
+                <div class="mt-8 flex -space-x-3 overflow-hidden">
+                    {% for product in products|slice:":5" %}
+                    <div class="w-10 h-10 rounded-full border-2 border-white bg-surface-container-high flex items-center justify-center text-xs shadow-sm">
+                        {% if product.category.name == 'Fruits' %}🍎{% elif product.category.name == 'Vegetables' %}🥕{% else %}🥦{% endif %}
+                    </div>
                     {% endfor %}
-                </tbody>
-            </table>
+                    {% if products.count > 5 %}
+                    <div class="w-10 h-10 rounded-full border-2 border-white bg-emerald-100 flex items-center justify-center text-[10px] font-bold text-emerald-800 shadow-sm">+{{ products.count|add:"-5" }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="bg-tertiary-container rounded-3xl p-8 text-on-tertiary-container flex flex-col justify-between relative overflow-hidden shadow-lg shadow-tertiary/10">
+                <div class="relative z-10">
+                    <p class="font-bold text-[10px] uppercase tracking-widest mb-1 opacity-80">Action Needed</p>
+                    <h3 class="text-4xl font-extrabold">Stock Alerts</h3>
+                </div>
+                <div class="relative z-10 mt-6">
+                    <button class="bg-white/30 backdrop-blur-md px-6 py-2.5 rounded-full text-xs font-extrabold hover:bg-white/40 active:scale-95 transition-all">Review Now</button>
+                </div>
+                <div class="absolute right-0 top-0 w-24 h-24 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+            </div>
         </div>
-    </div>
+
+        <!-- Inventory Table -->
+        <div class="bg-surface-container-lowest rounded-[32px] overflow-hidden shadow-[0_20px_40px_rgba(0,0,0,0.03)] border border-outline-variant/5">
+            <div class="p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-outline-variant/10">
+                <h3 class="text-xl font-extrabold font-headline text-on-background">Inventory Overview</h3>
+                <div class="flex items-center gap-3">
+                    <div class="relative">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-lg">search</span>
+                        <input type="text" placeholder="Search items..." class="pl-10 pr-4 py-2 bg-surface-container-high border-none rounded-full text-xs font-medium w-48 lg:w-64 focus:ring-2 focus:ring-primary/20 transition-all">
+                    </div>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="bg-surface-container-low text-on-surface-variant text-[10px] font-extrabold uppercase tracking-widest border-b border-outline-variant/10">
+                            <th class="px-8 py-5">Product Details</th>
+                            <th class="px-8 py-5">Rate ($)</th>
+                            <th class="px-8 py-5">In Stock</th>
+                            <th class="px-8 py-5 text-center">AI Diagnostics</th>
+                            <th class="px-8 py-5">Status</th>
+                            <th class="px-8 py-5 text-right">Settings</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y-0">
+                        {% for product in products %}
+                        <tr class="group hover:bg-emerald-50/30 transition-colors border-b border-outline-variant/5">
+                            <td class="px-8 py-6">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-14 h-14 rounded-2xl overflow-hidden bg-surface-container-high flex-shrink-0">
+                                        <div class="w-full h-full flex items-center justify-center text-xl opacity-20">🥦</div>
+                                    </div>
+                                    <div>
+                                        <p class="font-extrabold text-on-background text-sm group-hover:text-primary transition-colors">{{ product.name }}</p>
+                                        <p class="text-[10px] font-bold text-outline-variant uppercase tracking-wider mt-1">{{ product.category.name|default:"General" }}</p>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td class="px-8 py-6">
+                                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-white hover:shadow-sm transition-all border border-transparent hover:border-outline-variant/10">
+                                    <span class="text-sm font-extrabold text-primary">$</span>
+                                    <span class="text-sm font-extrabold text-on-background editable-cell" data-field="price" data-id="{{ product.id }}">{{ product.price }}</span>
+                                    <span class="text-[10px] text-zinc-400 font-bold uppercase">/ {{ product.unit }}</span>
+                                </div>
+                            </td>
+                            <td class="px-8 py-6">
+                                <div class="inline-flex items-center gap-3 px-3 py-1.5 rounded-xl hover:bg-white hover:shadow-sm transition-all border border-transparent hover:border-outline-variant/10">
+                                    <span class="text-sm font-extrabold text-on-background editable-cell" data-field="stock_quantity" data-id="{{ product.id }}">{{ product.stock_quantity }}</span>
+                                    <span class="text-[10px] text-zinc-400 font-bold uppercase tracking-tighter">{{ product.unit }}</span>
+                                </div>
+                            </td>
+                            <td class="px-8 py-6 text-center">
+                                <span class="text-[10px] font-bold text-outline-variant uppercase tracking-widest">—</span>
+                            </td>
+
+                            <td class="px-8 py-6">
+                                <div class="flex flex-col gap-1.5">
+                                    {% with status=product.get_status %}
+                                    <div class="flex items-center gap-2">
+                                        {% if status == "Available" %}
+                                        <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                                        <span class="text-[10px] font-extrabold text-emerald-700 uppercase tracking-widest">Live</span>
+                                        {% elif status == "Out of Stock" %}
+                                        <div class="w-2 h-2 rounded-full bg-error"></div>
+                                        <span class="text-[10px] font-extrabold text-error uppercase tracking-widest">Depleted</span>
+                                        {% elif status == "Out of Season" %}
+                                        <div class="w-2 h-2 rounded-full bg-amber-400"></div>
+                                        <span class="text-[10px] font-extrabold text-amber-600 uppercase tracking-widest">Scheduled</span>
+                                        {% else %}
+                                        <div class="w-2 h-2 rounded-full bg-outline-variant"></div>
+                                        <span class="text-[10px] font-extrabold text-outline uppercase tracking-widest">Hidden</span>
+                                        {% endif %}
+                                    </div>
+                                    {% if status == "Out of Season" and product.available_from %}
+                                    <span class="text-[9px] text-amber-500 font-bold">Goes live: {{ product.available_from }}</span>
+                                    {% endif %}
+                                    {% endwith %}
+                                </div>
+                            </td>
+                            <td class="px-8 py-6 text-right">
+                                <div class="flex items-center justify-end gap-1">
+                                    <a href="{% url 'edit_product' product.id %}" class="p-2 text-outline hover:text-primary transition-colors">
+                                        <span class="material-symbols-outlined text-sm">edit</span>
+                                    </a>
+                                    <a href="{% url 'delete_product' product.id %}" class="p-2 text-outline hover:text-error transition-colors">
+                                        <span class="material-symbols-outlined text-sm">delete</span>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="px-8 py-20 text-center">
+                                <span class="material-symbols-outlined text-6xl text-outline-variant mb-6">inventory_2</span>
+                                <h4 class="font-headline text-2xl font-bold mb-2">No products found</h4>
+                                <p class="text-on-surface-variant max-w-sm mx-auto mb-8">Start your journey by adding your first organic product to the marketplace.</p>
+                                <a href="{% url 'add_product' %}" class="inline-flex items-center gap-3 px-8 py-4 bg-primary text-on-primary rounded-full font-extrabold shadow-lg shadow-primary/10">
+                                    <span class="material-symbols-outlined">add</span>
+                                    Post First Product
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
 </div>
 {% endblock %}
 

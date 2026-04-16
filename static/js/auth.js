@@ -96,9 +96,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const result = await response.json();
 
                 if (response.ok) {
-                    localStorage.setItem('auth_token', result.token);
-                    localStorage.setItem('user_role', result.role);
-                    
                     showFeedback('login-feedback', 'Login successful! Redirecting...', 'success');
                     
                     setTimeout(() => {
@@ -200,9 +197,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const result = await response.json();
 
                 if (response.ok) {
-                    localStorage.setItem('auth_token', result.token);
-                    localStorage.setItem('user_role', result.role);
-                    
                     showFeedback(feedbackId, 'Account created! Welcome!', 'success');
                     
                     setTimeout(() => {

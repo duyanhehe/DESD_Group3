@@ -14,6 +14,40 @@ const VALID_TRANSITIONS = {
     'cancelled': []
 };
 
+// UI Config
+const STATUS_STYLES = {
+    'pending': { 
+        bg: 'bg-amber-100/50', 
+        text: 'text-amber-700', 
+        dot: 'bg-amber-500',
+        label: 'Awaiting Action'
+    },
+    'confirmed': { 
+        bg: 'bg-blue-100/50', 
+        text: 'text-blue-700', 
+        dot: 'bg-blue-500',
+        label: 'Processing'
+    },
+    'ready': { 
+        bg: 'bg-emerald-100/50', 
+        text: 'text-emerald-700', 
+        dot: 'bg-emerald-500',
+        label: 'Packing Ready'
+    },
+    'delivered': { 
+        bg: 'bg-zinc-100/50', 
+        text: 'text-zinc-600', 
+        dot: 'bg-zinc-400',
+        label: 'Completed'
+    },
+    'cancelled': { 
+        bg: 'bg-error-container/20', 
+        text: 'text-error', 
+        dot: 'bg-error',
+        label: 'Voided'
+    }
+};
+
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -39,7 +73,14 @@ async function fetchOrders() {
         renderTable();
     } catch (e) {
         console.error(e);
-        document.getElementById('orders-tbody').innerHTML = `<tr><td colspan="7" class="error">Failed to load orders.</td></tr>`;
+        document.getElementById('orders-tbody').innerHTML = `
+            <tr>
+                <td colspan="6" class="px-8 py-20 text-center">
+                    <span class="material-symbols-outlined text-4xl text-error mb-4">error</span>
+                    <p class="font-bold text-on-surface-variant">Failed to sync with order relay.</p>
+                </td>
+            </tr>
+        `;
     }
 }
 
@@ -57,17 +98,33 @@ function renderStats() {
     });
 
     document.getElementById('order-stats-grid').innerHTML = `
-        <div class="stat-card">
-            <h3>Active Orders</h3>
-            <p>${activeOrders}</p>
+        <div class="bg-primary rounded-[32px] p-8 relative overflow-hidden group shadow-xl shadow-primary/10">
+            <div class="relative z-10 text-on-primary">
+                <p class="font-bold text-[10px] uppercase tracking-widest opacity-80 mb-2">My Gross Revenue</p>
+                <h3 class="text-4xl font-black mb-4">$${totalRevenue.toFixed(2)}</h3>
+                <p class="text-[10px] font-bold opacity-60 uppercase tracking-widest">Total from ${ordersData.length} Orders</p>
+            </div>
+            <div class="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-700">
+                <span class="material-symbols-outlined text-8xl">payments</span>
+            </div>
         </div>
-        <div class="stat-card">
-            <h3>Total Revenue (Est.)</h3>
-            <p>$${totalRevenue.toFixed(2)}</p>
+        <div class="bg-surface-container-low rounded-[32px] p-8 flex flex-col justify-between border border-outline-variant/10">
+            <div>
+                <p class="text-on-surface-variant font-bold text-[10px] uppercase tracking-widest mb-1">Active Batches</p>
+                <h3 class="text-4xl font-extrabold text-on-background">${activeOrders}</h3>
+            </div>
+            <div class="mt-4">
+                <div class="h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+                    <div class="h-full bg-primary rounded-full" style="width: ${ordersData.length ? (activeOrders / ordersData.length * 100) : 0}%"></div>
+                </div>
+            </div>
         </div>
-        <div class="stat-card">
-            <h3>Total Orders</h3>
-            <p>${ordersData.length}</p>
+        <div class="bg-surface-container-low rounded-[32px] p-8 flex flex-col justify-between border border-outline-variant/10">
+            <div>
+                <p class="text-on-surface-variant font-bold text-[10px] uppercase tracking-widest mb-1">Items Prepared</p>
+                <h3 class="text-4xl font-extrabold text-on-background">${ordersData.reduce((acc, o) => acc + o.my_items.length, 0)}</h3>
+            </div>
+            <p class="text-[10px] font-bold text-outline-variant uppercase mt-2">Inventory Throughput</p>
         </div>
     `;
 }
@@ -76,63 +133,105 @@ function renderTable() {
     const tbody = document.getElementById('orders-tbody');
     
     if (ordersData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 40px;">No orders found.</td></tr>`;
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="px-8 py-20 text-center">
+                    <span class="material-symbols-outlined text-5xl text-outline mb-6">inbox</span>
+                    <h4 class="font-headline text-xl font-bold mb-1">Quiet on the farm</h4>
+                    <p class="text-on-surface-variant text-sm font-medium">No customer requests have arrived yet.</p>
+                </td>
+            </tr>
+        `;
         return;
     }
 
     tbody.innerHTML = ordersData.map(order => {
-        let statusColor = '#666';
-        if (order.status === 'pending') statusColor = '#d97706';
-        if (order.status === 'confirmed') statusColor = '#2563eb';
-        if (order.status === 'ready') statusColor = '#16a34a';
-        if (order.status === 'cancelled') statusColor = '#dc2626';
-
-        // Filter out transitions, build buttons
+        const style = STATUS_STYLES[order.status] || STATUS_STYLES['pending'];
         const allowed = VALID_TRANSITIONS[order.status] || [];
-        let actionButtonsHtml = allowed.map(st => `
-            <button class="btn btn-sm ${st === 'cancelled' ? 'btn-ghost' : 'btn-primary'}" 
-                    style="margin-right: 5px; ${st === 'cancelled' ? 'color: red;' : ''}"
+        
+        const actionButtons = allowed.map(st => `
+            <button class="px-4 py-1.5 rounded-full text-[10px] font-extrabold uppercase tracking-widest transition-all ${st === 'cancelled' ? 'bg-error-container/20 text-error hover:bg-error-container/40' : 'bg-primary text-on-primary shadow-sm hover:scale-105 active:scale-95'}"
                     onclick="event.stopPropagation(); prepareStatusUpdate(${order.id}, '${st}')">
-                Mark ${st.charAt(0).toUpperCase() + st.slice(1)}
+                Mark ${st}
             </button>
         `).join('');
 
-        let itemsHtml = order.my_items.map(item => `
-            <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed var(--border-light);">
-                <span>${item.quantity}x ${item.product_name}</span>
-                <span>$${item.subtotal}</span>
+        const itemsSummary = order.my_items.map(item => `
+            <div class="flex justify-between items-center py-2 group/item transition-all rounded-xl px-2 hover:bg-emerald-50">
+                <span class="font-medium text-xs text-on-surface flex items-center gap-2">
+                    <span class="w-5 h-5 bg-surface-container-high rounded flex items-center justify-center text-[10px] font-bold">${item.quantity}</span>
+                    ${item.product_name}
+                </span>
+                <span class="font-bold text-xs text-on-surface-variant group-hover/item:text-primary">$${parseFloat(item.subtotal).toFixed(2)}</span>
             </div>
         `).join('');
 
         return `
-            <tr style="cursor: pointer; transition: background 0.2s;" onclick="toggleRow(${order.id})" id="row-${order.id}">
-                <td>#${order.id}</td>
-                <td>${order.customer_name}</td>
-                <td>${order.my_items.length}</td>
-                <td style="font-weight: 600;">$${parseFloat(order.my_subtotal).toFixed(2)}</td>
-                <td><span class="badge" style="background-color: ${statusColor}20; color: ${statusColor}; padding: 4px 8px; border-radius: 4px;">${order.status.toUpperCase()}</span></td>
-                <td>${new Date(order.created_at).toLocaleDateString()}</td>
-                <td class="table-actions">
-                    ${actionButtonsHtml}
-                    <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation(); viewHistory(${order.id})">History</button>
+            <tr class="group hover:bg-emerald-50/20 cursor-pointer border-b border-outline-variant/5 transition-all" onclick="toggleRow(${order.id})" id="row-${order.id}">
+                <td class="px-8 py-6 font-bold text-on-surface-variant">#${order.id}</td>
+                <td class="px-8 py-6">
+                    <div>
+                        <p class="font-extrabold text-on-background text-sm truncate max-w-[150px]">${order.customer_name}</p>
+                        <p class="text-[10px] font-bold text-outline-variant uppercase tracking-wider">${order.customer_email.split('@')[0]}</p>
+                    </div>
+                </td>
+                <td class="px-8 py-6">
+                    <span class="px-3 py-1 bg-surface-container rounded-lg text-xs font-extrabold text-on-surface-variant">
+                        ${order.my_items.length} Units
+                    </span>
+                </td>
+                <td class="px-8 py-6">
+                    <span class="text-sm font-black text-primary">$${parseFloat(order.my_subtotal).toFixed(2)}</span>
+                </td>
+                <td class="px-8 py-6">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full ${style.bg} ${style.text}">
+                        <div class="w-1.5 h-1.5 rounded-full ${style.dot} animate-pulse"></div>
+                        <span class="text-[10px] font-black uppercase tracking-widest">${style.label}</span>
+                    </div>
+                </td>
+                <td class="px-8 py-6 text-right">
+                    <div class="flex items-center justify-end gap-2">
+                        ${actionButtons}
+                        <button class="p-2 text-outline hover:text-on-background transition-all" onclick="event.stopPropagation(); viewHistory(${order.id})">
+                            <span class="material-symbols-outlined text-sm">history</span>
+                        </button>
+                    </div>
                 </td>
             </tr>
-            <tr id="details-${order.id}" class="hidden" style="background-color: #fafafa;">
-                <td colspan="7" style="padding: 20px;">
-                    <div style="display: flex; gap: 40px;">
-                        <div style="flex: 1;">
-                            <h4 style="margin-top: 0;">Customer Information</h4>
-                            <p><strong>Name:</strong> ${order.customer_name}</p>
-                            <p><strong>Email:</strong> ${order.customer_email}</p>
-                            <p><strong>Phone:</strong> ${order.customer_phone || 'N/A'}</p>
-                            <p><strong>Address:</strong> ${order.delivery_address || 'N/A'} ${order.customer_postcode || ''}</p>
+            <tr id="details-${order.id}" class="hidden border-b border-outline-variant/5 bg-surface-container-low/30 overflow-hidden">
+                <td colspan="6" class="px-8 py-8">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 bg-white rounded-[24px] p-8 shadow-inner border border-outline-variant/5">
+                        <div class="space-y-6">
+                            <h4 class="font-headline font-extrabold text-on-background uppercase text-[10px] tracking-[0.2em] border-b pb-4">Logistics Matrix</h4>
+                            <div class="grid grid-cols-2 gap-6">
+                                <div>
+                                    <p class="text-[10px] font-bold text-outline uppercase tracking-widest mb-1">Customer</p>
+                                    <p class="text-sm font-extrabold text-on-surface">${order.customer_name}</p>
+                                    <p class="text-sm text-on-surface-variant">${order.customer_email}</p>
+                                    <p class="text-sm text-on-surface-variant">${order.customer_phone || 'No phone'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] font-bold text-outline uppercase tracking-widest mb-1">Drop-off Point</p>
+                                    <p class="text-sm font-extrabold text-on-surface leading-tight">${order.delivery_address || 'Collection point'}</p>
+                                    <p class="text-[10px] font-bold text-primary mt-1">${order.customer_postcode || ''}</p>
+                                </div>
+                            </div>
+                            <div class="pt-4">
+                                <p class="text-[10px] font-bold text-outline uppercase tracking-widest mb-1">Order Timestamp</p>
+                                <p class="text-sm font-medium text-on-surface-variant underline decoration-dotted">${new Date(order.created_at).toLocaleString()}</p>
+                            </div>
                         </div>
-                        <div style="flex: 1;">
-                            <h4 style="margin-top: 0;">Your Items to Prepare</h4>
-                            ${itemsHtml}
-                            <div style="display: flex; justify-content: space-between; padding: 8px 0; font-weight: 700; margin-top: 8px; border-top: 2px solid var(--border-light);">
-                                <span>Subtotal:</span>
-                                <span>$${parseFloat(order.my_subtotal).toFixed(2)}</span>
+                        <div class="space-y-6">
+                            <h4 class="font-headline font-extrabold text-emerald-800 uppercase text-[10px] tracking-[0.2em] border-b border-emerald-100 pb-4">Fulfillment Queue</h4>
+                            <div class="space-y-1">
+                                ${itemsSummary}
+                            </div>
+                            <div class="pt-4 flex justify-between items-end">
+                                <div>
+                                    <p class="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Producer Share</p>
+                                    <p class="text-[10px] text-outline font-medium">After system processing</p>
+                                </div>
+                                <span class="text-2xl font-black text-primary">$${parseFloat(order.my_subtotal).toFixed(2)}</span>
                             </div>
                         </div>
                     </div>
@@ -144,10 +243,14 @@ function renderTable() {
 
 window.toggleRow = function(id) {
     const detailsRow = document.getElementById(`details-${id}`);
+    const mainRow = document.getElementById(`row-${id}`);
+    
     if (detailsRow.classList.contains('hidden')) {
         detailsRow.classList.remove('hidden');
+        mainRow.classList.add('bg-emerald-50/50');
     } else {
         detailsRow.classList.add('hidden');
+        mainRow.classList.remove('bg-emerald-50/50');
     }
 };
 
@@ -158,12 +261,22 @@ window.prepareStatusUpdate = function(orderId, newStatus) {
     document.getElementById('display-order-id').textContent = orderId;
     document.getElementById('status-modal-target').textContent = newStatus.toUpperCase();
     document.getElementById('status-note').value = '';
-    document.getElementById('status-modal').classList.remove('hidden');
+    
+    const modal = document.getElementById('status-modal');
+    modal.classList.remove('hidden');
+    // Simple transition
+    modal.querySelector('div').classList.remove('scale-95');
+    modal.querySelector('div').classList.add('scale-100');
 };
 
 document.getElementById('status-modal-confirm').addEventListener('click', async () => {
     const note = document.getElementById('status-note').value.trim();
     if (!currentOrderForStatus || !targetStatusStr) return;
+
+    const btn = document.getElementById('status-modal-confirm');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-sm">sync</span> Syncing...`;
+    btn.disabled = true;
 
     try {
         const res = await fetch(`/orders/api/v1/${currentOrderForStatus}/status/`, {
@@ -179,12 +292,14 @@ document.getElementById('status-modal-confirm').addEventListener('click', async 
         if (!res.ok) {
             alert(data.error || 'Failed to update status.');
         } else {
-            // refresh
-            fetchOrders();
+            await fetchOrders();
             document.getElementById('status-modal').classList.add('hidden');
         }
     } catch (e) {
         console.error(e);
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
     }
 });
 
@@ -197,25 +312,45 @@ window.viewHistory = async function(orderId) {
         
         let html = '';
         if (history.length === 0) {
-            html = '<p>No history found.</p>';
+            html = '<p class="text-sm font-medium text-outline-variant italic">No legacy record found.</p>';
         } else {
-            html = history.map(h => `
-                <div style="margin-bottom: 16px; padding-left: 16px; border-left: 2px solid var(--primary);">
-                    <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">
-                        ${new Date(h.timestamp).toLocaleString()} by ${h.changed_by_name || 'System'}
+            html = history.map(h => {
+                const isNew = !h.old_status;
+                return `
+                    <div class="relative pl-8 pb-6 border-l-2 border-emerald-100 last:border-0 last:pb-0">
+                        <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-white border-2 border-emerald-500 flex items-center justify-center">
+                            <div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                        </div>
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-[10px] font-black text-emerald-800 uppercase tracking-widest px-2 py-1 bg-emerald-50 rounded">
+                                ${h.new_status.toUpperCase()}
+                            </span>
+                            <span class="text-[10px] font-bold text-outline-variant">${new Date(h.timestamp).toLocaleString()}</span>
+                        </div>
+                        <p class="text-xs font-bold text-on-surface mb-1">
+                            ${isNew ? 'New request initialized' : `Transition from ${h.old_status.toUpperCase()}`}
+                        </p>
+                        <p class="text-xs text-on-surface-variant mb-2">By ${h.changed_by_name || 'System Auto-Agent'}</p>
+                        ${h.note ? `<div class="p-3 bg-surface-container-low rounded-xl text-xs font-medium italic text-on-surface-variant border-l-2 border-primary/20">"${h.note}"</div>` : ''}
                     </div>
-                    <div style="font-weight: 600;">
-                        ${h.old_status ? h.old_status.toUpperCase() : 'NEW'} &rarr; ${h.new_status.toUpperCase()}
-                    </div>
-                    ${h.note ? `<div style="margin-top: 4px; font-style: italic; color: #555;">Note: ${h.note}</div>` : ''}
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
         
-        document.getElementById('audit-content').innerHTML = html;
+        document.getElementById('audit-content').innerHTML = `
+            <div class="p-1 border border-emerald-100 rounded-[20px] mb-8">
+                <div class="px-6 py-3 bg-emerald-50/50 rounded-[16px] flex justify-between items-center text-[10px] font-black text-emerald-900 uppercase">
+                    <span>Lifecycle Trace</span>
+                    <span>Order #${orderId}</span>
+                </div>
+            </div>
+            <div class="space-y-0">
+                ${html}
+            </div>
+        `;
         document.getElementById('audit-modal').classList.remove('hidden');
     } catch (e) {
         console.error(e);
-        alert('Failed to load history.');
+        alert('Audit trail extraction failed.');
     }
 };

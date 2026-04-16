@@ -13,7 +13,6 @@ from django.contrib import messages
 from .models import Product
 from .serializers import ProductSerializer
 from .forms import ProductForm
-from .utils import validate_product_for_order
 
 from django.db import transaction
 

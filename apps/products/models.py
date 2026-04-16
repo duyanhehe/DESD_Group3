@@ -7,6 +7,13 @@ from apps.allergens.models import Allergen
 
 
 class ProductManager(Manager):
+    """
+    Visibility Logic: 
+    An item is 'active' for customers if:
+    1. Stock quantity > 0
+    2. is_available is True
+    3. Today's date is within [available_from, available_to] (inclusive)
+    """
     def active(self):
         today = now().date()
 
@@ -76,15 +83,29 @@ class Product(models.Model):
         return self.stock_quantity > 0 and self.is_available and self.is_in_season()
 
     def get_status(self):
+        if self.stock_quantity == 0:
+            return "Out of Stock"
+        if not self.is_in_season():
+            return "Out of Season"
         if self.is_available:
             return "Available"
-        if self.is_in_season():
-            return "In Season"
         return "Unavailable"
 
     def update_availability(self):
+        """
+        Auto-manage availability based on seasonal dates.
+        - If out of season: Set is_available to False.
+        - If in season: Safe to keep True or reset to True if previously disabled by seasonality.
+        Note: This does not override manual 'Unavailable' settings intended by the producer.
+        """
         if not self.is_in_season():
             self.is_available = False
+        elif self.stock_quantity > 0:
+            # If we are in season and HAVE stock, we default to Available 
+            # unless there's a specific reason not to.
+            # This fixes the 'missing item' issue for new seasonal products.
+            if not self.is_available:
+                self.is_available = True
 
     def save(self, *args, **kwargs):
         self.update_availability()

@@ -3,6 +3,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.shortcuts import get_object_or_404
+import requests
+import json
 
 # Recommendation services
 from .recommendation.services import (
@@ -16,6 +18,7 @@ from .recommendation.services import (
 )
 from apps.products.models import Product
 from apps.products.serializers import ProductSerializer
+from .chatbot import chatbot_logic
 
 
 class RecommendationView(APIView):
@@ -166,4 +169,25 @@ class OrderRecommendationsView(APIView):
                 {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class ChatbotView(APIView):
+    """
+    POST /ai/chatbot/
+    Provides an AI chat interface powered by local Ollama (qwen2.5:7b).
+    """
+    permission_classes = [AllowAny] # Use IsAuthenticated in production
+
+    def post(self, request):
+        user_message = request.data.get("message")
+        if not user_message:
+            return Response({"error": "Message is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Delegate to modular logic
+        result = chatbot_logic.get_response(user_message)
+        
+        if result.get("success") is False:
+            return Response(result, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+        return Response(result, status=status.HTTP_200_OK)
 

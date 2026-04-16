@@ -167,3 +167,7 @@ REST_FRAMEWORK = {
 # AI Models Configuration
 AI_MODELS_DIR = BASE_DIR / "ai_models"
 AI_RECOMMENDATION_MODEL_PATH = AI_MODELS_DIR / "recommendation" / "rules.pkl"
+
+# AI Concierge (Ollama) configuration
+OLLAMA_API_URL = os.getenv("OLLAMA_API_URL", "http://localhost:11434/api/generate")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:7b")

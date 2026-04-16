@@ -5,6 +5,7 @@ from .views import (
     ProductRecommendationsView,
     CartRecommendationsView,
     OrderRecommendationsView,
+    ChatbotView,
 )
 
 urlpatterns = [
@@ -22,4 +23,7 @@ urlpatterns = [
 
     # Post-checkout recommendations
     path("recommendations/order/<int:order_id>/", OrderRecommendationsView.as_view(), name="order_recommendations"),
+
+    # AI Chatbot endpoint
+    path("chatbot/", ChatbotView.as_view(), name="chatbot"),
 ]
