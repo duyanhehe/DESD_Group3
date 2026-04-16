@@ -37,6 +37,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error('Product not found');
             const product = await response.json();
             renderProductDetail(product);
+            
+            // Fetch related products
+            fetchRelatedProducts();
         } catch (error) {
             console.error('Product fetch error:', error);
             detailContent.innerHTML = `
@@ -48,6 +51,57 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
         }
+    }
+
+    async function fetchRelatedProducts() {
+        const relatedContainer = document.getElementById('related-products');
+        try {
+            const res = await fetch(`/ai/recommendations/product/${PRODUCT_ID}/`);
+            if (!res.ok) return;
+
+            const data = await res.json();
+            if (data.products && data.products.length > 0) {
+                relatedContainer.innerHTML = `
+                    <div class="space-y-10">
+                        <div class="max-w-xl">
+                            <span class="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-2 block">Perfect Pairing</span>
+                            <h2 class="font-headline text-3xl font-extrabold text-on-background">Frequently Bought Together</h2>
+                            <p class="text-on-surface-variant text-sm font-medium mt-1">Customers who selected this harvest also appreciated these items.</p>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                            ${data.products.slice(0, 4).map(p => createSimpleProductCard(p)).join('')}
+                        </div>
+                    </div>
+                `;
+                relatedContainer.classList.remove('hidden');
+            }
+        } catch (error) {
+            console.error('Error fetching related products:', error);
+        }
+    }
+
+    function createSimpleProductCard(product) {
+        const icon = categoryIcons[product.category_name] || '🛍';
+        return `
+            <div class="bg-surface-container-lowest rounded-3xl overflow-hidden group hover:shadow-xl transition-all duration-300 border border-outline-variant/5 flex flex-col cursor-pointer"
+                 onclick="window.location.href='/products/${product.id}/'">
+                <div class="aspect-[4/3] relative overflow-hidden bg-surface-container">
+                    <div class="absolute inset-0 flex items-center justify-center text-4xl opacity-30 group-hover:scale-105 transition-transform">
+                        ${icon}
+                    </div>
+                </div>
+                <div class="p-5 flex-grow flex flex-col">
+                    <h3 class="font-headline font-bold text-on-background text-sm mb-1 group-hover:text-primary transition-colors">${product.name}</h3>
+                    <div class="flex justify-between items-center mt-auto">
+                        <span class="text-sm font-black text-primary">$${product.price}</span>
+                        <button onclick="event.stopPropagation(); window.addToCart(${product.id})" 
+                                class="w-8 h-8 bg-surface-container-high text-on-surface-variant hover:bg-primary hover:text-on-primary rounded-xl flex items-center justify-center transition-all active:scale-90">
+                            <span class="material-symbols-outlined text-sm">add_shopping_cart</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
     function renderProductDetail(product) {

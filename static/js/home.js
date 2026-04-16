@@ -20,6 +20,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize
     async function init() {
         try {
+            // Start fetching recommendations in parallel
+            fetchAIRecommendations();
+
             const [catRes, prodRes] = await Promise.all([
                 fetch('/categories/api/v1/'),
                 fetch('/products/api/v1/')
@@ -58,6 +61,62 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p class="text-on-surface-variant">${error.message}</p>
                 </div>
             `;
+        }
+    }
+
+    async function fetchAIRecommendations() {
+        try {
+            const res = await fetch('/ai/recommendations/homepage/');
+            if (!res.ok) return;
+
+            const data = await res.json();
+            
+            // 1. Render Trending
+            if (data.trending && data.trending.length > 0) {
+                const trendingContainer = document.getElementById('trending-recommendations');
+                trendingContainer.innerHTML = `
+                    <div class="space-y-8">
+                        <div class="flex items-end justify-between border-b border-outline-variant/10 pb-6">
+                            <div class="max-w-xl">
+                                <span class="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-2 block">Hot Harvest</span>
+                                <h2 class="font-headline text-3xl font-extrabold text-on-background">Trending Now</h2>
+                                <p class="text-on-surface-variant text-sm font-medium mt-1">Discover what other food enthusiasts are loving this week.</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                            ${data.trending.slice(0, 4).map(p => renderProductCard(p)).join('')}
+                        </div>
+                    </div>
+                `;
+                trendingContainer.classList.remove('hidden');
+            }
+
+            // 2. Render Personalized
+            if (data.personalized && data.personalized.length > 0) {
+                const personaContainer = document.getElementById('personalized-recommendations');
+                personaContainer.innerHTML = `
+                    <div class="space-y-8 bg-primary/5 p-10 rounded-[48px] border border-primary/10 relative overflow-hidden">
+                        <div class="absolute -right-20 -top-20 w-64 h-64 bg-primary/5 rounded-full blur-3xl"></div>
+                        <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-primary/10 pb-8">
+                            <div class="max-w-xl">
+                                <span class="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-2 block">Curated just for you</span>
+                                <h2 class="font-headline text-3xl font-extrabold text-on-background">Personalized Picks</h2>
+                                <p class="text-on-surface-variant text-sm font-medium mt-2 leading-relaxed">
+                                    <span class="material-symbols-outlined text-primary text-base inline-block align-middle mr-1">auto_awesome</span>
+                                    ${data.personalized_explanation || 'Based on your recent interests and seasonal favorites.'}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                            ${data.personalized.slice(0, 4).map(p => renderProductCard(p)).join('')}
+                        </div>
+                    </div>
+                `;
+                personaContainer.classList.remove('hidden');
+            }
+
+        } catch (error) {
+            console.error('Error fetching AI recommendations:', error);
         }
     }
 

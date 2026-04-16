@@ -247,6 +247,61 @@ async function refreshCartBadge() {
 }
 
 
+async function fetchCartRecommendations(itemNames) {
+    const recContainer = document.getElementById('cart-recommendations');
+    if (!recContainer) return;
+
+    try {
+        const res = await fetch('/ai/recommendations/cart/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ items: itemNames })
+        });
+        if (!res.ok) return;
+
+        const data = await res.json();
+        if (data.products && data.products.length > 0) {
+            recContainer.innerHTML = `
+                <div class="space-y-12">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-outline-variant/10 pb-8">
+                        <div class="max-w-xl">
+                            <span class="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-3 block">Complete your basket</span>
+                            <h2 class="font-headline text-3xl font-extrabold text-on-background tracking-tight italic">Recommended For You</h2>
+                            <p class="text-on-surface-variant text-sm font-medium leading-relaxed mt-2">
+                                <span class="material-symbols-outlined text-primary text-base inline-block align-middle mr-1">auto_awesome</span>
+                                ${data.explanation || 'Based on your current basket selections.'}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                        ${data.products.slice(0, 4).map(p => `
+                            <div class="bg-surface-container-low rounded-3xl overflow-hidden group hover:shadow-xl transition-all duration-300 border border-outline-variant/10 flex flex-col p-4">
+                                <div class="aspect-square bg-surface-container rounded-2xl flex items-center justify-center text-3xl opacity-30 group-hover:scale-105 transition-transform mb-4">
+                                    🛒
+                                </div>
+                                <h4 class="font-headline font-bold text-on-background text-[11px] mb-1 uppercase tracking-wider h-8 line-clamp-2">${p.name}</h4>
+                                <div class="flex justify-between items-center mt-auto pt-3 border-t border-outline-variant/5">
+                                    <span class="text-sm font-black text-primary">$${p.price}</span>
+                                    <button onclick="window.addToCart(${p.id})" class="px-3 py-1.5 bg-zinc-900 text-white rounded-full text-[10px] font-bold hover:bg-emerald-700 transition-colors">
+                                        Add
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            recContainer.classList.remove('hidden');
+        }
+    } catch (e) {
+        console.error('Error fetching cart recommendations:', e);
+    }
+}
+
+
 async function renderCartPage() {
     const cartContent = document.getElementById('cart-content');
     const clearBtn = document.getElementById('clear-cart-btn');
@@ -281,6 +336,12 @@ async function renderCartPage() {
             clearBtn.classList.add('hidden');
             checkoutBtn.classList.add('hidden');
             return;
+        }
+
+        // Fetch AI recommendations based on current cart items
+        if (data.items && data.items.length > 0) {
+            const itemNames = data.items.map(i => i.product_name);
+            fetchCartRecommendations(itemNames);
         }
 
         clearBtn.classList.remove('hidden');
