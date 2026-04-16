@@ -15,3 +15,8 @@ wheels/
 
 # Postman
 .postman
+
+# History log
+history_log.txt
+
+.frontend_task
