@@ -5,6 +5,7 @@ from .views import (
     ProductRecommendationsView,
     CartRecommendationsView,
     OrderRecommendationsView,
+    GradingView,
 )
 
 urlpatterns = [
@@ -22,4 +23,7 @@ urlpatterns = [
 
     # Post-checkout recommendations
     path("recommendations/order/<int:order_id>/", OrderRecommendationsView.as_view(), name="order_recommendations"),
+
+    # Fruit/Vegetable grading
+    path("grading/", GradingView.as_view(), name="grading"),
 ]

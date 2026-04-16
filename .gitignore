@@ -18,3 +18,7 @@ wheels/
 
 # AI Models
 ai_models/
+
+# dataset
+notebooks/dataset/*
+!notebooks/dataset/.gitkeep

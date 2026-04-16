@@ -3,14 +3,28 @@ name = "desd-group3"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.13"
 dependencies = [
     "django>=5.2.12",
     "django-cors-headers>=4.9.0",
     "djangorestframework>=3.17.1",
-    "mlxtend>=0.24.0",
+    "grad-cam==1.5.4",
+    "kaggle>=2.0.1",
+    "kagglehub>=1.0.0",
+    "mlxtend>=0.22,<0.23",
+    "opencv-python==4.10.0.84",
     "pandas>=3.0.2",
+    "pillow==10.4.0",
     "psycopg2-binary>=2.9.11",
     "python-dotenv>=1.2.2",
     "scikit-learn>=1.8.0",
+    "torch>=2.6.0",
+    "torchvision>=0.21.0",
+    "ultralytics==8.3.0",
 ]
+
+[[tool.uv.index]]
+url = "https://download.pytorch.org/whl/cu124"
+
+[[tool.uv.index]]
+url = "https://pypi.org/simple"

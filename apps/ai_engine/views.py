@@ -17,6 +17,9 @@ from .recommendation.services import (
 from apps.products.models import Product
 from apps.products.serializers import ProductSerializer
 
+# Grading services
+from .grading.services import GradingService
+
 
 class RecommendationView(APIView):
     """
@@ -158,6 +161,50 @@ class OrderRecommendationsView(APIView):
             if result["recommendations"]:
                 products = resolve_product_names_to_objects(result["recommendations"])
                 result["products"] = ProductSerializer(products, many=True).data
+
+            return Response(result, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class GradingView(APIView):
+    """
+    POST /ai/grading/
+    Analyzes fruit/vegetable image and returns quality grade.
+    Expects an image file upload. Only producers can access.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        if not request.user.is_producer:
+            return Response({"error": "Only producers can analyze products"}, status=403)
+
+        image_file = request.FILES.get("image")
+
+        if not image_file:
+            return Response(
+                {"error": "Image file is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Save uploaded file temporarily
+        import tempfile
+        import os
+
+        try:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp:
+                for chunk in image_file.chunks():
+                    tmp.write(chunk)
+                tmp_path = tmp.name
+
+            result = GradingService.analyze(tmp_path)
+
+            # Clean up temp file
+            os.unlink(tmp_path)
 
             return Response(result, status=status.HTTP_200_OK)
 
