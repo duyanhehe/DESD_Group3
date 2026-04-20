@@ -6,6 +6,7 @@ from rest_framework import status
 
 from django.shortcuts import get_object_or_404
 from django.db import transaction
+from django.utils.timezone import now
 
 from .models import Cart, CartItem, Order, OrderItem, OrderStatusLog
 from .serializers import (
@@ -297,6 +298,11 @@ class UpdateOrderStatusView(APIView):
         note = request.data.get("note", "")
 
         order.status = new_status
+
+        # Set delivered_at timestamp when order is marked as delivered
+        if new_status == Order.DELIVERED and not order.delivered_at:
+            order.delivered_at = now()
+
         order.save()
 
         # audit trail
