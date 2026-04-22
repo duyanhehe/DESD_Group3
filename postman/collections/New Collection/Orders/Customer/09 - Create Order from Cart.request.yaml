@@ -32,7 +32,7 @@ scripts:
           var data = pm.response.json();
           pm.expect(data.status_logs.length).to.eql(1);
           pm.expect(data.status_logs[0].new_status).to.eql("pending");
-          pm.expect(data.status_logs[0].note).to.eql("Order placed");
+          pm.expect(data.status_logs[0].note).to.eql("Master Order placed");
       });
 
       var data = pm.response.json();
