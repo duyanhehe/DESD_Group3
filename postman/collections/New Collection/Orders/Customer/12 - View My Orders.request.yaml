@@ -1,0 +1,28 @@
+$kind: http-request
+name: View My Orders (DESD-72)
+method: GET
+url: "{{base_url}}/orders/api/v1/"
+headers:
+  Authorization: "Token {{customer_token}}"
+scripts:
+  - type: afterResponse
+    code: |
+      pm.test("Status 200", function () {
+          pm.response.to.have.status(200);
+      });
+
+      pm.test("Returns order list", function () {
+          var data = pm.response.json();
+          pm.expect(data).to.be.an("array");
+          pm.expect(data.length).to.be.at.least(1);
+      });
+
+      pm.test("Order has required fields", function () {
+          var order = pm.response.json()[0];
+          pm.expect(order).to.have.property("id");
+          pm.expect(order).to.have.property("status");
+          pm.expect(order).to.have.property("total_price");
+          pm.expect(order).to.have.property("items");
+          pm.expect(order).to.have.property("status_logs");
+      });
+    language: text/javascript

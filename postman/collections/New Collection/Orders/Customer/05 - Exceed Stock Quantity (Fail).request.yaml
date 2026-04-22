@@ -1,0 +1,26 @@
+$kind: http-request
+name: Exceed Stock Quantity (Fail)
+method: POST
+url: "{{base_url}}/orders/api/v1/cart/add/"
+headers:
+  Content-Type: application/json
+  Authorization: "Token {{customer_token}}"
+body:
+  type: json
+  content: |-
+    {
+      "product_id": 13,
+      "quantity": 99999
+    }
+scripts:
+  - type: afterResponse
+    code: |
+      pm.test("Status 400 — exceeds stock", function () {
+          pm.response.to.have.status(400);
+      });
+
+      pm.test("Error mentions stock", function () {
+          var data = pm.response.json();
+          pm.expect(data.error.toLowerCase()).to.include("stock");
+      });
+    language: text/javascript

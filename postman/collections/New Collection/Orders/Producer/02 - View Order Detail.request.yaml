@@ -1,0 +1,34 @@
+$kind: http-request
+name: View Order Detail (DESD-67, 68)
+method: GET
+url: "{{base_url}}/orders/api/v1/producer/{{order_id}}/"
+headers:
+  Authorization: "Token {{producer_token}}"
+scripts:
+  - type: afterResponse
+    code: |
+      pm.test("Status 200", function () {
+          pm.response.to.have.status(200);
+      });
+
+      pm.test("Only my items shown (DESD-67)", function () {
+          var data = pm.response.json();
+          pm.expect(data.my_items).to.be.an("array");
+          pm.expect(data.my_items.length).to.be.at.least(1);
+      });
+
+      pm.test("Customer delivery info (DESD-68)", function () {
+          var data = pm.response.json();
+          pm.expect(data.customer_name).to.be.a("string").and.not.empty;
+          pm.expect(data.customer_email).to.be.a("string").and.not.empty;
+          pm.expect(data.delivery_address).to.be.a("string");
+          pm.expect(data.customer_postcode).to.be.a("string");
+      });
+
+      pm.test("my_subtotal <= total_price", function () {
+          var data = pm.response.json();
+          pm.expect(parseFloat(data.my_subtotal)).to.be.at.most(
+              parseFloat(data.total_price)
+          );
+      });
+    language: text/javascript

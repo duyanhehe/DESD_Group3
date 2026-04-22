@@ -1,0 +1,43 @@
+$kind: http-request
+name: Add Second Product (Multi-Vendor)
+method: POST
+url: "{{base_url}}/orders/api/v1/cart/add/"
+headers:
+  Content-Type: application/json
+  Authorization: "Token {{customer_token}}"
+body:
+  type: json
+  content: |-
+    {
+      "product_id": 4,
+      "quantity": 1
+    }
+scripts:
+  - type: afterResponse
+    code: |
+      pm.test("Status 200", function () {
+          pm.response.to.have.status(200);
+      });
+
+      pm.test("Cart has 2 items", function () {
+          var data = pm.response.json();
+          pm.expect(data.items.length).to.eql(2);
+      });
+
+      pm.test("Items grouped by producer (DESD-58)", function () {
+          var data = pm.response.json();
+          pm.expect(data.grouped_by_producer.length).to.be.at.least(1);
+          data.grouped_by_producer.forEach(function(group) {
+              pm.expect(group).to.have.property("producer_id");
+              pm.expect(group).to.have.property("producer_name");
+              pm.expect(group).to.have.property("subtotal");
+          });
+      });
+
+      pm.test("Total = sum of all subtotals (DESD-57)", function () {
+          var data = pm.response.json();
+          var sum = 0;
+          data.items.forEach(function(i) { sum += parseFloat(i.subtotal); });
+          pm.expect(parseFloat(data.total)).to.eql(sum);
+      });
+    language: text/javascript

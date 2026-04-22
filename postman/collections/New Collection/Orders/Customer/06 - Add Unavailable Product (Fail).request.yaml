@@ -1,0 +1,26 @@
+$kind: http-request
+name: Add Unavailable Product (Fail)
+method: POST
+url: "{{base_url}}/orders/api/v1/cart/add/"
+headers:
+  Content-Type: application/json
+  Authorization: "Token {{customer_token}}"
+body:
+  type: json
+  content: |-
+    {
+      "product_id": 26,
+      "quantity": 1
+    }
+scripts:
+  - type: afterResponse
+    code: |
+      pm.test("Status 400 — out-of-stock product rejected", function () {
+          pm.response.to.have.status(400);
+      });
+
+      pm.test("Error message returned", function () {
+          var data = pm.response.json();
+          pm.expect(data).to.have.property("error");
+      });
+    language: text/javascript

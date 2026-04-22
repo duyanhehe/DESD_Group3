@@ -1,0 +1,26 @@
+$kind: http-request
+name: Change Delivered Status (Fail - Terminal)
+method: PUT
+url: "{{base_url}}/orders/api/v1/{{order_id}}/status/"
+headers:
+  Content-Type: application/json
+  Authorization: "Token {{producer_token}}"
+body:
+  type: json
+  content: |-
+    {
+      "status": "pending",
+      "note": "Trying to revert"
+    }
+scripts:
+  - type: afterResponse
+    code: |
+      pm.test("Status 400 — delivered is terminal", function () {
+          pm.response.to.have.status(400);
+      });
+
+      pm.test("No transitions allowed", function () {
+          var data = pm.response.json();
+          pm.expect(data.allowed_transitions).to.be.an("array").that.is.empty;
+      });
+    language: text/javascript

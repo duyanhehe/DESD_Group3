@@ -1,0 +1,40 @@
+$kind: http-request
+name: Register - Customer
+method: POST
+url: "{{base_url}}/api/v1/accounts/register/"
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "username": "testcustomer",
+      "email": "customer@test.com",
+      "password": "TestPass123!",
+      "first_name": "Test",
+      "last_name": "Customer",
+      "phone_number": "0123456789",
+      "is_customer": true,
+      "is_producer": false,
+      "customer_profile": {
+        "delivery_address": "123 Test Street, HCM City"
+      }
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 201", function () {
+        pm.response.to.have.status(201);
+      });
+
+      pm.test("Response has message and user_id", function () {
+        var jsonData = pm.response.json();
+        pm.expect(jsonData).to.have.property("message");
+        pm.expect(jsonData).to.have.property("user_id");
+        pm.expect(jsonData.message).to.eql("Registration successful");
+      });
+
+      pm.test("Content-Type is application/json", function () {
+        pm.response.to.have.header("Content-Type");
+      });
+    language: text/javascript

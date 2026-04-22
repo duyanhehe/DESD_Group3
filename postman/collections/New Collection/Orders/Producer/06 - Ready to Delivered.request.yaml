@@ -1,0 +1,33 @@
+$kind: http-request
+name: Ready to Delivered (DESD-71)
+method: PUT
+url: "{{base_url}}/orders/api/v1/{{order_id}}/status/"
+headers:
+  Content-Type: application/json
+  Authorization: "Token {{producer_token}}"
+body:
+  type: json
+  content: |-
+    {
+      "status": "delivered",
+      "note": "Handed to customer"
+    }
+scripts:
+  - type: afterResponse
+    code: |
+      pm.test("Status 200", function () {
+          pm.response.to.have.status(200);
+      });
+
+      pm.test("Status is delivered (terminal)", function () {
+          var data = pm.response.json();
+          pm.expect(data.status).to.eql("delivered");
+      });
+
+      pm.test("Full audit trail (DESD-73)", function () {
+          var data = pm.response.json();
+          pm.expect(data.status_logs.length).to.eql(4);
+          var statuses = data.status_logs.map(l => l.new_status);
+          pm.expect(statuses).to.eql(["pending", "confirmed", "ready", "delivered"]);
+      });
+    language: text/javascript

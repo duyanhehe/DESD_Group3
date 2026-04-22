@@ -1,0 +1,20 @@
+$kind: http-request
+name: View Order Detail (DESD-72)
+method: GET
+url: "{{base_url}}/orders/api/v1/{{order_id}}/"
+headers:
+  Authorization: "Token {{customer_token}}"
+scripts:
+  - type: afterResponse
+    code: |
+      pm.test("Status 200", function () {
+          pm.response.to.have.status(200);
+      });
+
+      pm.test("Order detail has items and logs", function () {
+          var data = pm.response.json();
+          pm.expect(data.id).to.eql(parseInt(pm.environment.get("order_id")));
+          pm.expect(data.items.length).to.be.at.least(1);
+          pm.expect(data.status_logs.length).to.be.at.least(1);
+      });
+    language: text/javascript

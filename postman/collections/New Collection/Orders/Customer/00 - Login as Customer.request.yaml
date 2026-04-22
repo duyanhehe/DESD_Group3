@@ -1,0 +1,32 @@
+$kind: http-request
+name: Login as Customer
+method: POST
+url: "{{base_url}}/accounts/api/v1/login/"
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "username": "customer1",
+      "password": "password123"
+    }
+scripts:
+  - type: afterResponse
+    code: |
+      pm.test("Status 200", function () {
+          pm.response.to.have.status(200);
+      });
+
+      pm.test("Got token, role is customer", function () {
+          var data = pm.response.json();
+          pm.expect(data).to.have.property("token");
+          pm.expect(data.role).to.eql("customer");
+      });
+
+      var data = pm.response.json();
+      if (data.token) {
+          pm.environment.set("customer_token", data.token);
+          pm.environment.set("auth_token", data.token);
+      }
+    language: text/javascript
