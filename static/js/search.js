@@ -66,24 +66,26 @@ document.addEventListener('DOMContentLoaded', function() {
         suggestionsList.innerHTML = '';
         
         if (results.length === 0) {
-            suggestionsList.innerHTML = '<div class="suggestion-item no-results">No products found</div>';
+            suggestionsList.innerHTML = '<div class="p-8 text-center text-[10px] font-bold text-outline-variant uppercase tracking-widest">No products found</div>';
         } else {
-            // Show up to 5 results
             const topResults = results.slice(0, 5);
             topResults.forEach(product => {
                 const item = document.createElement('a');
                 item.href = `/products/${product.id}/`;
-                item.className = 'suggestion-item';
+                item.className = 'flex justify-between items-center p-4 hover:bg-surface-container-low transition-all border-b border-outline-variant/5 last:border-0 group';
                 
-                const producerName = product.producer_name || 'Unknown Producer';
-                const categoryName = product.category_name || 'Uncategorized';
+                const producerName = product.producer_name || 'Direct Source';
+                const categoryName = product.category_name || 'Fresh';
                 
                 item.innerHTML = `
-                    <div class="suggestion-info">
-                        <span class="suggestion-name">${product.name}</span>
-                        <span class="suggestion-meta">${categoryName} • ${producerName}</span>
+                    <div class="flex flex-col gap-1">
+                        <span class="text-sm font-bold text-on-surface group-hover:text-primary transition-colors">${product.name}</span>
+                        <span class="text-[10px] font-bold text-outline uppercase tracking-widest">${categoryName} • ${producerName}</span>
                     </div>
-                    <div class="suggestion-price">$${product.price} / ${product.unit}</div>
+                    <div class="text-right">
+                        <p class="text-sm font-black text-on-surface">$${product.price}</p>
+                        <p class="text-[9px] font-bold text-outline-variant uppercase tracking-tighter">/ ${product.unit}</p>
+                    </div>
                 `;
                 suggestionsList.appendChild(item);
             });

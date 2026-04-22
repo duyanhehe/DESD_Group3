@@ -1,146 +1,191 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Sign up - Food Network{% endblock %}
 
 {% block content %}
-<div class="auth-container">
-    <div class="auth-card">
-        <h1>Sign up</h1>
-        <p class="subtitle">Join our multi-vendor food marketplace today.</p>
-
-        <div class="role-selector">
-            <p class="form-label">I want to be a:</p>
-            <div class="role-tabs">
-                <div class="role-tab active" data-role="customer">Customer</div>
-                <div class="role-tab" data-role="producer">Producer</div>
+<section class="min-h-[calc(100vh-80px)] flex items-center justify-center p-6 bg-surface-container-low">
+    <div class="w-full max-w-4xl grid lg:grid-cols-12 bg-surface-container-lowest rounded-3xl overflow-hidden shadow-2xl">
+        <!-- Left: Branding & Info side -->
+        <div class="lg:col-span-5 bg-primary p-12 text-on-primary relative overflow-hidden hidden lg:flex flex-col justify-between">
+            <div class="absolute inset-0 opacity-10 mix-blend-overlay">
+                 <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuD3dC0dSZ_1ZRPubH7q4rCaxSgS_N6I0iKB13nFwBs6X-2LqxxNJs_ZUsm1I_XNvV5-oX4TNk6zDSghPljXg4cPU2rAKLSPj7Xxm0sNOfuuHFyD8vhAdq64oz3kYOBwUKHs0C24-pTg3gw9mFh1zKk_vmPS700cRCtDrXDkPzJRxll6L7BXX1gZp5lf5aanfk4APk3-oH5D8jKqV7usKWnqG81s3OYX_39nnR3XEUyoP_SDNFZjSDHWkQaCtAzcwzH1tOewS7t8EOU" class="w-full h-full object-cover">
+            </div>
+            <div class="relative z-10">
+                <span class="inline-block px-3 py-1 bg-white/20 rounded-full text-[10px] font-bold uppercase tracking-widest mb-6 border border-white/10">Community First</span>
+                <h2 class="font-headline text-4xl font-extrabold mb-6 leading-tight">Join the local <br/>food network.</h2>
+                <p class="text-white/80 leading-relaxed font-medium">Whether you're looking for fresh seasonal bounty or selling your artisanal goods, we have a place for you.</p>
+            </div>
+            
+            <div class="relative z-10 space-y-6">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+                        <span class="material-symbols-outlined text-white">eco</span>
+                    </div>
+                    <p class="text-sm font-bold">100% Organic Sources</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+                        <span class="material-symbols-outlined text-white">local_shipping</span>
+                    </div>
+                    <p class="text-sm font-bold">Carbon-Neutral Delivery</p>
+                </div>
             </div>
         </div>
 
-        <form id="register-form">
-            {% csrf_token %}
-            <input type="hidden" id="is_customer" name="is_customer" value="true">
-            <input type="hidden" id="is_producer" name="is_producer" value="false">
-            <div class="form-group">
-                <label for="username">Choose a Username</label>
-                <input type="text" id="username" name="username" class="form-control" placeholder="e.g. jdoe123" required minlength="4">
+        <!-- Right: Registration Form -->
+        <div class="lg:col-span-7 p-8 lg:p-12 overflow-y-auto max-h-[90vh]">
+            <div class="mb-8">
+                <h1 class="font-headline text-3xl font-extrabold text-on-background mb-2">Create Account</h1>
+                <p class="text-on-surface-variant font-medium">Join our sustainable marketplace today.</p>
             </div>
 
-            <div class="form-group">
-                <label for="email">Email Address</label>
-                <input type="email" id="email" name="email" class="form-control" placeholder="name@example.com" required>
-            </div>
-
-            <div class="row" style="display: flex; gap: 10px;">
-                <div class="form-group" style="flex: 1;">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" class="form-control" placeholder="Min. 8 characters" required minlength="8">
-                    <div id="password-strength" class="password-strength-text hidden">Password is too weak</div>
-                </div>
-                <div class="form-group" style="flex: 1;">
-                    <label for="confirm_password">Confirm Password</label>
-                    <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="Repeat password" required minlength="8">
+            <!-- Role Selector -->
+            <div class="mb-10">
+                <p class="text-[10px] font-bold text-outline uppercase tracking-[0.2em] mb-4">I want to be a:</p>
+                <div class="flex p-1.5 bg-surface-container-high rounded-2xl">
+                    <button type="button" class="role-tab flex-1 py-3 text-sm font-bold rounded-xl transition-all bg-white shadow-sm text-primary" data-role="customer">Customer</button>
+                    <button type="button" class="role-tab flex-1 py-3 text-sm font-bold rounded-xl transition-all text-outline hover:text-on-surface" data-role="producer">Producer</button>
                 </div>
             </div>
 
-            <div class="row" style="display: flex; gap: 10px;">
-                <div class="form-group" style="flex: 1;">
-                    <label for="first_name">Full Name (First)</label>
-                    <input type="text" id="first_name" name="first_name" class="form-control" placeholder="First name" required>
-                </div>
-                <div class="form-group" style="flex: 1;">
-                    <label for="last_name">Full Name (Last)</label>
-                    <input type="text" id="last_name" name="last_name" class="form-control" placeholder="Last name" required>
-                </div>
-            </div>
+            <form id="register-form" class="space-y-6">
+                {% csrf_token %}
+                <input type="hidden" id="is_customer" name="is_customer" value="true">
+                <input type="hidden" id="is_producer" name="is_producer" value="false">
 
-            <div class="form-group">
-                <label for="phone_number">Phone Number</label>
-                <input type="tel" id="phone_number" name="phone_number" class="form-control" placeholder="e.g. (555) 000-0000" required>
-            </div>
-
-            <!-- Role Specific Fields -->
-            <div id="customer-fields">
-                <div class="form-group">
-                    <label for="delivery_address">Delivery Address</label>
-                    <textarea id="delivery_address" name="delivery_address" class="form-control" rows="2" placeholder="Street, City, State"></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="customer_postcode">Postcode (ZIP)</label>
-                    <input type="text" id="customer_postcode" name="customer_postcode" class="form-control" placeholder="e.g. 90210" pattern="^\d{5}(-\d{4})?$">
-                </div>
-            </div>
-
-            <div id="producer-fields" class="hidden">
-                <div class="form-group">
-                    <label for="business_name">Business Name</label>
-                    <input type="text" id="business_name" name="business_name" class="form-control" placeholder="Enter your business name">
-                </div>
-                <div class="form-group">
-                    <label for="business_address">Business Address</label>
-                    <textarea id="business_address" name="business_address" class="form-control" rows="2" placeholder="Street, City, State"></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="producer_postcode">Business Postcode (ZIP)</label>
-                    <input type="text" id="producer_postcode" name="producer_postcode" class="form-control" placeholder="e.g. 90210" pattern="^\d{5}(-\d{4})?$">
-                </div>
-                <div class="row" style="display: flex; gap: 10px;">
-                    <div class="form-group" style="flex: 1;">
-                        <label for="tax_id">Tax ID (Optional)</label>
-                        <input type="text" id="tax_id" name="tax_id" class="form-control" placeholder="EIN/SSN">
+                <!-- Shared Fields Grid -->
+                <div class="grid sm:grid-cols-2 gap-4">
+                    <div class="space-y-1.5">
+                        <label for="username" class="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Username</label>
+                        <input type="text" id="username" name="username" class="w-full px-5 py-3 bg-surface-container-high border-none rounded-2xl focus:ring-2 focus:ring-primary/20 font-medium placeholder:text-outline/40 transition-all text-sm" placeholder="e.g. jdoe" required>
                     </div>
-                    <div class="form-group" style="flex: 1;">
-                        <label for="farm_origin">Farm Origin</label>
-                        <input type="text" id="farm_origin" name="farm_origin" class="form-control" placeholder="e.g. California, US">
+                    <div class="space-y-1.5">
+                        <label for="email" class="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Email</label>
+                        <input type="email" id="email" name="email" class="w-full px-5 py-3 bg-surface-container-high border-none rounded-2xl focus:ring-2 focus:ring-primary/20 font-medium placeholder:text-outline/40 transition-all text-sm" placeholder="name@email.com" required>
                     </div>
                 </div>
+
+                <div class="grid sm:grid-cols-2 gap-4">
+                    <div class="space-y-1.5">
+                        <label for="password" class="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Password</label>
+                        <input type="password" id="password" name="password" class="w-full px-5 py-3 bg-surface-container-high border-none rounded-2xl focus:ring-2 focus:ring-primary/20 font-medium placeholder:text-outline/40 transition-all text-sm" placeholder="Min. 8 chars" required minlength="8">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label for="confirm_password" class="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Confirm</label>
+                        <input type="password" id="confirm_password" name="confirm_password" class="w-full px-5 py-3 bg-surface-container-high border-none rounded-2xl focus:ring-2 focus:ring-primary/20 font-medium placeholder:text-outline/40 transition-all text-sm" placeholder="Repeat password" required minlength="8">
+                    </div>
+                </div>
+
+                <div class="grid sm:grid-cols-2 gap-4">
+                    <div class="space-y-1.5">
+                        <label for="first_name" id="label-first-name" class="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">First Name</label>
+                        <input type="text" id="first_name" name="first_name" class="w-full px-5 py-3 bg-surface-container-high border-none rounded-2xl focus:ring-2 focus:ring-primary/20 font-medium placeholder:text-outline/40 transition-all text-sm" placeholder="First name" required>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label for="last_name" id="label-last-name" class="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Last Name</label>
+                        <input type="text" id="last_name" name="last_name" class="w-full px-5 py-3 bg-surface-container-high border-none rounded-2xl focus:ring-2 focus:ring-primary/20 font-medium placeholder:text-outline/40 transition-all text-sm" placeholder="Last name" required>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label for="phone_number" class="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Phone Number</label>
+                    <input type="tel" id="phone_number" name="phone_number" class="w-full px-5 py-3 bg-surface-container-high border-none rounded-2xl focus:ring-2 focus:ring-primary/20 font-medium placeholder:text-outline/40 transition-all text-sm" placeholder="(555) 000-0000" required>
+                </div>
+
+                <!-- Role Specific Sections -->
+                <div id="customer-fields" class="space-y-4">
+                    <div class="space-y-1.5">
+                        <label for="delivery_address" class="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Delivery Address</label>
+                        <textarea id="delivery_address" name="delivery_address" rows="2" class="w-full px-5 py-3 bg-surface-container-high border-none rounded-2xl focus:ring-2 focus:ring-primary/20 font-medium placeholder:text-outline/40 transition-all text-sm resize-none" placeholder="Street, City, State"></textarea>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label for="customer_postcode" class="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Postcode (ZIP)</label>
+                        <input type="text" id="customer_postcode" name="customer_postcode" class="w-full px-5 py-3 bg-surface-container-high border-none rounded-2xl focus:ring-2 focus:ring-primary/20 font-medium placeholder:text-outline/40 transition-all text-sm" placeholder="e.g. 90210">
+                    </div>
+                </div>
+
+                <div id="producer-fields" class="space-y-4 hidden">
+                    <div class="space-y-1.5">
+                        <label for="business_name" class="text-[10px] font-bold text-outline uppercase tracking-wider pl-1 font-headline">Business Name</label>
+                        <input type="text" id="business_name" name="business_name" class="w-full px-5 py-3 bg-secondary-container/20 border-none rounded-2xl focus:ring-2 focus:ring-primary/20 font-medium placeholder:text-outline/40 transition-all text-sm" placeholder="Your farm or artisan shop">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label for="business_address" class="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Business Address</label>
+                        <textarea id="business_address" name="business_address" rows="2" class="w-full px-5 py-3 bg-surface-container-high border-none rounded-2xl focus:ring-2 focus:ring-primary/20 font-medium placeholder:text-outline/40 transition-all text-sm resize-none" placeholder="Workshop/Farm Location"></textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-1.5">
+                            <label for="producer_postcode" class="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Postcode</label>
+                            <input type="text" id="producer_postcode" name="producer_postcode" class="w-full px-5 py-3 bg-surface-container-high border-none rounded-2xl focus:ring-2 focus:ring-primary/20 font-medium transition-all text-sm" placeholder="90210">
+                        </div>
+                        <div class="space-y-1.5">
+                            <label for="tax_id" class="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Tax ID</label>
+                            <input type="text" id="tax_id" name="tax_id" class="w-full px-5 py-3 bg-surface-container-high border-none rounded-2xl focus:ring-2 focus:ring-primary/20 font-medium transition-all text-sm" placeholder="EIN/SSN">
+                        </div>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label for="farm_origin" class="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Region/Origin</label>
+                        <input type="text" id="farm_origin" name="farm_origin" class="w-full px-5 py-3 bg-surface-container-high border-none rounded-2xl focus:ring-2 focus:ring-primary/20 font-medium transition-all text-sm" placeholder="e.g. California, US">
+                    </div>
+                </div>
+
+                <div id="register-feedback" class="p-4 rounded-2xl text-xs font-semibold bg-error-container text-on-error-container hidden"></div>
+
+                <button type="submit" class="w-full py-4 bg-primary text-on-primary rounded-full font-extrabold text-lg shadow-xl shadow-primary/20 hover:bg-primary-container hover:scale-[1.01] active:scale-95 transition-all">
+                    Sign Up Now
+                </button>
+            </form>
+
+            <div class="mt-8 pt-6 border-t border-outline-variant/10 text-center">
+                <p class="text-on-surface-variant font-medium text-sm">
+                    Already have an account? 
+                    <a href="{% url 'login_page' %}" class="text-primary font-bold hover:text-primary-container">Sign in</a>
+                </p>
             </div>
-
-            <div id="register-feedback" class="feedback hidden"></div>
-
-            <button type="submit" class="btn btn-primary btn-block">Sign up</button>
-        </form>
-
-        <div class="footer-link">
-            Already have an account? <a href="/accounts/login/">Log in</a>
         </div>
     </div>
-</div>
+</section>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    // Simple role switching logic
-    document.querySelectorAll('.role-tab').forEach(tab => {
+    const roleTabs = document.querySelectorAll('.role-tab');
+    const customerFields = document.getElementById('customer-fields');
+    const producerFields = document.getElementById('producer-fields');
+    const isCustomerInput = document.getElementById('is_customer');
+    const isProducerInput = document.getElementById('is_producer');
+    const labelFirst = document.getElementById('label-first-name');
+    const labelLast = document.getElementById('label-last-name');
+
+    roleTabs.forEach(tab => {
         tab.addEventListener('click', () => {
-            document.querySelectorAll('.role-tab').forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            
+            // UI Toggle
+            roleTabs.forEach(t => {
+                t.classList.remove('bg-white', 'shadow-sm', 'text-primary');
+                t.classList.add('text-outline');
+            });
+            tab.classList.add('bg-white', 'shadow-sm', 'text-primary');
+            tab.classList.remove('text-outline');
+
             const role = tab.dataset.role;
             const isCustomer = role === 'customer';
-            
-            document.getElementById('is_customer').value = isCustomer;
-            document.getElementById('is_producer').value = !isCustomer;
 
-            // Update Name Labels based on role
-            const firstNameLabel = document.querySelector('label[for="first_name"]');
-            const lastNameLabel = document.querySelector('label[for="last_name"]');
-            
+            isCustomerInput.value = isCustomer;
+            isProducerInput.value = !isCustomer;
+
             if (isCustomer) {
-                firstNameLabel.innerText = 'Full Name (First)';
-                lastNameLabel.innerText = 'Full Name (Last)';
-                document.getElementById('customer-fields').classList.remove('hidden');
-                document.getElementById('producer-fields').classList.add('hidden');
-                // Make producer fields optional when not in use
+                customerFields.classList.remove('hidden');
+                producerFields.classList.add('hidden');
+                labelFirst.innerText = 'First Name';
+                labelLast.innerText = 'Last Name';
                 document.getElementById('business_name').required = false;
-                document.getElementById('business_address').required = false;
             } else {
-                firstNameLabel.innerText = 'Contact First Name';
-                lastNameLabel.innerText = 'Contact Last Name';
-                document.getElementById('customer-fields').classList.add('hidden');
-                document.getElementById('producer-fields').classList.remove('hidden');
-                // Make producer fields required when in use
+                customerFields.classList.add('hidden');
+                producerFields.classList.remove('hidden');
+                labelFirst.innerText = 'Contact First Name';
+                labelLast.innerText = 'Contact Last Name';
                 document.getElementById('business_name').required = true;
-                document.getElementById('business_address').required = true;
             }
         });
     });

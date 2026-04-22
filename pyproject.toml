@@ -8,7 +8,6 @@ dependencies = [
     "django>=5.2.12",
     "django-cors-headers>=4.9.0",
     "djangorestframework>=3.17.1",
-    "grad-cam==1.5.4",
     "kaggle>=2.0.1",
     "kagglehub>=1.0.0",
     "mlxtend>=0.22,<0.23",
@@ -33,4 +32,8 @@ url = "https://pypi.org/simple"
 [dependency-groups]
 dev = [
     "ipykernel>=7.2.0",
+    "pandas>=3.0.2",
+    "psycopg2-binary>=2.9.11",
+    "python-dotenv>=1.2.2",
+    "scikit-learn>=1.8.0",
 ]

@@ -27,8 +27,50 @@ function getCookie(name) {
     return cookieValue;
 }
 
+// ─── Auth Gate ────────────────────────────────────────────────
+// Reads server-injected meta tag — no API round-trip needed
+function isAuthenticated() {
+    const meta = document.querySelector('meta[name="user-authenticated"]');
+    return meta && meta.getAttribute('content') === 'true';
+}
+
+window.showAuthModal = function(returnUrl) {
+    const modal = document.getElementById('auth-gate-modal');
+    const loginBtn = document.getElementById('auth-gate-login-btn');
+    if (!modal) return;
+
+    // Set the ?next= redirect on the login button
+    const next = returnUrl || window.location.pathname;
+    const loginBase = document.querySelector('meta[name="login-url"]')?.getAttribute('content') || '/accounts/login/';
+    loginBtn.href = `${loginBase}?next=${encodeURIComponent(next)}`;
+
+    modal.classList.remove('hidden');
+    // Animate panel in
+    requestAnimationFrame(() => {
+        const panel = document.getElementById('auth-gate-panel');
+        if (panel) panel.style.animation = 'slideUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards';
+    });
+};
+
+window.closeAuthModal = function() {
+    const modal = document.getElementById('auth-gate-modal');
+    if (modal) modal.classList.add('hidden');
+};
+
+// Close on Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') window.closeAuthModal();
+});
+
+// ─── Add to Cart ───────────────────────────────────────────────
 // Ensure global handle
 window.addToCart = async function(productId, quantity = 1) {
+    // Auth gate — check before any network call
+    if (!isAuthenticated()) {
+        window.showAuthModal(window.location.pathname);
+        return;
+    }
+
     try {
         const res = await fetch('/orders/api/v1/cart/add/', {
             method: 'POST',
@@ -39,21 +81,62 @@ window.addToCart = async function(productId, quantity = 1) {
             body: JSON.stringify({ product_id: productId, quantity: quantity })
         });
         const data = await res.json();
-        
+
         if (!res.ok) {
-            alert(data.error || 'Failed to add item to cart.');
+            // Could be stock issue, permission issue, etc.
+            if (res.status === 401 || res.status === 403) {
+                window.showAuthModal(window.location.pathname);
+            } else {
+                // Show inline toast for stock/validation errors
+                showToast(data.error || 'Could not add item to cart.');
+            }
         } else {
-            // Update badge
-            updateCartBadge(data.items ? data.items.length : 0);
-            alert('Item added to cart!');
+            // Update badge with total quantity across all items
+            const totalQty = data.items ? data.items.reduce((sum, i) => sum + i.quantity, 0) : 0;
+            updateCartBadge(totalQty);
+            showToast('Added to basket! 🛒', 'success');
         }
     } catch (e) {
         console.error(e);
-        alert('You must be logged in to add objects to cart.');
+        showToast('Something went wrong. Please try again.');
     }
 };
 
+// Lightweight toast — no library needed
+function showToast(message, type = 'error') {
+    const existing = document.getElementById('fn-toast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.id = 'fn-toast';
+    const isSuccess = type === 'success';
+    toast.className = [
+        'fixed bottom-6 left-1/2 -translate-x-1/2 z-[300]',
+        'px-6 py-3 rounded-full shadow-xl font-bold text-sm',
+        'flex items-center gap-2 transition-all',
+        isSuccess ? 'bg-emerald-700 text-white' : 'bg-zinc-900 text-white'
+    ].join(' ');
+    toast.innerHTML = `
+        <span class="material-symbols-outlined text-base">${isSuccess ? 'check_circle' : 'error'}</span>
+        ${message}
+    `;
+    document.body.appendChild(toast);
+
+    // Auto-dismiss after 2.5s
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(-50%) translateY(12px)';
+        setTimeout(() => toast.remove(), 300);
+    }, 2500);
+}
+
+
+
 async function updateCartItem(itemId, quantity) {
+    if (quantity < 1) {
+        removeCartItem(itemId);
+        return;
+    }
     try {
         const res = await fetch(`/orders/api/v1/cart/item/${itemId}/`, {
             method: 'PUT',
@@ -65,10 +148,9 @@ async function updateCartItem(itemId, quantity) {
         });
         const data = await res.json();
         if (!res.ok) {
-            alert(data.error || 'Invalid quantity.');
+            showToast(data.error || 'Invalid quantity.', 'error');
         }
         
-        // Re-render
         renderCartPage();
         refreshCartBadge();
     } catch (e) {
@@ -90,7 +172,7 @@ async function removeCartItem(itemId) {
 }
 
 async function clearCart() {
-    if (!confirm('Are you sure you want to empty your cart?')) return;
+    if (!confirm('Are you sure you want to empty your basket?')) return;
     try {
         await fetch('/orders/api/v1/cart/clear/', {
             method: 'DELETE',
@@ -104,6 +186,11 @@ async function clearCart() {
 }
 
 async function checkout() {
+    const btn = document.getElementById('checkout-btn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-sm">sync</span> Finalizing...`;
+    btn.disabled = true;
+
     try {
         const res = await fetch('/orders/api/v1/create/', {
             method: 'POST',
@@ -111,21 +198,35 @@ async function checkout() {
         });
         const data = await res.json();
         if (!res.ok) {
-            alert(data.error || 'Checkout failed.');
+            if (res.status === 401 || res.status === 403) {
+                window.showAuthModal(window.location.pathname);
+            } else {
+                showToast(data.error || 'Checkout failed.', 'error');
+            }
+            btn.innerHTML = originalText;
+            btn.disabled = false;
         } else {
-            alert('Order placed successfully! Redirecting to orders page...');
-            window.location.href = '/orders/api/v1/'; // To be updated to a template view in step 3
+            // Redirect to homepage with success message
+            window.location.href = '/?order=success';
         }
     } catch (e) {
         console.error(e);
+        btn.innerHTML = originalText;
+        btn.disabled = false;
     }
 }
+
 
 function updateCartBadge(count) {
     const badge = document.getElementById('cart-count');
     if (badge) {
         badge.textContent = count;
-        badge.style.display = count > 0 ? 'inline-block' : 'none';
+        // Use Tailwind hidden class
+        if (count > 0) {
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
     }
 }
 
@@ -134,8 +235,9 @@ async function refreshCartBadge() {
         const res = await fetch('/orders/api/v1/cart/');
         if (res.ok) {
             const data = await res.json();
-            const count = data.items ? data.items.length : 0; // Number of unique items
-            updateCartBadge(count);
+            // Show total quantity, not distinct product count
+            const totalQty = data.items ? data.items.reduce((sum, i) => sum + i.quantity, 0) : 0;
+            updateCartBadge(totalQty);
         } else {
             updateCartBadge(0);
         }
@@ -143,6 +245,62 @@ async function refreshCartBadge() {
         updateCartBadge(0);
     }
 }
+
+
+async function fetchCartRecommendations(itemNames) {
+    const recContainer = document.getElementById('cart-recommendations');
+    if (!recContainer) return;
+
+    try {
+        const res = await fetch('/ai/recommendations/cart/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ items: itemNames })
+        });
+        if (!res.ok) return;
+
+        const data = await res.json();
+        if (data.products && data.products.length > 0) {
+            recContainer.innerHTML = `
+                <div class="space-y-12">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-outline-variant/10 pb-8">
+                        <div class="max-w-xl">
+                            <span class="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-3 block">Complete your basket</span>
+                            <h2 class="font-headline text-3xl font-extrabold text-on-background tracking-tight italic">Recommended For You</h2>
+                            <p class="text-on-surface-variant text-sm font-medium leading-relaxed mt-2">
+                                <span class="material-symbols-outlined text-primary text-base inline-block align-middle mr-1">auto_awesome</span>
+                                ${data.explanation || 'Based on your current basket selections.'}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                        ${data.products.slice(0, 4).map(p => `
+                            <div class="bg-surface-container-low rounded-3xl overflow-hidden group hover:shadow-xl transition-all duration-300 border border-outline-variant/10 flex flex-col p-4">
+                                <div class="aspect-square bg-surface-container rounded-2xl flex items-center justify-center text-3xl opacity-30 group-hover:scale-105 transition-transform mb-4">
+                                    🛒
+                                </div>
+                                <h4 class="font-headline font-bold text-on-background text-[11px] mb-1 uppercase tracking-wider h-8 line-clamp-2">${p.name}</h4>
+                                <div class="flex justify-between items-center mt-auto pt-3 border-t border-outline-variant/5">
+                                    <span class="text-sm font-black text-primary">$${p.price}</span>
+                                    <button onclick="window.addToCart(${p.id})" class="px-3 py-1.5 bg-zinc-900 text-white rounded-full text-[10px] font-bold hover:bg-emerald-700 transition-colors">
+                                        Add
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            recContainer.classList.remove('hidden');
+        }
+    } catch (e) {
+        console.error('Error fetching cart recommendations:', e);
+    }
+}
+
 
 async function renderCartPage() {
     const cartContent = document.getElementById('cart-content');
@@ -153,7 +311,14 @@ async function renderCartPage() {
         const res = await fetch('/orders/api/v1/cart/');
         
         if (!res.ok) {
-            cartContent.innerHTML = `<p style="padding: 20px;">You are not logged in or have no cart yet.</p>`;
+            cartContent.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-20 text-center bg-surface-container-low rounded-[32px] border border-dashed border-outline-variant">
+                    <span class="material-symbols-outlined text-6xl text-outline mb-6">lock</span>
+                    <h3 class="font-headline text-2xl font-bold mb-2">Member Access Only</h3>
+                    <p class="text-on-surface-variant font-medium mb-8">Please log in to review your cart and proceed to checkout.</p>
+                    <a href="/accounts/login/" class="px-8 py-3 bg-primary text-on-primary rounded-full font-bold shadow-lg shadow-primary/20">Sign In</a>
+                </div>
+            `;
             return;
         }
 
@@ -161,65 +326,129 @@ async function renderCartPage() {
         
         if (!data.items || data.items.length === 0) {
             cartContent.innerHTML = `
-                <div style="text-align: center; padding: 40px; border: 1px dashed var(--border-light); border-radius: 12px; margin-top: 20px;">
-                    <h3>Your cart is empty</h3>
-                    <p style="color: var(--text-secondary); margin-bottom: 20px;">Looks like you haven't added anything to your cart yet.</p>
-                    <a href="/" class="btn btn-primary">Start Shopping</a>
+                <div class="flex flex-col items-center justify-center py-20 text-center bg-surface-container-low rounded-[32px] border border-dashed border-outline-variant/30">
+                    <span class="material-symbols-outlined text-6xl text-outline mb-6">shopping_basket</span>
+                    <h3 class="font-headline text-2xl font-bold mb-2">Your basket is empty</h3>
+                    <p class="text-on-surface-variant font-medium mb-8">Looks like you haven't added any fresh harvests yet.</p>
+                    <a href="/" class="px-8 py-4 bg-primary text-on-primary rounded-full font-bold shadow-xl shadow-primary/20 hover:scale-105 transition-all">Start Shopping</a>
                 </div>
             `;
-            clearBtn.style.display = 'none';
-            checkoutBtn.style.display = 'none';
+            clearBtn.classList.add('hidden');
+            checkoutBtn.classList.add('hidden');
             return;
         }
 
-        // Show buttons
-        clearBtn.style.display = 'inline-block';
-        checkoutBtn.style.display = 'inline-block';
+        // Fetch AI recommendations based on current cart items
+        if (data.items && data.items.length > 0) {
+            const itemNames = data.items.map(i => i.product_name);
+            fetchCartRecommendations(itemNames);
+        }
 
-        let html = '';
+        clearBtn.classList.remove('hidden');
+        checkoutBtn.classList.remove('hidden');
+
+        let html = '<div class="space-y-12">';
+        
         data.grouped_by_producer.forEach(group => {
             let itemsHtml = group.items.map(item => `
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--border-light);">
-                    <div style="flex: 2;">
-                        <h4 style="margin: 0;">${item.product_name}</h4>
-                        <p style="margin: 4px 0 0; font-size: 14px; color: var(--text-secondary);">$${item.unit_price} / ${item.unit}</p>
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center py-8 border-b border-outline-variant/5 last:border-0 group">
+                    <div class="flex gap-6 items-center flex-1">
+                        <div class="w-16 h-16 bg-surface-container rounded-2xl flex items-center justify-center text-3xl opacity-40 group-hover:scale-110 transition-transform">
+                            🛒
+                        </div>
+                        <div>
+                            <h4 class="font-headline font-bold text-lg text-on-background">${item.product_name}</h4>
+                            <p class="text-sm font-bold text-primary">$${item.unit_price} <span class="text-xs text-outline font-medium tracking-tight">/ ${item.unit}</span></p>
+                        </div>
                     </div>
-                    <div style="flex: 1; display: flex; align-items: center; gap: 10px;">
-                        <button class="btn btn-ghost" onclick="updateCartItem(${item.id}, ${item.quantity - 1})" style="padding: 4px 8px;">-</button>
-                        <span>${item.quantity}</span>
-                        <button class="btn btn-ghost" onclick="updateCartItem(${item.id}, ${item.quantity + 1})" style="padding: 4px 8px;">+</button>
-                    </div>
-                    <div style="flex: 1; text-align: right; font-weight: 600;">
-                        $${item.subtotal}
-                    </div>
-                    <div style="margin-left: 20px;">
-                        <button class="btn btn-ghost" onclick="removeCartItem(${item.id})" style="color: red; padding: 4px 8px;">Remove</button>
+                    
+                    <div class="flex items-center gap-12 w-full sm:w-auto mt-6 sm:mt-0">
+                        <div class="flex items-center bg-surface-container-high rounded-2xl p-1 border border-outline-variant/5 shadow-sm">
+                            <button class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white transition-all text-on-surface-variant hover:text-primary active:scale-90" onclick="updateCartItem(${item.id}, ${item.quantity - 1})">
+                                <span class="material-symbols-outlined font-bold text-sm">remove</span>
+                            </button>
+                            <span class="w-12 text-center font-black text-on-background">${item.quantity}</span>
+                            <button class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white transition-all text-on-surface-variant hover:text-primary active:scale-90" onclick="updateCartItem(${item.id}, ${item.quantity + 1})">
+                                <span class="material-symbols-outlined font-bold text-sm">add</span>
+                            </button>
+                        </div>
+                        
+                        <div class="text-right min-w-[100px]">
+                            <p class="text-[10px] font-bold text-outline uppercase tracking-widest mb-1">Subtotal</p>
+                            <span class="font-black text-on-background text-lg">$${item.subtotal}</span>
+                        </div>
+                        
+                        <button class="p-2 text-outline hover:text-error transition-colors" onclick="removeCartItem(${item.id})">
+                            <span class="material-symbols-outlined text-lg">delete</span>
+                        </button>
                     </div>
                 </div>
             `).join('');
 
             html += `
-                <div style="background: white; border: 1px solid var(--border-light); border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
-                    <div style="border-bottom: 2px solid var(--bg-color); padding-bottom: 12px; margin-bottom: 12px; display: flex; justify-content: space-between;">
-                        <h3 style="margin: 0;">Farm: ${group.producer_name}</h3>
-                        <span style="font-weight: 600; color: var(--text-secondary);">Subtotal: $${group.subtotal.toFixed(2)}</span>
+                <div class="bg-surface-container-lowest rounded-[32px] overflow-hidden shadow-sm border border-outline-variant/5">
+                    <div class="px-10 py-6 bg-surface-container-low flex justify-between items-center border-b border-outline-variant/10">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-700">
+                                <span class="material-symbols-outlined text-sm">potted_plant</span>
+                            </div>
+                            <h3 class="font-headline font-extrabold text-on-background uppercase text-[10px] tracking-[0.2em]">Farm: ${group.producer_name}</h3>
+                        </div>
+                        <span class="text-[10px] font-bold text-primary uppercase tracking-widest bg-emerald-50 px-3 py-1 rounded-full">Origin Direct</span>
                     </div>
-                    ${itemsHtml}
+                    <div class="px-10">
+                        ${itemsHtml}
+                    </div>
+                    <div class="px-10 py-6 bg-surface-container-lowest flex justify-between items-center border-t border-dashed border-outline-variant/20 italic">
+                        <span class="text-xs font-bold text-outline uppercase tracking-widest">Share from ${group.producer_name}</span>
+                        <span class="font-extrabold text-on-background">$${group.subtotal.toFixed(2)}</span>
+                    </div>
                 </div>
             `;
         });
 
         html += `
-            <div style="display: flex; justify-content: flex-end; align-items: center; padding: 20px 0; font-size: 24px; font-weight: 700;">
-                <span>Grand Total:</span>
-                <span style="color: var(--primary); margin-left: 20px;">$${Number(data.total).toFixed(2)}</span>
+            <div class="mt-20 p-12 bg-zinc-900 rounded-[48px] text-white flex flex-col md:flex-row justify-between items-center gap-8 relative overflow-hidden shadow-2xl">
+                <div class="relative z-10">
+                    <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-[0.3em] mb-3 block">Final Calculation</span>
+                    <h3 class="font-headline text-3xl font-extrabold mb-1">Order Summary</h3>
+                    <p class="text-zinc-400 text-sm font-medium">Includes all service fees and local delivery.</p>
+                </div>
+                
+                <div class="flex items-center gap-12 relative z-10 w-full md:w-auto">
+                    <div class="text-right hidden sm:block">
+                        <p class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Net Total</p>
+                        <p class="text-2xl font-black text-white">$${Number(data.total).toFixed(2)}</p>
+                    </div>
+                    <div class="flex-1 md:flex-none">
+                        <button onclick="checkout()" class="w-full md:w-auto px-12 py-5 bg-white text-zinc-900 rounded-full font-black text-lg shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3">
+                            Confirm and Pay $${Number(data.total).toFixed(2)}
+                            <span class="material-symbols-outlined font-black">arrow_forward</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Decorative element -->
+                <div class="absolute -right-12 -bottom-12 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl"></div>
             </div>
-        `;
+            
+            <div class="mt-12 text-center">
+                <p class="text-[10px] font-bold text-outline-variant uppercase tracking-widest flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-sm">verified_user</span>
+                    Secure Transaction via Food Network Ledger
+                </p>
+            </div>
+        </div>`;
 
         cartContent.innerHTML = html;
 
     } catch (e) {
         console.error(e);
-        cartContent.innerHTML = `<div class="error" style="padding: 20px;">Error loading cart.</div>`;
+        cartContent.innerHTML = `
+            <div class="flex flex-col items-center justify-center py-20 text-center text-error">
+                <span class="material-symbols-outlined text-4xl mb-4">report</span>
+                <p class="font-bold uppercase text-xs tracking-widest">Error syncing basket data.</p>
+            </div>
+        `;
     }
 }

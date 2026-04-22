@@ -1,134 +1,170 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Add New Product - Food Network{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div style="margin-bottom: 20px;">
-        <a href="{% url 'producer_dashboard' %}" class="btn btn-secondary">&larr; Back to Dashboard</a>
+<div class="max-w-4xl mx-auto px-6 py-12 lg:py-20">
+    <div class="mb-12">
+        <a href="{% url 'producer_dashboard' %}" class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-surface-container-high text-on-surface-variant font-bold text-xs uppercase tracking-widest hover:bg-primary/10 hover:text-primary transition-all">
+            <span class="material-symbols-outlined text-sm">arrow_back</span>
+            Dashboard
+        </a>
     </div>
 
-    <div class="form-card">
-        <form method="post" class="farmer-form">
+    <div class="bg-white rounded-[48px] p-8 md:p-16 shadow-sm border border-outline-variant/5">
+        <div class="text-center mb-16">
+            <span class="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-3 block">Market Listing</span>
+            <h1 class="font-headline text-4xl font-extrabold text-on-background mb-4 tracking-tight">Add New Product</h1>
+            <p class="text-on-surface-variant font-medium max-w-lg mx-auto leading-relaxed">Fill in the details below to list your fresh harvests for the Food Network community.</p>
+        </div>
+
+        <form method="post" class="space-y-12">
             {% csrf_token %}
             
-            <h1>Add New Product</h1>
-            <p class="subtitle" style="text-align: center; margin-bottom: 40px;">
-                Fill in the details below to list your fresh product for customers.
-            </p>
-
-            <!-- Basic Information -->
-            <div class="form-section">
-                <h2 class="form-section-title">1. Basic Information</h2>
+            <!-- Section 1: Basic Information -->
+            <div class="space-y-8">
+                <div class="flex items-center gap-3 pb-4 border-b border-outline-variant/10">
+                    <span class="material-symbols-outlined text-primary">potted_plant</span>
+                    <h2 class="font-headline font-extrabold text-xs uppercase tracking-[0.2em] text-on-background">1. Basic Information</h2>
+                </div>
                 
-                <div class="form-group">
-                    <label for="{{ form.name.id_for_label }}">Product Name</label>
-                    {{ form.name }}
-                    {% if form.name.errors %}
-                        <div class="feedback feedback-error">{{ form.name.errors }}</div>
-                    {% endif %}
-                    <small class="help-text">Give your product a clear, catchy name.</small>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="form-group space-y-3">
+                        <label class="farmer-form-label" for="{{ form.name.id_for_label }}">Product Name</label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                            <div class="text-error text-[10px] font-bold uppercase tracking-widest mt-2">{{ form.name.errors.0 }}</div>
+                        {% endif %}
+                        <p class="text-[10px] text-outline-variant font-medium">Use a clear name like "Organic Heirloom Tomatoes"</p>
+                    </div>
+
+                    <div class="form-group space-y-3">
+                        <label class="farmer-form-label" for="{{ form.category.id_for_label }}">Category</label>
+                        {{ form.category }}
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="{{ form.category.id_for_label }}">Category</label>
-                    {{ form.category }}
-                </div>
-
-                <div class="form-group">
-                    <label for="{{ form.description.id_for_label }}">Description</label>
+                <div class="form-group space-y-3">
+                    <label class="farmer-form-label" for="{{ form.description.id_for_label }}">Description</label>
                     {{ form.description }}
-                    <small class="help-text">Tell customers about your product's quality, origin, or harvest date.</small>
+                    <p class="text-[10px] text-outline-variant font-medium">Details about variety, quality, or harvest date.</p>
                 </div>
             </div>
 
-            <!-- Pricing & Stock -->
-            <div class="form-section">
-                <h2 class="form-section-title">2. Pricing & Stock</h2>
+            <!-- Section 2: Pricing & Stock -->
+            <div class="space-y-8">
+                <div class="flex items-center gap-3 pb-4 border-b border-outline-variant/10">
+                    <span class="material-symbols-outlined text-primary">payments</span>
+                    <h2 class="font-headline font-extrabold text-xs uppercase tracking-[0.2em] text-on-background">2. Pricing & Stock</h2>
+                </div>
                 
-                <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-                    <div class="form-group" style="flex: 1; min-width: 200px;">
-                        <label for="{{ form.price.id_for_label }}">Price ($)</label>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-8">
+                    <div class="form-group space-y-3">
+                        <label class="farmer-form-label" for="{{ form.price.id_for_label }}">Price ($)</label>
                         {{ form.price }}
                     </div>
-                    <div class="form-group" style="flex: 1; min-width: 200px;">
-                        <label for="{{ form.unit.id_for_label }}">Unit</label>
+                    <div class="form-group space-y-3">
+                        <label class="farmer-form-label" for="{{ form.unit.id_for_label }}">Unit</label>
                         {{ form.unit }}
                     </div>
-                </div>
-
-                <div class="form-group" style="max-width: 300px;">
-                    <label for="{{ form.stock_quantity.id_for_label }}">Stock Quantity</label>
-                    {{ form.stock_quantity }}
-                    <small class="help-text">How much do you have available right now?</small>
+                    <div class="form-group space-y-3">
+                        <label class="farmer-form-label" for="{{ form.stock_quantity.id_for_label }}">Stock Quantity</label>
+                        {{ form.stock_quantity }}
+                    </div>
                 </div>
             </div>
 
-            <!-- Availability & Allergens -->
-            <div class="form-section">
-                <h2 class="form-section-title">3. Availability & Health</h2>
+            <!-- Section 3: Availability & Health -->
+            <div class="space-y-8">
+                <div class="flex items-center gap-3 pb-4 border-b border-outline-variant/10">
+                    <span class="material-symbols-outlined text-primary">health_and_safety</span>
+                    <h2 class="font-headline font-extrabold text-xs uppercase tracking-[0.2em] text-on-background">3. Availability & Health</h2>
+                </div>
                 
-                <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-                    <div class="form-group" style="flex: 1; min-width: 240px;">
-                        <label for="{{ form.available_from.id_for_label }}">Available From (Start date)</label>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="form-group space-y-3 text-zinc-400">
+                        <label class="farmer-form-label" for="{{ form.available_from.id_for_label }}">From (Start date)</label>
                         {{ form.available_from }}
                     </div>
-                    <div class="form-group" style="flex: 1; min-width: 240px;">
-                        <label for="{{ form.available_to.id_for_label }}">Available To (End date)</label>
+                    <div class="form-group space-y-3 text-zinc-400">
+                        <label class="farmer-form-label" for="{{ form.available_to.id_for_label }}">To (End date)</label>
                         {{ form.available_to }}
                     </div>
                 </div>
 
-                <div class="form-group allergen-form-group">
-                    <label>Allergen Information (Required)</label>
-                    <div id="allergens-grid" class="allergens-grid">
+                <!-- Seasonal date warning -->
+                <div class="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-2xl">
+                    <span class="material-symbols-outlined text-amber-500 text-lg flex-shrink-0 mt-0.5">info</span>
+                    <div>
+                        <p class="text-[11px] font-extrabold text-amber-700 uppercase tracking-widest mb-1">Visibility Note</p>
+                        <p class="text-xs text-amber-600 font-medium leading-relaxed">
+                            Leave both dates <strong>blank</strong> for a year-round listing (recommended).
+                            If you set a <strong>Start date in the future</strong>, your product will be <strong>hidden from the marketplace</strong> until that date.
+                            If you set an <strong>End date in the past</strong>, your product will be hidden immediately.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="form-group space-y-6">
+                    <label class="farmer-form-label">Allergen Information</label>
+                    <div id="allergens-grid" class="allergens-grid-wrapper bg-surface-container-low/30 rounded-[32px] p-8">
                         {{ form.allergens }}
                     </div>
                     {% if form.allergens.errors %}
-                        <div class="feedback feedback-error">{{ form.allergens.errors }}</div>
+                        <div class="text-error text-[10px] font-bold uppercase tracking-widest mt-2">{{ form.allergens.errors.0 }}</div>
                     {% endif %}
                 </div>
             </div>
 
-            <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    const allergenInputs = document.querySelectorAll('.allergen-checkbox-group input');
-                    let noneCheckbox = null;
-                    
-                    allergenInputs.forEach(input => {
-                        const labelText = input.parentElement.textContent.trim().toLowerCase();
-                        if (labelText.includes('none') || labelText.includes('not applicable')) {
-                            noneCheckbox = input;
-                        }
-                    });
-
-                    if (noneCheckbox) {
-                        noneCheckbox.addEventListener('change', function() {
-                            if (this.checked) {
-                                allergenInputs.forEach(input => {
-                                    if (input !== noneCheckbox) input.checked = false;
-                                });
-                            }
-                        });
-
-                        allergenInputs.forEach(input => {
-                            if (input !== noneCheckbox) {
-                                input.addEventListener('change', function() {
-                                    if (this.checked) noneCheckbox.checked = false;
-                                });
-                            }
-                        });
-                    }
-                });
-            </script>
-
-            <div class="form-actions-centered">
-                <button type="submit" class="btn-premium">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            <div class="pt-12 border-t border-outline-variant/10">
+                <button type="submit" class="w-full py-6 bg-primary text-on-primary rounded-full font-black text-lg shadow-2xl shadow-primary/30 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-4">
                     List Product Now
+                    <span class="material-symbols-outlined font-black">check_circle</span>
                 </button>
             </div>
         </form>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inject class names into Django form fields
+        const inputs = document.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            if (input.type !== 'checkbox' && input.type !== 'radio' && input.type !== 'hidden') {
+                input.classList.add('farmer-form-input');
+            }
+        });
+
+        // Allergen Logic
+        const allergenInputs = document.querySelectorAll('.allergen-checkbox-group input, #allergens-grid input');
+        let noneCheckbox = null;
+        
+        allergenInputs.forEach(input => {
+            const labelText = input.parentElement ? input.parentElement.textContent.trim().toLowerCase() : '';
+            if (labelText.includes('none') || labelText.includes('not applicable')) {
+                noneCheckbox = input;
+            }
+        });
+
+        if (noneCheckbox) {
+            noneCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    allergenInputs.forEach(input => {
+                        if (input !== noneCheckbox) input.checked = false;
+                    });
+                }
+            });
+
+            allergenInputs.forEach(input => {
+                if (input !== noneCheckbox) {
+                    input.addEventListener('change', function() {
+                        if (this.checked) noneCheckbox.checked = false;
+                    });
+                }
+            });
+        }
+    });
+</script>
 {% endblock %}

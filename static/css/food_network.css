@@ -1,0 +1,109 @@
+/* 
+ * Food Network Market - Global Style System
+ * -----------------------------------------
+ * This file contains custom styles linked to specific HTML templates.
+ * Design Principle: Use Tailwind utility classes primarily. 
+ * Use this file only for complex custom behaviors or unique brand elements.
+ */
+
+:root {
+    --primary: #006a3e;
+    --primary-container: #00864f;
+    --surface-container-low: #f3f3f4;
+}
+
+/* --- base.html --- */
+.glass-nav {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+
+.material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* --- add_product.html & edit_product.html --- */
+.farmer-form-input {
+    width: 100%;
+    background-color: rgba(243, 243, 244, 0.5); /* surface-container-low/50 */
+    border: 1px solid rgba(0, 0, 0, 0.1); /* outline-variant/30 approximation */
+    border-radius: 1rem;
+    padding: 1rem 1.5rem;
+    outline: none;
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+.farmer-form-input:focus {
+    box-shadow: 0 0 0 2px rgba(0, 106, 62, 0.2); /* primary/20 */
+    border-color: #006a3e; /* primary */
+}
+
+.farmer-form-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #5f6368;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.75rem;
+}
+
+.allergens-grid-wrapper ul {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 1rem;
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+@media (min-width: 640px) {
+    .allergens-grid-wrapper ul { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (min-width: 1024px) {
+    .allergens-grid-wrapper ul { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+.allergens-grid-wrapper li label {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background-color: white;
+    border-radius: 1rem;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    transition: all 200ms;
+}
+
+.allergens-grid-wrapper li label:hover {
+    background-color: #ecfdf5; /* emerald-50 */
+    border-color: #a7f3d0; /* emerald-200 */
+}
+
+.allergens-grid-wrapper input[type="checkbox"] {
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 0.5rem;
+    border-color: rgba(0,0,0,0.1);
+    color: #006a3e;
+}
+
+.allergens-grid-wrapper li label:has(input:checked) {
+    background-color: #ecfdf5;
+    border-color: #10b981; /* emerald-500 */
+    color: #064e3b; /* emerald-900 */
+    font-weight: 700;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+/* --- search_results.html --- */
+.search-result-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+}

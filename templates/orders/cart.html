@@ -1,22 +1,42 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Shopping Cart - Food Network{% endblock %}
 
 {% block content %}
-<div class="container" style="padding-top: 2rem;">
-    <div class="dashboard-header">
-        <div>
-            <h1>Your Cart</h1>
-            <p class="subtitle" id="cart-subtitle">Review your items before checkout.</p>
+<div class="max-w-screen-xl mx-auto px-6 py-12 lg:py-20">
+    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-8 mb-12 border-b border-outline-variant/10 pb-12">
+        <div class="max-w-2xl">
+            <span class="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-3 block">Your Selections</span>
+            <h1 class="font-headline text-4xl lg:text-6xl font-extrabold text-on-background mb-4 tracking-tight">Shopping Basket</h1>
+            <p class="text-on-surface-variant text-lg font-medium leading-relaxed" id="cart-subtitle text-zinc-500">Review your farm-to-table selections before we finalize your local delivery.</p>
         </div>
-        <div>
-            <button id="clear-cart-btn" class="btn btn-ghost" style="display: none; border: 1px solid var(--border-light); margin-right: 10px;">Clear Cart</button>
-            <button id="checkout-btn" class="btn btn-primary" style="display: none;">Checkout</button>
+        <div class="flex flex-wrap gap-4 w-full lg:w-auto">
+            <button id="clear-cart-btn" class="hidden px-8 py-4 rounded-full bg-surface-container-high text-on-surface-variant font-bold text-sm hover:bg-error-container/20 hover:text-error transition-all active:scale-95">
+                Clear All
+            </button>
+            <button id="checkout-btn" class="hidden px-10 py-4 rounded-full bg-primary text-on-primary font-bold text-sm shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3">
+                Checkout Now
+                <span class="material-symbols-outlined text-base">arrow_forward</span>
+            </button>
         </div>
     </div>
 
-    <div id="cart-content" style="margin-top: 2rem;">
-        <div class="loading-spinner">Loading your cart...</div>
+    <div id="cart-content" class="min-h-[400px]">
+        <!-- Loading State -->
+        <div class="flex flex-col items-center justify-center py-20 text-center space-y-4">
+            <div class="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+            <p class="text-on-surface-variant font-bold text-xs uppercase tracking-widest">Coordinating with Producers...</p>
+        </div>
+    </div>
+
+    <!-- Recommendations Section -->
+    <div id="cart-recommendations" class="mt-24 pt-24 border-t border-outline-variant/10 hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <!-- Loaded via cart.js -->
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/cart.js' %}"></script>
 {% endblock %}
