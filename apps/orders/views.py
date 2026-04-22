@@ -263,7 +263,8 @@ class CustomerOrderListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        orders = Order.objects.filter(customer=request.user)
+        # Only list Master Orders for the customer
+        orders = Order.objects.filter(customer=request.user, parent_order__isnull=True)
         serializer = OrderSerializer(orders, many=True)
         return Response(serializer.data)
 
@@ -274,9 +275,83 @@ class CustomerOrderDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, order_id):
+        # A customer can view their Master Order or Sub-Orders
         order = get_object_or_404(Order, id=order_id, customer=request.user)
         serializer = OrderSerializer(order)
         return Response(serializer.data)
+
+
+class ReorderView(APIView):
+    """POST — Reorder items from a past order.
+    Checks availability and adds items to the current cart.
+    Handles Master Orders (fetches items from sub-orders) or Sub-Orders directly."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, order_id):
+        order = get_object_or_404(Order, id=order_id, customer=request.user)
+        cart, _ = Cart.objects.get_or_create(customer=request.user)
+
+        # Get all items (from sub-orders if master, or directly if sub-order)
+        if order.parent_order is None and order.sub_orders.exists():
+            items = OrderItem.objects.filter(order__parent_order=order)
+        else:
+            items = order.items.all()
+
+        added_items = []
+        unavailable_items = []
+        partial_items = []
+
+        for item in items:
+            product = item.product
+            
+            if not product.is_active() or product.stock_quantity == 0:
+                unavailable_items.append({"name": product.name, "reason": "Out of stock or off-season"})
+                continue
+                
+            qty_to_add = item.quantity
+            if qty_to_add > product.stock_quantity:
+                qty_to_add = product.stock_quantity
+                partial_items.append({
+                    "name": product.name, 
+                    "requested": item.quantity, 
+                    "added": qty_to_add, 
+                    "reason": f"Only {qty_to_add} left in stock"
+                })
+            else:
+                added_items.append({"name": product.name, "added": qty_to_add})
+
+            # Add to cart
+            cart_item, created = CartItem.objects.get_or_create(
+                cart=cart,
+                product=product,
+                defaults={"quantity": qty_to_add},
+            )
+            if not created:
+                new_qty = cart_item.quantity + qty_to_add
+                # Ensure we don't exceed stock when combining with existing cart
+                if new_qty > product.stock_quantity:
+                    new_qty = product.stock_quantity
+                cart_item.quantity = new_qty
+                cart_item.save()
+
+        # Generate summary message
+        msg_parts = []
+        if added_items or partial_items:
+            msg_parts.append(f"Successfully added {len(added_items) + len(partial_items)} items to your cart.")
+        if unavailable_items:
+            msg_parts.append(f"{len(unavailable_items)} items were unavailable and skipped.")
+            
+        summary = " ".join(msg_parts) if msg_parts else "No items were available to reorder."
+
+        return Response({
+            "message": summary,
+            "details": {
+                "added": added_items,
+                "partial": partial_items,
+                "unavailable": unavailable_items
+            }
+        }, status=status.HTTP_200_OK)
 
 
 class UpdateOrderStatusView(APIView):

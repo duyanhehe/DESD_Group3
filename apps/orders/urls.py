@@ -15,6 +15,7 @@ from .views import (
     CustomerOrderDetailView,
     UpdateOrderStatusView,
     OrderStatusHistoryView,
+    ReorderView,
     # orders (producer)
     ProducerOrderListView,
     ProducerOrderDetailView,
@@ -38,6 +39,7 @@ urlpatterns = [
     path("api/v1/<int:order_id>/", CustomerOrderDetailView.as_view(), name="order_detail"),
     path("api/v1/<int:order_id>/status/", UpdateOrderStatusView.as_view(), name="order_update_status"),
     path("api/v1/<int:order_id>/history/", OrderStatusHistoryView.as_view(), name="order_status_history"),
+    path("api/v1/<int:order_id>/reorder/", ReorderView.as_view(), name="order_reorder"),
 
     # ── Orders (producer) ──
     path("api/v1/producer/", ProducerOrderListView.as_view(), name="producer_order_list"),

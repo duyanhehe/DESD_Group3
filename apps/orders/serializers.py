@@ -88,19 +88,33 @@ class OrderStatusLogSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    items = OrderItemSerializer(many=True, read_only=True)
+    items = serializers.SerializerMethodField()
     status_logs = OrderStatusLogSerializer(many=True, read_only=True)
     customer_name = serializers.SerializerMethodField()
+    sub_orders = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
         fields = [
             "id", "customer", "customer_name",
             "status", "total_price",
-            "items", "status_logs",
+            "items", "sub_orders", "status_logs",
             "created_at", "updated_at",
         ]
         read_only_fields = ["customer", "total_price", "created_at", "updated_at"]
+
+    def get_items(self, obj):
+        # If it's a Master Order, fetch items from its sub_orders
+        if obj.parent_order is None and obj.sub_orders.exists():
+            items = OrderItem.objects.filter(order__parent_order=obj)
+            return OrderItemSerializer(items, many=True).data
+        return OrderItemSerializer(obj.items.all(), many=True).data
+
+    def get_sub_orders(self, obj):
+        if obj.parent_order is None:
+            # Avoid recursion by only returning basic info
+            return [{"id": so.id, "producer": so.producer.username if so.producer else None, "total_price": float(so.total_price), "status": so.status} for so in obj.sub_orders.all()]
+        return None
 
     def get_customer_name(self, obj):
         u = obj.customer
