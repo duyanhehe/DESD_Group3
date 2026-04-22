@@ -20,3 +20,12 @@ wheels/
 history_log.txt
 
 .frontend_task
+# AI Models
+ai_models/
+
+# dataset
+notebooks/dataset/*
+!notebooks/dataset/.gitkeep
+
+# rule
+.agents/rules/rule.md

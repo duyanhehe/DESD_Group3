@@ -1,9 +1,10 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Producer Dashboard - Food Network{% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container" style="padding-top: 2rem;">
     {% if messages %}
     <ul class="messages">
         {% for message in messages %}
@@ -12,30 +13,26 @@
     </ul>
     {% endif %}
 
-    <div class="dashboard-header">
+    <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
         <div>
-            <h1>Dashboard</h1>
-            <p class="subtitle">Manage your products and inventory</p>
+            <h1 style="margin: 0;">Dashboard</h1>
+            <p class="subtitle" style="color: var(--text-secondary);">Manage your products and inventory</p>
         </div>
-        <a href="{% url 'add_product' %}" class="btn btn-primary">+ Add New Product</a>
+        <div>
+            <a href="{% url 'producer_orders_page' %}" class="btn btn-secondary" style="margin-right: 10px;">Orders Dashboard</a>
+            <a href="{% url 'add_product' %}" class="btn btn-primary">+ Add New Product</a>
+        </div>
     </div>
 
     <!-- Stats Overview -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <h3>Total Products</h3>
-            <p>{{ products.count }}</p>
+    <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 2rem;">
+        <div class="stat-card" style="background: white; padding: 20px; border-radius: 12px; box-shadow: var(--shadow-sm); text-align: center;">
+            <h3 style="margin-top: 0; font-size: 14px; color: var(--text-secondary); text-transform: uppercase;">Total Products</h3>
+            <p style="font-size: 24px; font-weight: 700; color: var(--primary-green); margin: 10px 0 0 0;">{{ products.count }}</p>
         </div>
-        <div class="stat-card">
-            <h3>Total Stock</h3>
-            <p>
-                {% with total_stock=0 %}
-                    {% for p in products %}
-                        {# This is a simple counter, ideally done in the view #}
-                    {% endfor %}
-                {% endwith %}
-                {{ products.all|length }} items
-            </p>
+        <div class="stat-card" style="background: white; padding: 20px; border-radius: 12px; box-shadow: var(--shadow-sm); text-align: center;">
+            <h3 style="margin-top: 0; font-size: 14px; color: var(--text-secondary); text-transform: uppercase;">Total items</h3>
+            <p style="font-size: 24px; font-weight: 700; color: var(--primary-green); margin: 10px 0 0 0;">{{ products.all|length }} items</p>
         </div>
     </div>
 
@@ -47,19 +44,31 @@
                     <tr>
                         <th>Product Name</th>
                         <th>Category</th>
-                        <th>Price</th>
+                        <th>Price ($)</th>
                         <th>Stock</th>
+                        <th>Image & AI</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for product in products %}
-                    <tr>
+                    <tr data-id="{{ product.id }}">
                         <td><strong>{{ product.name }}</strong></td>
                         <td>{{ product.category.name|default:"Uncategorized" }}</td>
-                        <td>${{ product.price }} / {{ product.unit }}</td>
-                        <td>{{ product.stock_quantity }} {{ product.unit }}</td>
+                        <td>
+                            $<span class="editable-cell" data-field="price" data-id="{{ product.id }}" style="cursor: pointer; border-bottom: 1px dashed var(--border-light); padding: 2px 4px;" title="Click to edit">{{ product.price }}</span> / {{ product.unit }}
+                        </td>
+                        <td>
+                            <span class="editable-cell" data-field="stock_quantity" data-id="{{ product.id }}" style="cursor: pointer; border-bottom: 1px dashed var(--border-light); padding: 2px 4px;" title="Click to edit">{{ product.stock_quantity }}</span> {{ product.unit }}
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 5px; flex-direction: column;">
+                                <button class="btn btn-sm btn-ghost" onclick="document.getElementById('file-{{ product.id }}').click()" style="padding: 4px 8px; font-size: 11px;">Upload Image</button>
+                                <input type="file" id="file-{{ product.id }}" style="display: none;" accept="image/*">
+                                <button class="btn btn-sm btn-secondary" title="Coming soon" disabled style="padding: 4px 8px; font-size: 11px; cursor: not-allowed; opacity: 0.6;">Check Ripeness (AI)</button>
+                            </div>
+                        </td>
                         <td>
                             {% if product.stock_quantity > 0 %}
                                 <span class="status-badge status-available">In Stock</span>
@@ -75,7 +84,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                        <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-secondary);">
                             No products found. Start by adding your first product!
                         </td>
                     </tr>
@@ -85,4 +94,8 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/inventory.js' %}"></script>
 {% endblock %}

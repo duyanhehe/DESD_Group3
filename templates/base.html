@@ -20,16 +20,26 @@
                 <span class="logo-text"><span class="logo-icon">🌿</span>Food Network</span>
             </a>
             
-            <div class="search-container">
+            <div class="search-container" style="position: relative;">
                 <div class="search-box">
                     <span class="search-icon">🔍</span>
-                    <input type="text" id="global-search" placeholder="Search for local produce, dairy, bakery..." aria-label="Search">
+                    <input type="text" id="global-search" placeholder="Search for local produce, dairy, bakery..." aria-label="Search" autocomplete="off">
+                </div>
+                <!-- Search Suggestions Overlay -->
+                <div id="search-suggestions" class="search-suggestions dropdown-overlay hidden">
+                    <div class="suggestions-list"></div>
+                    <div class="suggestions-footer">
+                        <a href="javascript:void(0)" id="view-all-results">View all results</a>
+                    </div>
                 </div>
             </div>
 
             <div class="nav-links">
                 {% if user.is_authenticated %}
-                    <div class="user-menu">
+                    <div class="user-menu" style="display: flex; align-items: center; gap: 1rem;">
+                        <a href="/orders/cart/" class="cart-icon" aria-label="Cart">
+                            🛒 <span id="cart-count" class="badge">0</span>
+                        </a>
                         <span class="welcome-text">Hi, {{ user.first_name|default:user.username }}</span>
                         {% if user.is_producer %}
                             <a href="{% url 'producer_dashboard' %}" class="btn btn-secondary btn-sm">Dashboard</a>
@@ -53,6 +63,8 @@
 
     <!-- Global JS -->
     <script src="{% static 'js/auth.js' %}"></script>
+    <script src="{% static 'js/search.js' %}"></script>
+    <script src="{% static 'js/cart.js' %}"></script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

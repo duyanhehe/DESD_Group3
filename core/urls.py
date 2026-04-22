@@ -26,9 +26,10 @@ def home(request):
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("accounts/", include("accounts.urls")),
-    path("products/", include("products.urls")),
-    path("orders/", include("orders.urls")),
-    path("categories/", include("categories.urls")),
+    path("accounts/", include("apps.accounts.urls")),
+    path("products/", include("apps.products.urls")),
+    path("orders/", include("apps.orders.urls")),
+    path("categories/", include("apps.categories.urls")),
+    path("ai/", include("apps.ai_engine.urls")),
     path("", home, name="home"),
 ]

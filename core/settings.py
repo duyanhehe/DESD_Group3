@@ -41,13 +41,14 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "accounts",
-    "products",
-    "categories",
-    "allergens",
-    "orders",
-    "payments",
-    "logistics",
+    "apps.accounts",
+    "apps.products",
+    "apps.categories",
+    "apps.allergens",
+    "apps.orders",
+    "apps.payments",
+    "apps.logistics",
+    "apps.ai_engine",
     "rest_framework",
     "rest_framework.authtoken",
 ]
@@ -162,3 +163,27 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
     ],
 }
+
+# AI Models Configuration
+AI_MODELS_DIR = BASE_DIR / "ai_models"
+
+# Recommendation Model Path
+AI_RECOMMENDATION_MODEL_PATH = AI_MODELS_DIR / "recommendation" / "rules.pkl"
+
+# Grading Dataset Paths
+GRADING_DATA_DIR = BASE_DIR / "notebooks/dataset"
+GRADING_RAW_DIR = GRADING_DATA_DIR / "raw"
+GRADING_PROCESSED_DIR = GRADING_DATA_DIR / "processed"
+GRADING_DATASET_NAME = "muhammad0subhan/fruit-and-vegetable-disease-healthy-vs-rotten"
+
+# Grading Model Paths
+AI_MODELS_GRADING_DIR = AI_MODELS_DIR / "grading"
+AI_MODELS_GRADING_PRETRAINED_DIR = AI_MODELS_GRADING_DIR / "pretrained"
+AI_MODELS_GRADING_WEIGHTS_DIR = AI_MODELS_GRADING_DIR / "weights"
+AI_GRADING_YOLOV8N_PATH = AI_MODELS_GRADING_PRETRAINED_DIR / "yolov8n.pt"
+AI_GRADING_BEST_PT_PATH = AI_MODELS_GRADING_WEIGHTS_DIR / "best.pt"
+
+
+# KAGGLE CREDENTIALS
+KAGGLE_USERNAME = os.getenv("KAGGLE_USERNAME")
+KAGGLE_KEY = os.getenv("KAGGLE_KEY")

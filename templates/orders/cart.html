@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Shopping Cart - Food Network{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2rem;">
+    <div class="dashboard-header">
+        <div>
+            <h1>Your Cart</h1>
+            <p class="subtitle" id="cart-subtitle">Review your items before checkout.</p>
+        </div>
+        <div>
+            <button id="clear-cart-btn" class="btn btn-ghost" style="display: none; border: 1px solid var(--border-light); margin-right: 10px;">Clear Cart</button>
+            <button id="checkout-btn" class="btn btn-primary" style="display: none;">Checkout</button>
+        </div>
+    </div>
+
+    <div id="cart-content" style="margin-top: 2rem;">
+        <div class="loading-spinner">Loading your cart...</div>
+    </div>
+</div>
+{% endblock %}
