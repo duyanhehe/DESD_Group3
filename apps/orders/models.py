@@ -64,6 +64,20 @@ class Order(models.Model):
         on_delete=models.CASCADE,
         related_name="orders",
     )
+    parent_order = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="sub_orders",
+    )
+    producer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="received_orders",
+    )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PENDING)
     total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     delivered_at = models.DateTimeField(null=True, blank=True)

@@ -6,11 +6,17 @@ from io import StringIO
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from django.utils.timezone import now
+from django.conf import settings
+from django.db import transaction
+import stripe
+
+stripe.api_key = settings.STRIPE_SECRET_KEY
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, generics
 
+from apps.orders.models import Cart, Order, OrderItem, OrderStatusLog
 from .models import ProducerWeeklySettlement, SettlementOrderItem, SettlementAuditLog
 from .serializers import (
     ProducerWeeklySettlementSerializer,
@@ -492,3 +498,163 @@ class AdminSettlementExportView(APIView):
 
         return response
 
+
+# ═══════════════════════════════════════════════════════════════
+# Customer Checkout Endpoints (Stripe)
+# ═══════════════════════════════════════════════════════════════
+
+class CreateCheckoutSessionView(APIView):
+    """POST — Create a Stripe checkout session from the customer's cart."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            cart = Cart.objects.get(customer=request.user)
+            cart_items = cart.items.select_related("product").all()
+        except Cart.DoesNotExist:
+            return Response({"error": "Cart is empty."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not cart_items.exists():
+            return Response({"error": "Cart is empty."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Build Stripe line items
+        line_items = []
+        for item in cart_items:
+            line_items.append({
+                "price_data": {
+                    "currency": "usd",
+                    "product_data": {
+                        "name": item.product.name,
+                    },
+                    "unit_amount": int(item.product.price * 100),  # Stripe uses cents
+                },
+                "quantity": item.quantity,
+            })
+
+        try:
+            # Create a Stripe Checkout Session
+            frontend_url = request.build_absolute_uri('/')[:-1] # e.g. http://localhost:8000
+            
+            checkout_session = stripe.checkout.Session.create(
+                payment_method_types=['card'],
+                line_items=line_items,
+                mode='payment',
+                success_url=frontend_url + '/?order=success',
+                cancel_url=frontend_url + '/cart/?order=cancel',
+                client_reference_id=str(request.user.id),
+                metadata={
+                    "user_id": request.user.id
+                }
+            )
+            return Response({'checkout_url': checkout_session.url})
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class StripeWebhookView(APIView):
+    """POST — Handle Stripe webhooks (e.g., checkout.session.completed)."""
+
+    permission_classes = []  # Stripe doesn't send auth headers
+
+    def post(self, request):
+        payload = request.body
+        sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
+        endpoint_secret = getattr(settings, 'STRIPE_WEBHOOK_SECRET', '')
+
+        event = None
+
+        try:
+            event = stripe.Webhook.construct_event(
+                payload, sig_header, endpoint_secret
+            )
+        except ValueError as e:
+            # Invalid payload
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        except stripe.error.SignatureVerificationError as e:
+            # Invalid signature
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        # Handle the checkout.session.completed event
+        if event['type'] == 'checkout.session.completed':
+            session = event['data']['object']
+            
+            user_id = session.get('client_reference_id')
+            if user_id:
+                self.fulfill_order(user_id)
+
+        return Response(status=status.HTTP_200_OK)
+
+    def fulfill_order(self, user_id):
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        
+        try:
+            user = User.objects.get(id=user_id)
+            cart = Cart.objects.get(customer=user)
+            cart_items = cart.items.select_related("product").all()
+            
+            if not cart_items.exists():
+                return
+                
+            with transaction.atomic():
+                # 1. Create Master Order
+                total = sum(item.product.price * item.quantity for item in cart_items)
+                
+                master_order = Order.objects.create(
+                    customer=user,
+                    status=Order.CONFIRMED, # Paid via Stripe
+                    total_price=total,
+                )
+                
+                OrderStatusLog.objects.create(
+                    order=master_order,
+                    old_status="",
+                    new_status=Order.CONFIRMED,
+                    note="Paid via Stripe Checkout",
+                )
+                
+                # Group items by producer
+                items_by_producer = {}
+                for item in cart_items:
+                    producer = item.product.producer
+                    if producer not in items_by_producer:
+                        items_by_producer[producer] = []
+                    items_by_producer[producer].append(item)
+                
+                # 2. Create Sub-Orders
+                for producer, items in items_by_producer.items():
+                    sub_total = sum(i.product.price * i.quantity for i in items)
+                    sub_order = Order.objects.create(
+                        customer=user,
+                        parent_order=master_order,
+                        producer=producer,
+                        status=Order.CONFIRMED,
+                        total_price=sub_total,
+                    )
+                    
+                    OrderStatusLog.objects.create(
+                        order=sub_order,
+                        old_status="",
+                        new_status=Order.CONFIRMED,
+                        note="Sub-order created from Master Order",
+                    )
+                    
+                    for item in items:
+                        OrderItem.objects.create(
+                            order=sub_order,
+                            product=item.product,
+                            producer=producer,
+                            quantity=item.quantity,
+                            unit_price=item.product.price,
+                        )
+                        # deduct stock
+                        item.product.stock_quantity -= item.quantity
+                        item.product.save()
+
+                # 3. Clear cart
+                cart.items.all().delete()
+                
+        except Exception as e:
+            # In production, log this error securely
+            print(f"Error fulfilling order: {str(e)}")

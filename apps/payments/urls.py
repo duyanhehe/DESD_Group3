@@ -15,6 +15,9 @@ from .views import (
     AdminRetrySettlementView,
     AdminSettlementSummaryView,
     AdminSettlementExportView,
+    # Customer endpoints
+    CreateCheckoutSessionView,
+    StripeWebhookView,
 )
 
 urlpatterns = [
@@ -38,4 +41,10 @@ urlpatterns = [
     path("api/v1/admin/settlements/<uuid:settlement_id>/pay/", AdminPaySettlementView.as_view(), name="admin_settlement_pay"),
     path("api/v1/admin/settlements/<uuid:settlement_id>/fail/", AdminFailSettlementView.as_view(), name="admin_settlement_fail"),
     path("api/v1/admin/settlements/<uuid:settlement_id>/retry/", AdminRetrySettlementView.as_view(), name="admin_settlement_retry"),
+    
+    # ═══════════════════════════════════════════════════════════════
+    # Customer Checkout Endpoints
+    # ═══════════════════════════════════════════════════════════════
+    path("api/v1/checkout/", CreateCheckoutSessionView.as_view(), name="create_checkout_session"),
+    path("api/v1/webhook/", StripeWebhookView.as_view(), name="stripe_webhook"),
 ]

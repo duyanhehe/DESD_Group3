@@ -196,37 +196,64 @@ class CreateOrderView(APIView):
             # calculate total
             total = sum(item.product.price * item.quantity for item in cart_items)
 
-            order = Order.objects.create(
+            # 1. Create Master Order
+            master_order = Order.objects.create(
                 customer=request.user,
                 status=Order.PENDING,
                 total_price=total,
             )
 
-            for item in cart_items:
-                OrderItem.objects.create(
-                    order=order,
-                    product=item.product,
-                    producer=item.product.producer,
-                    quantity=item.quantity,
-                    unit_price=item.product.price,
-                )
-                # deduct stock
-                item.product.stock_quantity -= item.quantity
-                item.product.save()
-
-            # log the initial status
             OrderStatusLog.objects.create(
-                order=order,
+                order=master_order,
                 old_status="",
                 new_status=Order.PENDING,
                 changed_by=request.user,
-                note="Order placed",
+                note="Master Order placed",
             )
+
+            # Group items by producer
+            items_by_producer = {}
+            for item in cart_items:
+                producer = item.product.producer
+                if producer not in items_by_producer:
+                    items_by_producer[producer] = []
+                items_by_producer[producer].append(item)
+
+            # 2. Create Sub-Orders
+            for producer, items in items_by_producer.items():
+                sub_total = sum(i.product.price * i.quantity for i in items)
+                sub_order = Order.objects.create(
+                    customer=request.user,
+                    parent_order=master_order,
+                    producer=producer,
+                    status=Order.PENDING,
+                    total_price=sub_total,
+                )
+
+                OrderStatusLog.objects.create(
+                    order=sub_order,
+                    old_status="",
+                    new_status=Order.PENDING,
+                    changed_by=request.user,
+                    note="Sub-order created from Master Order",
+                )
+
+                for item in items:
+                    OrderItem.objects.create(
+                        order=sub_order,
+                        product=item.product,
+                        producer=producer,
+                        quantity=item.quantity,
+                        unit_price=item.product.price,
+                    )
+                    # deduct stock
+                    item.product.stock_quantity -= item.quantity
+                    item.product.save()
 
             # clear the cart
             cart.items.all().delete()
 
-        serializer = OrderSerializer(order)
+        serializer = OrderSerializer(master_order)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
