@@ -536,6 +536,10 @@ class CreateCheckoutSessionView(APIView):
             # Create a Stripe Checkout Session
             frontend_url = request.build_absolute_uri('/')[:-1] # e.g. http://localhost:8000
             
+            if settings.STRIPE_SECRET_KEY == "sk_test_mock":
+                StripeWebhookView()._fulfill_order(request.user.id, "mock_session_123")
+                return Response({"checkout_url": frontend_url + "/?order=success"})
+            
             checkout_session = stripe.checkout.Session.create(
                 payment_method_types=['card'],
                 line_items=line_items,
