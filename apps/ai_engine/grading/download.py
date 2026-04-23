@@ -9,11 +9,12 @@ BASE_DIR = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(BASE_DIR))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
 import django
+
 django.setup()
 
 from django.conf import settings
 
-MODEL_NAME = "cazofi/fruit-disease-1/pyTorch/default"
+MODEL_NAME = "cazofi/fruit-disease-v2/pyTorch/default"
 MODEL_DIR = settings.AI_MODELS_GRADING_WEIGHTS_DIR
 
 

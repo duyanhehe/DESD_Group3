@@ -13,13 +13,14 @@ class CartItemSerializer(serializers.ModelSerializer):
     )
     unit = serializers.CharField(source="product.unit", read_only=True)
     subtotal = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    food_miles = serializers.FloatField(read_only=True)
 
     class Meta:
         model = CartItem
         fields = [
             "id", "product", "product_name",
             "producer_id", "producer_name",
-            "unit_price", "unit", "quantity", "subtotal",
+            "unit_price", "unit", "quantity", "subtotal", "food_miles",
         ]
         read_only_fields = ["id"]
 
@@ -27,12 +28,13 @@ class CartItemSerializer(serializers.ModelSerializer):
 class CartSerializer(serializers.ModelSerializer):
     items = CartItemSerializer(many=True, read_only=True)
     total = serializers.SerializerMethodField()
+    total_food_miles = serializers.FloatField(read_only=True)
     # group items by producer for multi-vendor awareness (DESD-58)
     grouped_by_producer = serializers.SerializerMethodField()
 
     class Meta:
         model = Cart
-        fields = ["id", "items", "total", "grouped_by_producer", "updated_at"]
+        fields = ["id", "items", "total", "total_food_miles", "grouped_by_producer", "updated_at"]
 
     def get_total(self, obj):
         return sum(item.subtotal for item in obj.items.all())
@@ -50,10 +52,16 @@ class CartSerializer(serializers.ModelSerializer):
                     "producer_name": producer.username,
                     "items": [],
                     "subtotal": 0,
+                    "food_miles": 0,
                 }
             item_data = CartItemSerializer(item).data
             groups[key]["items"].append(item_data)
             groups[key]["subtotal"] += float(item.subtotal)
+            if item.food_miles is not None:
+                groups[key]["food_miles"] += item.food_miles
+        # Round food_miles in each group
+        for group in groups.values():
+            group["food_miles"] = round(group["food_miles"], 1)
         return list(groups.values())
 
 
