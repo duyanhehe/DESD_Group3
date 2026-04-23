@@ -50,6 +50,30 @@ class FruitDetector:
 
         return None, None
 
+    def detect_from_array(self, image: np.ndarray):
+        """
+        Run YOLO model on a numpy array (OpenCV BGR image).
+
+        Args:
+            image: OpenCV BGR image as numpy array
+
+        Returns:
+            bbox: [x_min, y_min, x_max, y_max]
+            class_name: The string label of the detected object
+            Returns None, None if nothing is detected.
+        """
+        results = self.model.predict(source=image, conf=0.25, save=False)
+        boxes = results[0].boxes
+
+        if len(boxes) > 0:
+            # Pick the first/best box
+            box = boxes[0].xyxy[0].cpu().numpy().astype(int)
+            class_id = int(boxes[0].cls[0].cpu().numpy())
+            class_name = self.model.names[class_id]
+            return box, class_name
+
+        return None, None
+
     def crop_image(self, image: np.ndarray, bbox):
         """
         Crop the image using NumPy slicing based on bounding box coordinates.

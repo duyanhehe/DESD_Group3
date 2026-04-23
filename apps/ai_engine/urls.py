@@ -5,6 +5,7 @@ from .views import (
     ProductRecommendationsView,
     CartRecommendationsView,
     OrderRecommendationsView,
+    GradingView,
     ChatbotView,
 )
 
@@ -24,8 +25,9 @@ urlpatterns = [
     # Post-checkout recommendations
     path("recommendations/order/<int:order_id>/", OrderRecommendationsView.as_view(), name="order_recommendations"),
 
-    # Fruit/Vegetable grading
-    # path("grading/", GradingView.as_view(), name="grading"),
+    # Fruit/Vegetable grading with XAI
+    path("grading/", GradingView.as_view(), name="grading"),
+
     # AI Chatbot endpoint
     path("chatbot/", ChatbotView.as_view(), name="chatbot"),
 ]

@@ -5,6 +5,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.shortcuts import get_object_or_404
 import requests
 import json
+import uuid
 
 # Recommendation services
 from .recommendation.services import (
@@ -19,6 +20,9 @@ from .recommendation.services import (
 from apps.products.models import Product
 from apps.products.serializers import ProductSerializer
 from .chatbot import chatbot_logic
+
+# Grading services
+from .grading.services import GradingService
 
 
 class RecommendationView(APIView):
@@ -171,6 +175,110 @@ class OrderRecommendationsView(APIView):
             )
 
 
+class GradingView(APIView):
+    """
+    POST /ai/grading/
+    Analyzes fruit/vegetable images and returns quality grade with XAI explanation.
+
+    Accepts:
+    - Multipart form-data with 'image' field (file upload)
+    - JSON with 'image_path' field (server-side file path)
+
+    Returns:
+    - Grade (A, B, C, D, or F for rotten)
+    - Quality metrics (size, shape, ripeness, defect %)
+    - XAI reasons for the grading decision
+    - Optional heatmap for defective fruit
+    """
+    permission_classes = [AllowAny]  # Change to IsAuthenticated in production
+
+    def post(self, request):
+        # Handle file upload
+        if 'image' in request.FILES:
+            uploaded_file = request.FILES['image']
+
+            # Validate file type
+            allowed_types = ['image/jpeg', 'image/png', 'image/jpg']
+            if uploaded_file.content_type not in allowed_types:
+                return Response(
+                    {"error": f"Invalid file type. Allowed: {allowed_types}"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Validate file size (max 10MB)
+            if uploaded_file.size > 10 * 1024 * 1024:
+                return Response(
+                    {"error": "File too large. Maximum size: 10MB"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            try:
+                result = GradingService.analyze_upload(uploaded_file)
+
+                if not result.get('success'):
+                    return Response(result, status=status.HTTP_400_BAD_REQUEST)
+
+                # Save heatmap if available
+                if result.get('heatmap') is not None:
+                    heatmap_filename = f"heatmap_{uuid.uuid4().hex[:8]}.png"
+                    heatmap_url = GradingService.save_heatmap(
+                        result['heatmap'],
+                        heatmap_filename
+                    )
+                    result['xai']['heatmap_url'] = heatmap_url
+                    del result['heatmap']  # Remove numpy array from response
+
+                return Response(result, status=status.HTTP_200_OK)
+
+            except Exception as e:
+                return Response(
+                    {"error": f"Processing failed: {str(e)}"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
+        # Handle image path
+        elif 'image_path' in request.data:
+            image_path = request.data.get('image_path')
+
+            if not image_path:
+                return Response(
+                    {"error": "image_path is required"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            try:
+                result = GradingService.analyze(image_path)
+
+                if not result.get('success'):
+                    return Response(result, status=status.HTTP_400_BAD_REQUEST)
+
+                # Save heatmap if available
+                if result.get('heatmap') is not None:
+                    heatmap_filename = f"heatmap_{uuid.uuid4().hex[:8]}.png"
+                    heatmap_url = GradingService.save_heatmap(
+                        result['heatmap'],
+                        heatmap_filename
+                    )
+                    result['xai']['heatmap_url'] = heatmap_url
+                    del result['heatmap']  # Remove numpy array from response
+
+                return Response(result, status=status.HTTP_200_OK)
+
+            except Exception as e:
+                return Response(
+                    {"error": f"Processing failed: {str(e)}"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
+        else:
+            return Response(
+                {
+                    "error": "No image provided. Upload via 'image' field (multipart) or provide 'image_path' (JSON)"
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
 class ChatbotView(APIView):
     """
     POST /ai/chatbot/
@@ -185,7 +293,7 @@ class ChatbotView(APIView):
 
         # Delegate to modular logic
         result = chatbot_logic.get_response(user_message)
-        
+
         if result.get("success") is False:
             return Response(result, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
