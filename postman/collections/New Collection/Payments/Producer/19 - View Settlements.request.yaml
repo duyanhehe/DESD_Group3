@@ -1,0 +1,17 @@
+$kind: http-request
+name: View Producer Settlements
+method: GET
+url: "{{base_url}}/payments/api/v1/settlements/"
+headers:
+  Authorization: "Token {{producer_token}}"
+scripts:
+  - type: afterResponse
+    code: |
+      pm.test("Status 200", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("Returns list of settlements", function () {
+          var data = pm.response.json();
+          pm.expect(data).to.be.an('array');
+      });
+    language: text/javascript
