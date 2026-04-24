@@ -38,7 +38,9 @@ class SettlementService:
 
         # Find Monday of the week (weekday() returns 0 for Monday, 6 for Sunday)
         days_since_monday = target_date.weekday()
-        week_start = target_date.date() - timedelta(days=days_since_monday)
+        # Handle both datetime and date objects
+        the_date = target_date.date() if hasattr(target_date, 'date') and callable(target_date.date) else target_date
+        week_start = the_date - timedelta(days=days_since_monday)
         week_end = week_start + timedelta(days=6)
 
         return week_start, week_end

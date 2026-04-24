@@ -4,13 +4,13 @@ method: POST
 url: "{{base_url}}/payments/api/v1/admin/settlements/calculate/"
 headers:
   Content-Type: application/json
-  Authorization: "Token {{admin_token}}"
+  Authorization: Token {{admin_token}}
 body:
   type: json
   content: |-
     {
-      "week_start": "2026-04-13",
-      "week_end": "2026-04-19"
+      "week_date": "2026-04-24",
+      "dry_run": false
     }
 scripts:
   - type: afterResponse

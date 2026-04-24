@@ -23,6 +23,13 @@ history_log.txt
 # AI Models
 ai_models/
 
+# Media
+media/
+*.sqlite3
+
+# IDEs
+.vscode/
+.idea/
 # dataset
 notebooks/dataset/*
 !notebooks/dataset/.gitkeep

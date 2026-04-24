@@ -4,12 +4,17 @@ method: POST
 url: "{{base_url}}/ai/grading/"
 headers:
   Content-Type: application/json
+  Authorization: Token {{producer_token}}
 body:
   type: json
   content: |-
     {
-      "image_path": "data/processed/images/train/Carrot__Healthy_freshCarrot (3).jpeg"
+      "image_path": "notebooks/dataset/test_images/tao_hong_1.png"
     }
+auth:
+  type: bearer
+  credentials:
+    token: "{{producer_token}}"
 scripts:
   - type: afterResponse
     code: |

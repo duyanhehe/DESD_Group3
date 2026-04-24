@@ -1,0 +1,21 @@
+$kind: http-request
+name: Login as Producer
+method: POST
+url: "{{base_url}}/accounts/api/v1/login/"
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "username": "producer1",
+      "password": "password123"
+    }
+scripts:
+  - type: afterResponse
+    code: |
+      var data = pm.response.json();
+      if (data.token) {
+          pm.environment.set("producer_token", data.token);
+      }
+    language: text/javascript

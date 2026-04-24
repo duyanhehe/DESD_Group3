@@ -1,20 +1,23 @@
 name: Local
 values:
   - key: base_url
+    enabled: true
     value: 'http://localhost:8000'
-    enabled: true
   - key: auth_token
-    value: ''
     enabled: true
+    value: ''
   - key: customer_token
-    value: ''
     enabled: true
+    value: ''
   - key: producer_token
-    value: ''
     enabled: true
+    value: ''
   - key: cart_item_id
-    value: ''
     enabled: true
+    value: ''
   - key: order_id
-    value: ''
     enabled: true
+    value: ''
+  - key: admin_token
+    enabled: true
+    value: ''

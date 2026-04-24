@@ -104,14 +104,15 @@ def predict_from_array(image: np.ndarray, source_path: Optional[str] = None) -> 
     safe_class_name = class_name.replace("__", "_")
     xai_report, final_image = grader.process_fruit(cropped, safe_class_name)
 
-    # Step 4: Generate XAI heatmap if defective
+    # Step 4: Generate XAI heatmap if defective (only for Rotten fruit)
+    # This mirrors the notebook 03 flow: heatmap is generated from the FULL
+    # original image (not the cropped region), using EigenCAM on 640x640 input.
     heatmap = None
     yolo_prediction = xai_report['metadata']['yolo_prediction']
     if yolo_prediction != 'Healthy':
         try:
-            yolo_results = _detector.model.predict(source=image, conf=0.25, verbose=False)
-            explanation = explainer.explain_prediction(image, yolo_results)
-            heatmap = explanation.get('heatmap')
+            # Pass the original BGR image directly — explainer handles BGR->RGB
+            heatmap = explainer.generate_heatmap(image)
         except Exception as e:
             print(f"[XAI] Heatmap generation skipped: {e}")
 
