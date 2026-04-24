@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} - Food Network{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --glass-bg: rgba(255, 255, 255, 0.7);
+        --glass-border: rgba(255, 255, 255, 0.3);
+        --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    }
+
+    .glass-card {
+        background: var(--glass-bg);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid var(--glass-border);
+        box-shadow: var(--glass-shadow);
+        border-radius: 24px;
+    }
+
+    .glass-header {
+        background: rgba(255, 255, 255, 0.4);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--glass-border);
+    }
+
+    .settlement-row {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+    }
+
+    .settlement-row:hover {
+        background: rgba(var(--primary-rgb), 0.04);
+        transform: scale(1.002);
+    }
+
+    .status-badge {
+        padding: 6px 14px;
+        border-radius: 99px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+
+    .status-pending { background: #fef3c7; color: #92400e; }
+    .status-calculated { background: #dcfce7; color: #166534; }
+    .status-approved { background: #dbeafe; color: #1e40af; }
+    .status-paid { background: #1e40af; color: #ffffff; }
+    .status-failed { background: #fee2e2; color: #991b1b; }
+
+    /* Animated background */
+    .bg-mesh {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        background-color: #f8fafc;
+        background-image: 
+            radial-gradient(at 0% 0%, rgba(var(--primary-rgb), 0.1) 0px, transparent 50%),
+            radial-gradient(at 100% 0%, rgba(var(--secondary-rgb), 0.1) 0px, transparent 50%),
+            radial-gradient(at 100% 100%, rgba(var(--tertiary-rgb), 0.1) 0px, transparent 50%),
+            radial-gradient(at 0% 100%, rgba(var(--primary-rgb), 0.1) 0px, transparent 50%);
+    }
+
+    .modal-glass {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(16px);
+        border: 1px solid var(--glass-border);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bg-mesh"></div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <!-- Header Section -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6">
+        <div>
+            <h1 class="text-4xl font-black tracking-tight text-on-surface mb-2 flex items-center gap-3">
+                <span class="material-symbols-outlined text-4xl text-primary p-2 bg-primary/10 rounded-2xl">payments</span>
+                My Payments
+            </h1>
+            <p class="text-on-surface-variant font-medium">Track your weekly settlements and payouts</p>
+        </div>
+        
+        <div class="flex items-center gap-3 bg-surface-container-high/50 p-2 rounded-2xl border border-outline-variant/30 backdrop-blur-sm">
+            <button class="status-tab active px-5 py-2.5 rounded-xl text-sm font-bold transition-all" data-status="all">All</button>
+            <button class="status-tab px-5 py-2.5 rounded-xl text-sm font-bold transition-all" data-status="pending">Pending</button>
+            <button class="status-tab px-5 py-2.5 rounded-xl text-sm font-bold transition-all" data-status="approved">Approved</button>
+            <button class="status-tab px-5 py-2.5 rounded-xl text-sm font-bold transition-all" data-status="paid">Paid</button>
+        </div>
+    </div>
+
+    <!-- Stats Summary -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+        <div class="glass-card p-6 flex items-center gap-5">
+            <div class="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                <span class="material-symbols-outlined text-3xl">account_balance_wallet</span>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Total Payouts</p>
+                <h3 class="text-2xl font-black text-on-surface" id="stat-total-paid">$0.00</h3>
+            </div>
+        </div>
+        <div class="glass-card p-6 flex items-center gap-5">
+            <div class="w-14 h-14 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-600">
+                <span class="material-symbols-outlined text-3xl">pending_actions</span>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Pending Approval</p>
+                <h3 class="text-2xl font-black text-on-surface" id="stat-pending-approval">$0.00</h3>
+            </div>
+        </div>
+        <div class="glass-card p-6 flex items-center gap-5">
+            <div class="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">
+                <span class="material-symbols-outlined text-3xl">event_available</span>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Approved for Payment</p>
+                <h3 class="text-2xl font-black text-on-surface" id="stat-approved-amt">$0.00</h3>
+            </div>
+        </div>
+        <div class="glass-card p-6 flex items-center gap-5">
+            <div class="w-14 h-14 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-600">
+                <span class="material-symbols-outlined text-3xl">calendar_month</span>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Settlement Period</p>
+                <h3 class="text-lg font-black text-on-surface">Weekly</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settlements Table -->
+    <div class="glass-card overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="glass-header text-on-surface-variant text-xs font-black uppercase tracking-widest">
+                        <th class="px-8 py-5">Period</th>
+                        <th class="px-8 py-5">Gross Revenue</th>
+                        <th class="px-8 py-5">Commission</th>
+                        <th class="px-8 py-5">Net Payout</th>
+                        <th class="px-8 py-5">Status</th>
+                        <th class="px-8 py-5 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="settlements-tbody" class="divide-y divide-outline-variant/20">
+                    <!-- Loaded via JS -->
+                    <tr>
+                        <td colspan="6" class="px-8 py-20 text-center">
+                            <div class="inline-block animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mb-4"></div>
+                            <p class="text-on-surface-variant font-medium">Syncing with treasury...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Settlement Detail Modal -->
+<div id="detail-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-opacity duration-300">
+    <div class="modal-glass w-full max-w-4xl rounded-[40px] shadow-2xl overflow-hidden transform transition-all scale-95 duration-300">
+        <div class="px-10 py-8 border-b border-outline-variant/30 flex justify-between items-start">
+            <div>
+                <div class="flex items-center gap-3 mb-2">
+                    <h2 class="text-3xl font-black text-on-surface" id="modal-title">Settlement Details</h2>
+                    <span id="modal-status-badge" class="status-badge"></span>
+                </div>
+                <p id="modal-period" class="text-on-surface-variant font-bold text-sm"></p>
+            </div>
+            <button onclick="closeModal()" class="w-12 h-12 rounded-full flex items-center justify-center hover:bg-surface-container-high transition-all">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        
+        <div class="p-10 max-h-[70vh] overflow-y-auto">
+            <!-- Tabs for Detail View -->
+            <div class="flex gap-8 border-b border-outline-variant/20 mb-8">
+                <button class="modal-tab active pb-4 text-sm font-bold relative transition-all" data-target="items-tab">
+                    Included Items
+                    <div class="tab-indicator absolute bottom-0 left-0 w-full h-1 bg-primary rounded-full"></div>
+                </button>
+                <button class="modal-tab pb-4 text-sm font-bold relative transition-all text-on-surface-variant" data-target="audit-tab">
+                    Audit Trail
+                </button>
+            </div>
+
+            <!-- Items Tab Content -->
+            <div id="items-tab" class="modal-content">
+                <div class="overflow-x-auto rounded-2xl border border-outline-variant/30">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-surface-container-low text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+                            <tr>
+                                <th class="px-6 py-4">Product</th>
+                                <th class="px-6 py-4">Qty</th>
+                                <th class="px-6 py-4">Subtotal</th>
+                                <th class="px-6 py-4">Commission</th>
+                                <th class="px-6 py-4">Net</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modal-items-tbody" class="text-sm divide-y divide-outline-variant/10">
+                            <!-- JS populated -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Audit Tab Content -->
+            <div id="audit-tab" class="modal-content hidden">
+                <div class="space-y-6" id="modal-audit-list">
+                    <!-- JS populated -->
+                </div>
+            </div>
+        </div>
+
+        <div class="px-10 py-6 bg-surface-container-low/50 border-t border-outline-variant/30 flex justify-between items-center">
+            <div class="flex gap-10">
+                <div>
+                    <p class="text-[10px] font-black text-on-surface-variant uppercase mb-1">Gross Total</p>
+                    <p class="font-bold text-lg" id="modal-total-sales">$0.00</p>
+                </div>
+                <div>
+                    <p class="text-[10px] font-black text-on-surface-variant uppercase mb-1">Total Payout</p>
+                    <p class="font-black text-xl text-primary" id="modal-net-payout">$0.00</p>
+                </div>
+            </div>
+            <button onclick="closeModal()" class="px-8 py-3 bg-surface-container-high text-on-surface rounded-2xl font-bold hover:bg-surface-container-highest transition-all">Close</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/settlements.js' %}"></script>
+{% endblock %}

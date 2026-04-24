@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Admin Settlement Management - Food Network{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-stats-card {
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .action-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        items-center: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+
+    .action-btn:hover {
+        transform: translateY(-2px);
+    }
+
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .status-pending { background: #fff7ed; color: #9a3412; }
+    .status-calculated { background: #eff6ff; color: #1e40af; }
+    .status-approved { background: #f0fdf4; color: #166534; }
+    .status-paid { background: #166534; color: #ffffff; }
+    .status-failed { background: #fef2f2; color: #991b1b; }
+
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(4px);
+        display: none;
+        items-center: center;
+        justify-content: center;
+        z-index: 100;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 24px;
+        width: 100%;
+        max-width: 500px;
+        padding: 32px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-screen-2xl mx-auto px-6 py-12">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-8">
+        <div>
+            <span class="text-xs font-black text-primary uppercase tracking-[0.3em] mb-3 block">Accounting System</span>
+            <h1 class="text-5xl font-black text-zinc-900 tracking-tight mb-2">Treasury Management</h1>
+            <p class="text-zinc-500 font-medium text-lg">Calculate, approve, and process producer settlements.</p>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <button id="export-csv" class="px-6 py-3 bg-zinc-100 text-zinc-700 rounded-xl font-bold flex items-center gap-2 hover:bg-zinc-200 transition-all">
+                <span class="material-symbols-outlined">download</span>
+                Export CSV
+            </button>
+            <button id="open-calculate-modal" class="px-8 py-3 bg-primary text-on-primary rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all">
+                <span class="material-symbols-outlined">calculate</span>
+                Calculate Weekly
+            </button>
+        </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12" id="admin-summary-grid">
+        <div class="admin-stats-card animate-pulse h-32 bg-zinc-50"></div>
+        <div class="admin-stats-card animate-pulse h-32 bg-zinc-50"></div>
+        <div class="admin-stats-card animate-pulse h-32 bg-zinc-50"></div>
+        <div class="admin-stats-card animate-pulse h-32 bg-zinc-50"></div>
+    </div>
+
+    <!-- Main Table -->
+    <div class="bg-white rounded-3xl shadow-sm border border-zinc-100 overflow-hidden">
+        <div class="p-8 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
+            <h3 class="font-black text-zinc-900">All Settlements</h3>
+            
+            <div class="flex items-center gap-4">
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400">search</span>
+                    <input type="text" id="producer-search" placeholder="Search producers..." class="pl-12 pr-6 py-2.5 bg-white border border-zinc-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none w-64">
+                </div>
+                <select id="status-filter" class="px-6 py-2.5 bg-white border border-zinc-200 rounded-xl text-sm outline-none">
+                    <option value="">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="calculated">Calculated</option>
+                    <option value="approved">Approved</option>
+                    <option value="paid">Paid</option>
+                    <option value="failed">Failed</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="text-[10px] uppercase font-black text-zinc-400 tracking-widest border-b border-zinc-100">
+                        <th class="px-8 py-5">Week Period</th>
+                        <th class="px-8 py-5">Producer</th>
+                        <th class="px-8 py-5">Gross Revenue</th>
+                        <th class="px-8 py-5">Net Payout</th>
+                        <th class="px-8 py-5">Status</th>
+                        <th class="px-8 py-5 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="settlements-table-body">
+                    <!-- Loaded by JS -->
+                    <tr>
+                        <td colspan="6" class="px-8 py-20 text-center">
+                            <div class="flex flex-col items-center gap-4">
+                                <div class="animate-spin rounded-full h-10 w-10 border-4 border-primary border-t-transparent"></div>
+                                <p class="font-bold text-zinc-400">Loading settlements...</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Calculate Modal -->
+<div id="calculate-modal" class="modal-overlay">
+    <div class="modal-content">
+        <h2 class="text-3xl font-black mb-6">Calculate Settlements</h2>
+        <p class="text-zinc-500 mb-8 font-medium">Select any date within the week you wish to calculate for. The system will automatically find the boundaries.</p>
+        
+        <div class="space-y-6">
+            <div>
+                <label class="text-xs font-black uppercase text-zinc-400 block mb-2">Target Date</label>
+                <input type="date" id="calculate-date" class="w-full px-6 py-4 bg-zinc-50 border border-zinc-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20">
+            </div>
+            
+            <div class="flex items-center gap-3 p-4 bg-amber-50 rounded-2xl border border-amber-100">
+                <span class="material-symbols-outlined text-amber-600">warning</span>
+                <p class="text-sm font-bold text-amber-800">Existing settlements for this week will not be overwritten.</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4 mt-10">
+            <button id="close-calculate-modal" class="flex-1 py-4 font-black text-zinc-400 hover:text-zinc-900 transition-colors">Cancel</button>
+            <button id="run-calculation" class="flex-2 px-8 py-4 bg-primary text-on-primary rounded-2xl font-black shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all">Calculate Now</button>
+        </div>
+    </div>
+</div>
+
+<!-- Pay Modal -->
+<div id="pay-modal" class="modal-overlay">
+    <div class="modal-content">
+        <h2 class="text-3xl font-black mb-2">Mark as Paid</h2>
+        <p class="text-zinc-500 mb-8 font-medium">Record the payout details for <span id="pay-producer-name" class="text-zinc-900 font-black"></span>.</p>
+        
+        <input type="hidden" id="pay-settlement-id">
+
+        <div class="space-y-6">
+            <div>
+                <label class="text-xs font-black uppercase text-zinc-400 block mb-2">Payment Method</label>
+                <select id="pay-method" class="w-full px-6 py-4 bg-zinc-50 border border-zinc-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20">
+                    <option value="bank_transfer">Bank Transfer</option>
+                    <option value="stripe">Stripe Connect</option>
+                    <option value="paypal">PayPal</option>
+                    <option value="cash">Cash / Check</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-xs font-black uppercase text-zinc-400 block mb-2">Transaction Reference</label>
+                <input type="text" id="pay-reference" placeholder="TXN-123456" class="w-full px-6 py-4 bg-zinc-50 border border-zinc-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20">
+            </div>
+            <div>
+                <label class="text-xs font-black uppercase text-zinc-400 block mb-2">Internal Notes</label>
+                <textarea id="pay-notes" rows="3" class="w-full px-6 py-4 bg-zinc-50 border border-zinc-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20" placeholder="Optional notes..."></textarea>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4 mt-10">
+            <button id="close-pay-modal" class="flex-1 py-4 font-black text-zinc-400 hover:text-zinc-900 transition-colors">Cancel</button>
+            <button id="confirm-payment" class="flex-2 px-8 py-4 bg-emerald-600 text-white rounded-2xl font-black shadow-lg shadow-emerald-600/20 hover:scale-[1.02] transition-all">Confirm Payment</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/admin_settlements.js' %}"></script>
+{% endblock %}

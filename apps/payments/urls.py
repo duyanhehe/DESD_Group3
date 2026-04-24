@@ -15,7 +15,9 @@ from .views import (
     AdminRetrySettlementView,
     AdminSettlementSummaryView,
     AdminSettlementExportView,
+    AdminSettlementsPageView,
     # Customer endpoints
+    ProducerPaymentsView,
     CreateCheckoutSessionView,
     StripeWebhookView,
 )
@@ -24,6 +26,8 @@ urlpatterns = [
     # ═══════════════════════════════════════════════════════════════
     # Producer Endpoints
     # ═══════════════════════════════════════════════════════════════
+    path("producer/", ProducerPaymentsView.as_view(), name="producer_payments"),
+
     path("api/v1/settlements/", ProducerSettlementListView.as_view(), name="producer_settlement_list"),
     path("api/v1/settlements/<uuid:settlement_id>/", ProducerSettlementDetailView.as_view(), name="producer_settlement_detail"),
     path("api/v1/settlements/<uuid:settlement_id>/items/", ProducerSettlementItemsView.as_view(), name="producer_settlement_items"),
@@ -41,6 +45,8 @@ urlpatterns = [
     path("api/v1/admin/settlements/<uuid:settlement_id>/pay/", AdminPaySettlementView.as_view(), name="admin_settlement_pay"),
     path("api/v1/admin/settlements/<uuid:settlement_id>/fail/", AdminFailSettlementView.as_view(), name="admin_settlement_fail"),
     path("api/v1/admin/settlements/<uuid:settlement_id>/retry/", AdminRetrySettlementView.as_view(), name="admin_settlement_retry"),
+    
+    path("admin/settlements/", AdminSettlementsPageView.as_view(), name="treasury_dashboard"),
     
     # ═══════════════════════════════════════════════════════════════
     # Customer Checkout Endpoints

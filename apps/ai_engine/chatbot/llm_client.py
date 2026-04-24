@@ -15,10 +15,18 @@ class LLMClient:
         """
         Sends a message to the Ollama API and retrieves the generated response.
         """
+        # Protection: Prevent massive input abuse
+        user_message = user_message[:500] 
+
         payload = {
             "model": self.model,
             "prompt": f"{system_prompt}\n\nUser: {user_message}\nAssistant:",
-            "stream": False
+            "stream": False,
+            "options": {
+                "num_predict": 300,  # Limits response length to ~225 words
+                "temperature": 0.7,
+                "top_p": 0.9
+            }
         }
 
         try:

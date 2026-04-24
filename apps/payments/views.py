@@ -15,6 +15,18 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, generics
+from django.views.generic import TemplateView
+
+
+class ProducerPaymentsView(TemplateView):
+    """Render the My Payments dashboard for producers."""
+    template_name = "payments/producer_settlement_list.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "My Payments"
+        return context
+
 
 from apps.orders.models import Cart, Order, OrderItem, OrderStatusLog
 from .models import ProducerWeeklySettlement, SettlementOrderItem, SettlementAuditLog
@@ -384,10 +396,17 @@ class AdminSettlementSummaryView(APIView):
         week_end = request.query_params.get("week_end")
 
         if not week_start or not week_end:
-            # Default to current week
-            week_start, week_end = SettlementService.get_week_boundaries()
-            week_start = week_start.isoformat()
-            week_end = week_end.isoformat()
+            latest = ProducerWeeklySettlement.objects.order_by("-week_start").first()
+            if latest:
+                week_start = latest.week_start
+                week_end = latest.week_end
+            else:
+                week_start, week_end = SettlementService.get_week_boundaries()
+            
+            if hasattr(week_start, 'isoformat'):
+                week_start = week_start.isoformat()
+            if hasattr(week_end, 'isoformat'):
+                week_end = week_end.isoformat()
 
         settlements = ProducerWeeklySettlement.objects.filter(
             week_start=week_start,
@@ -538,13 +557,13 @@ class CreateCheckoutSessionView(APIView):
             
             if settings.STRIPE_SECRET_KEY == "sk_test_mock":
                 StripeWebhookView().fulfill_order(request.user.id)
-                return Response({'checkout_url': frontend_url + '/?order=success'})
+                return Response({'checkout_url': frontend_url + '/orders/success/'})
             
             checkout_session = stripe.checkout.Session.create(
                 payment_method_types=['card'],
                 line_items=line_items,
                 mode='payment',
-                success_url=frontend_url + '/?order=success',
+                success_url=frontend_url + '/orders/success/',
                 cancel_url=frontend_url + '/cart/?order=cancel',
                 client_reference_id=str(request.user.id),
                 metadata={
@@ -662,3 +681,13 @@ class StripeWebhookView(APIView):
         except Exception as e:
             # In production, log this error securely
             print(f"Error fulfilling order: {str(e)}")
+
+
+class AdminSettlementsPageView(TemplateView):
+    template_name = "payments/admin_settlements.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Admin Settlement Management"
+        return context
+

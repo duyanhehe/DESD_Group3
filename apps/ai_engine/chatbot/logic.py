@@ -11,17 +11,29 @@ class ChatbotLogic:
 
     def get_response(self, user_message):
         """
-        Processes a user message through the LLM and applies humanizing formatting.
+        Processes a user message with live database context.
         """
-        # Call the raw LLM client
-        result = self.client.generate_response(self.system_prompt, user_message)
+        from apps.products.models import Product
+        
+        # Fetch active products to provide real context
+        active_products = Product.objects.active()[:15] # Top 15 current items
+        inventory_list = "\n".join([
+            f"- {p.name} ({p.category.name if p.category else 'General'}): ${p.price}/{p.unit} from {(p.producer.producer_profile.business_name if hasattr(p.producer, 'producer_profile') else p.producer.username) if p.producer else 'Local Farm'}"
+            for p in active_products
+        ])
+        
+        dynamic_prompt = self.system_prompt + f"\n\nCURRENT INVENTORY (ONLY RECOMMEND THESE):\n{inventory_list}"
+
+        # Call the raw LLM client with dynamic context
+        result = self.client.generate_response(dynamic_prompt, user_message)
         
         if result["success"]:
             # Apply any post-processing / "humanizing" logic here
             # Like adding natural transitions if the LLM output is too robotic
             processed_response = self._humanize_response(result["response"])
             return {
-                "response": processed_response,
+                "success": True,
+                "reply": processed_response,
                 "model": result["model"]
             }
         

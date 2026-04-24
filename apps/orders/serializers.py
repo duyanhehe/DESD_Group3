@@ -39,30 +39,46 @@ class CartSerializer(serializers.ModelSerializer):
     def get_total(self, obj):
         return sum(item.subtotal for item in obj.items.all())
 
-    def get_grouped_by_producer(self, obj):
-        """Group cart items by producer so the frontend can show
-        which items come from which farm."""
+    def to_representation(self, instance):
+        """
+        Optimize representation by grouping items that are already serialized.
+        This avoids double serialization and redundant property calls.
+        """
+        data = super().to_representation(instance)
+        
+        # Group items by producer
         groups = {}
-        for item in obj.items.select_related("product__producer").all():
-            producer = item.product.producer
-            key = str(producer.id)
-            if key not in groups:
-                groups[key] = {
-                    "producer_id": producer.id,
-                    "producer_name": producer.username,
+        for item_data in data.get('items', []):
+            p_id = str(item_data.get('producer_id'))
+            p_name = item_data.get('producer_name')
+            
+            if p_id not in groups:
+                groups[p_id] = {
+                    "producer_id": int(p_id),
+                    "producer_name": p_name,
                     "items": [],
                     "subtotal": 0,
                     "food_miles": 0,
                 }
-            item_data = CartItemSerializer(item).data
-            groups[key]["items"].append(item_data)
-            groups[key]["subtotal"] += float(item.subtotal)
-            if item.food_miles is not None:
-                groups[key]["food_miles"] += item.food_miles
+            
+            groups[p_id]["items"].append(item_data)
+            groups[p_id]["subtotal"] += float(item_data.get('subtotal', 0))
+            
+            miles = item_data.get('food_miles')
+            if miles is not None:
+                groups[p_id]["food_miles"] += miles
+
         # Round food_miles in each group
         for group in groups.values():
             group["food_miles"] = round(group["food_miles"], 1)
-        return list(groups.values())
+            
+        data['grouped_by_producer'] = list(groups.values())
+        return data
+
+    def get_grouped_by_producer(self, obj):
+        # Placeholder because the field is required by SerializerMethodField
+        # The actual work is done in to_representation for efficiency.
+        return []
 
 
 # ─── Orders ─────────────────────────────────────────────────

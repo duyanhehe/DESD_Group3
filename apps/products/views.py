@@ -122,6 +122,14 @@ def producer_dashboard(request):
     products = Product.objects.filter(producer=request.user)
     return render(request, "products/producer_dashboard.html", {"products": products})
 
+@login_required
+def producer_grading_page(request):
+    if not request.user.is_producer:
+        messages.error(request, "Only producers can access the grading dashboard.")
+        return redirect("/")
+
+    return render(request, "products/producer_grading.html")
+
 
 @login_required
 def add_product(request):

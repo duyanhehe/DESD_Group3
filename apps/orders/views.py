@@ -27,10 +27,19 @@ def cart_page(request):
 
 
 @login_required
+def order_success_page(request):
+    return render(request, "orders/success.html")
+
+@login_required
 def producer_orders_page(request):
     if not request.user.is_producer:
         return redirect("/")
     return render(request, "orders/producer_order_list.html")
+
+
+@login_required
+def order_history_page(request):
+    return render(request, "orders/order_history.html")
 
 
 # ─── Cart Views (DESD-55, 56, 57, 58) ──────────────────────

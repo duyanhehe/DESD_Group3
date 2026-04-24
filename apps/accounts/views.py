@@ -114,9 +114,15 @@ def logout_view(request):
     return redirect("login_page")
 
 
-class UserProfileView(generics.RetrieveAPIView):
+class UserProfileView(generics.RetrieveUpdateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = UserRegistrationSerializer
 
     def get_object(self):
         return self.request.user
+
+
+def profile_page(request):
+    if not request.user.is_authenticated:
+        return redirect("login_page")
+    return render(request, "accounts/profile.html")

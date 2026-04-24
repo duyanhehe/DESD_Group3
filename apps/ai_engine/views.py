@@ -74,6 +74,7 @@ class HomepageRecommendationsView(APIView):
             }
 
             # If user is authenticated, add personalized recommendations
+            print(f"DEBUG: User {request.user} is_authenticated: {request.user.is_authenticated}")
             if request.user.is_authenticated:
                 personal = get_user_recommendations(request.user.id, limit=10)
                 if personal["recommendations"]:

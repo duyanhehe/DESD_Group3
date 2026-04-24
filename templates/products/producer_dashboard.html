@@ -21,13 +21,25 @@
                     </a>
                 </li>
                 <li>
-                    <a href="{% url 'producer_orders_page' %}" class="flex items-center gap-4 px-8 py-4 text-outline font-bold hover:bg-emerald-50 hover:text-primary transition-all md:rounded-r-full group">
+                    <a href="{% url 'orders:producer_orders_page' %}" class="flex items-center gap-4 px-8 py-4 text-outline font-bold hover:bg-emerald-50 hover:text-primary transition-all md:rounded-r-full group">
                         <span class="material-symbols-outlined group-hover:scale-110 transition-transform">receipt_long</span>
                         Orders
                     </a>
                 </li>
-
+                <li>
+                    <a href="{% url 'producer_payments' %}" class="flex items-center gap-4 px-8 py-4 text-outline font-bold hover:bg-emerald-50 hover:text-primary transition-all md:rounded-r-full group">
+                        <span class="material-symbols-outlined group-hover:scale-110 transition-transform">payments</span>
+                        Payments
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'producer_grading' %}" class="flex items-center gap-4 px-8 py-4 text-outline font-bold hover:bg-emerald-50 hover:text-primary transition-all md:rounded-r-full group">
+                        <span class="material-symbols-outlined group-hover:scale-110 transition-transform">center_focus_strong</span>
+                        AI Grading
+                    </a>
+                </li>
             </ul>
+
         </nav>
 
         <div class="p-6 mt-auto">

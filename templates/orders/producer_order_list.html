@@ -21,9 +21,15 @@
                     </a>
                 </li>
                 <li>
-                    <a href="{% url 'producer_orders_page' %}" class="flex items-center gap-4 px-8 py-4 bg-primary text-on-primary font-bold shadow-lg shadow-primary/20 md:rounded-r-full transition-all">
+                    <a href="{% url 'orders:producer_orders_page' %}" class="flex items-center gap-4 px-8 py-4 bg-primary text-on-primary font-bold shadow-lg shadow-primary/20 md:rounded-r-full transition-all">
                         <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">receipt_long</span>
                         Orders
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'producer_payments' %}" class="flex items-center gap-4 px-8 py-4 text-outline font-bold hover:bg-emerald-50 hover:text-primary transition-all md:rounded-r-full group">
+                        <span class="material-symbols-outlined group-hover:scale-110 transition-transform">payments</span>
+                        Payments
                     </a>
                 </li>
 
@@ -59,6 +65,25 @@
             <div class="h-32 bg-surface-container animate-pulse rounded-3xl"></div>
         </div>
 
+        <!-- Status Tabs -->
+        <div class="flex items-center gap-2 mb-8 overflow-x-auto pb-2 scrollbar-hide">
+            <button class="status-tab active px-6 py-2.5 rounded-full text-xs font-bold transition-all whitespace-nowrap bg-primary text-on-primary shadow-lg shadow-primary/20" data-status="all">
+                All Orders
+            </button>
+            <button class="status-tab px-6 py-2.5 rounded-full text-xs font-bold transition-all whitespace-nowrap bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high" data-status="pending">
+                Pending
+            </button>
+            <button class="status-tab px-6 py-2.5 rounded-full text-xs font-bold transition-all whitespace-nowrap bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high" data-status="confirmed">
+                Confirmed
+            </button>
+            <button class="status-tab px-6 py-2.5 rounded-full text-xs font-bold transition-all whitespace-nowrap bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high" data-status="ready">
+                Ready
+            </button>
+            <button class="status-tab px-6 py-2.5 rounded-full text-xs font-bold transition-all whitespace-nowrap bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high" data-status="delivered">
+                Delivered
+            </button>
+        </div>
+
         <!-- Orders Management -->
         <div class="bg-surface-container-lowest rounded-[32px] overflow-hidden shadow-[0_20px_40px_rgba(0,0,0,0.03)] border border-outline-variant/5">
             <div class="p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-outline-variant/10">
@@ -66,7 +91,7 @@
                 <div class="flex items-center gap-3">
                     <div class="relative">
                         <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-lg">search</span>
-                        <input type="text" placeholder="Filter orders..." class="pl-10 pr-4 py-2 bg-surface-container-high border-none rounded-full text-xs font-medium w-48 lg:w-64 focus:ring-2 focus:ring-primary/20 transition-all">
+                        <input type="text" id="order-search" placeholder="Filter orders..." class="pl-10 pr-4 py-2 bg-surface-container-high border-none rounded-full text-xs font-medium w-48 lg:w-64 focus:ring-2 focus:ring-primary/20 transition-all">
                     </div>
                 </div>
             </div>

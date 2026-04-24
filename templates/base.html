@@ -108,7 +108,13 @@
                     <a class="font-['Plus_Jakarta_Sans'] font-semibold {% if request.path == '/' %}text-emerald-700 dark:text-emerald-400 border-b-2 border-emerald-600{% else %}text-zinc-500 dark:text-zinc-400 hover:text-emerald-600{% endif %} transition-colors" href="/">Market</a>
 
                     {% if user.is_authenticated %}
-                    <a class="font-['Plus_Jakarta_Sans'] font-semibold text-zinc-500 dark:text-zinc-400 hover:text-emerald-600 transition-colors" href="/orders/cart/">Orders</a>
+                    <a class="font-['Plus_Jakarta_Sans'] font-semibold {% if 'orders/history' in request.path %}text-emerald-700 dark:text-emerald-400 border-b-2 border-emerald-600{% else %}text-zinc-500 dark:text-zinc-400 hover:text-emerald-600{% endif %} transition-colors" href="{% url 'orders:order_history_page' %}">Orders</a>
+                    {% if user.is_producer %}
+                    <a class="font-['Plus_Jakarta_Sans'] font-semibold {% if 'payments/producer' in request.path %}text-emerald-700 dark:text-emerald-400 border-b-2 border-emerald-600{% else %}text-zinc-500 dark:text-zinc-400 hover:text-emerald-600{% endif %} transition-colors" href="{% url 'producer_payments' %}">Payments</a>
+                    {% endif %}
+                    {% if user.is_staff %}
+                    <a class="font-['Plus_Jakarta_Sans'] font-semibold {% if 'payments/admin' in request.path %}text-emerald-700 dark:text-emerald-400 border-b-2 border-emerald-600{% else %}text-zinc-500 dark:text-zinc-400 hover:text-emerald-600{% endif %} transition-colors" href="{% url 'treasury_dashboard' %}">Treasury</a>
+                    {% endif %}
                     {% endif %}
                 </div>
             </div>
@@ -141,6 +147,9 @@
                         {% if user.is_producer %}
                             <a href="{% url 'producer_dashboard' %}" class="hidden sm:inline-block px-4 py-1.5 bg-secondary-container text-on-secondary-fixed-variant rounded-full text-xs font-bold uppercase tracking-widest transition-all hover:bg-emerald-200">Suite</a>
                         {% endif %}
+                        <a href="{% url 'profile_page' %}" class="p-2 text-zinc-500 hover:text-emerald-600 transition-colors" title="Profile Settings">
+                            <span class="material-symbols-outlined">settings</span>
+                        </a>
                         <form action="{% url 'logout' %}" method="post" class="inline">
                             {% csrf_token %}
                             <button type="submit" class="p-2 text-zinc-500 hover:text-tertiary transition-colors">
@@ -231,7 +240,7 @@
     </footer>
 
     <!-- AI Chat Assistant Bubble -->
-    <div class="fixed bottom-8 right-8 z-[60] flex flex-col items-end gap-4">
+    <div class="fixed bottom-24 right-6 md:bottom-8 md:right-8 z-[60] flex flex-col items-end gap-4">
         <div id="ai-chat-hint" class="bg-white/90 backdrop-blur-xl shadow-2xl rounded-2xl p-4 max-w-[280px] border border-outline-variant/10 hidden md:block opacity-0 translate-y-4 transition-all duration-500">
             <p class="text-xs text-on-surface-variant font-medium leading-relaxed">
                 Hi! Looking for something specific? I can help you find seasonal produce or local artisan stores. 🌿
@@ -257,7 +266,7 @@
             <span class="material-symbols-outlined">shopping_basket</span>
             Cart
         </a>
-        <a class="flex flex-col items-center justify-center text-zinc-400 py-1" href="{% if user.is_authenticated %}{% url 'login_page' %}{% else %}{% url 'login_page' %}{% endif %}">
+        <a class="flex flex-col items-center justify-center text-zinc-400 py-1" href="{% if user.is_authenticated %}{% url 'profile_page' %}{% else %}{% url 'login_page' %}{% endif %}">
             <span class="material-symbols-outlined">person</span>
             Account
         </a>
@@ -266,9 +275,9 @@
     <!-- Scripts -->
     {% load static %}
     <script src="{% static 'js/auth.js' %}"></script>
-    <script src="{% static 'js/chatbot.js' %}"></script>
+    <script src="{% static 'js/chatbot.js' %}?v=1.1"></script>
     <script src="{% static 'js/search.js' %}"></script>
-    <script src="{% static 'js/cart.js' %}"></script>
+    <script src="{% static 'js/cart.js' %}?v=1.1"></script>
     <script>
         // AI Chat Hint Animation
         window.addEventListener('load', () => {

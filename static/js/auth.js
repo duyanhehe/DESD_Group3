@@ -96,6 +96,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const result = await response.json();
 
                 if (response.ok) {
+                    // Store token for API requests
+                    if (result.token) {
+                        localStorage.setItem('auth_token', result.token);
+                    }
                     showFeedback('login-feedback', 'Login successful! Redirecting...', 'success');
                     
                     setTimeout(() => {
@@ -197,6 +201,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const result = await response.json();
 
                 if (response.ok) {
+                    // Store token for API requests
+                    if (result.token) {
+                        localStorage.setItem('auth_token', result.token);
+                    }
                     showFeedback(feedbackId, 'Account created! Welcome!', 'success');
                     
                     setTimeout(() => {
@@ -225,5 +233,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 submitBtn.innerText = 'Sign up';
             }
         });
+    }
+});
+
+// Clear token on logout
+document.addEventListener('submit', (e) => {
+    if (e.target.action && e.target.action.includes('logout')) {
+        localStorage.removeItem('auth_token');
     }
 });

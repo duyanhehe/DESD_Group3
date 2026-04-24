@@ -25,7 +25,8 @@ MODEL_PATH = settings.AI_RECOMMENDATION_MODEL_PATH
 def load_data():
     transactions = []
 
-    orders = Order.objects.filter(status="delivered").prefetch_related("items__product")
+    # Include all completed or active orders to build rules quickly
+    orders = Order.objects.filter(status__in=["confirmed", "ready", "delivered"]).prefetch_related("items__product")
 
     for order in orders:
         product_names = [item.product.name for item in order.items.all()]
@@ -59,7 +60,7 @@ def train():
     transactions = load_data()
     df = preprocess(transactions)
 
-    freq = apriori(df, min_support=0.2, use_colnames=True)
+    freq = apriori(df, min_support=0.01, use_colnames=True)
     rules = association_rules(freq, metric="lift", min_threshold=1.0)
 
     return rules

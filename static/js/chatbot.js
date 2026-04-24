@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!chatWindow) {
         chatWindow = document.createElement('div');
         chatWindow.id = 'ai-chat-window';
-        chatWindow.className = 'fixed bottom-28 right-8 z-[70] w-[380px] h-[550px] bg-white rounded-[32px] shadow-2xl border border-outline-variant/10 flex flex-col overflow-hidden transition-all duration-500 opacity-0 translate-y-8 pointer-events-none scale-95';
+        chatWindow.className = 'fixed bottom-24 right-4 md:bottom-28 md:right-8 z-[70] w-[calc(100%-32px)] md:w-[380px] h-[500px] md:h-[550px] bg-white rounded-[32px] shadow-2xl border border-outline-variant/10 flex flex-col overflow-hidden transition-all duration-500 opacity-0 translate-y-8 pointer-events-none scale-95';
         chatWindow.innerHTML = `
             <!-- Header -->
             <div class="p-6 bg-zinc-900 text-white flex justify-between items-center relative overflow-hidden">
@@ -85,25 +85,62 @@ document.addEventListener('DOMContentLoaded', () => {
         const msgDiv = document.createElement('div');
         msgDiv.className = `flex ${isUser ? 'justify-end' : 'justify-start'} gap-3 animate-in slide-in-from-bottom-2 duration-300`;
         
+        const parsedText = parseMarkdown(text);
+        
         if (isUser) {
             msgDiv.innerHTML = `
-                <div class="bg-zinc-900 text-white rounded-3xl rounded-tr-none p-4 shadow-md max-w-[80%]">
-                    <p class="text-xs font-medium leading-relaxed">${text}</p>
+                <div class="bg-zinc-900 text-white rounded-[24px] rounded-tr-none p-4 shadow-sm max-w-[85%]">
+                    <div class="text-sm font-medium leading-relaxed whitespace-pre-wrap">${text}</div>
                 </div>
             `;
         } else {
             msgDiv.innerHTML = `
-                <div class="w-8 h-8 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-700 flex-shrink-0">
-                    <span class="material-symbols-outlined text-sm">bubble_chart</span>
+                <div class="w-9 h-9 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-700 flex-shrink-0 shadow-sm">
+                    <span class="material-symbols-outlined text-base">bubble_chart</span>
                 </div>
-                <div class="bg-white border border-outline-variant/5 rounded-2xl rounded-tl-none p-4 shadow-sm max-w-[80%]">
-                    <p class="text-xs font-medium text-on-surface-variant leading-relaxed">${text}</p>
+                <div class="bg-white border border-outline-variant/10 rounded-[24px] rounded-tl-none p-5 shadow-sm max-w-[85%] transition-all">
+                    <div class="text-[13px] font-medium text-on-surface-variant leading-relaxed space-y-2">${parsedText}</div>
                 </div>
             `;
         }
         
         messagesArea.appendChild(msgDiv);
         messagesArea.scrollTop = messagesArea.scrollHeight;
+    }
+
+    function parseMarkdown(text) {
+        // 1. Handle Bold: **text**
+        text = text.replace(/\*\*(.*?)\*\*/g, '<strong class="text-zinc-900 font-extrabold">$1</strong>');
+        
+        // 2. Handle Lists: Start with - or * or •
+        const lines = text.split('\n');
+        let inList = false;
+        let html = '';
+        
+        lines.forEach(line => {
+            const trimmed = line.trim();
+            if (trimmed.startsWith('- ') || trimmed.startsWith('* ') || trimmed.startsWith('• ')) {
+                if (!inList) {
+                    html += '<ul class="list-none space-y-2 mt-2">';
+                    inList = true;
+                }
+                const content = trimmed.substring(2);
+                html += `<li class="flex gap-2 items-start"><span class="text-emerald-500 font-bold mt-0.5">◦</span><span>${content}</span></li>`;
+            } else {
+                if (inList) {
+                    html += '</ul>';
+                    inList = false;
+                }
+                if (trimmed) {
+                    html += `<p class="mb-2">${line}</p>`;
+                } else {
+                    html += '<div class="h-2"></div>'; // Spacing for double newlines
+                }
+            }
+        });
+        
+        if (inList) html += '</ul>';
+        return html;
     }
 
     async function handleSend() {
@@ -140,14 +177,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             document.getElementById(typingId).remove();
 
-            if (res.ok) {
-                appendMessage('assistant', data.response);
+            if (res.ok && data.success) {
+                appendMessage('assistant', data.reply || data.response || "No reply found.");
             } else {
-                appendMessage('assistant', "I'm sorry, I'm finding it hard to communicate with my local intelligence server right now.");
+                appendMessage('assistant', "AI đang offline, vui lòng thử lại sau (Máy chủ trí tuệ nhân tạo đang nghỉ ngơi 🌿)");
             }
         } catch (e) {
             document.getElementById(typingId).remove();
-            appendMessage('assistant', "It looks like my local intelligence system is offline. I'll be back as soon as possible!");
+            appendMessage('assistant', "AI đang offline, vui lòng thử lại sau. Hệ thống đang gặp sự cố kết nối.");
         }
     }
 

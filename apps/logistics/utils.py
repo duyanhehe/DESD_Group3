@@ -30,6 +30,8 @@ def geocode_postcode(postcode: str) -> tuple[float, float] | None:
 
     # Check cache first
     cached = cache.get(cache_key)
+    if cached == "NONE":
+        return None
     if cached:
         return cached
 
@@ -44,7 +46,7 @@ def geocode_postcode(postcode: str) -> tuple[float, float] | None:
         headers = {"User-Agent": "DESD-Group3-FoodMiles/1.0"}
 
         response = requests.get(
-            NOMINATIM_URL, params=params, headers=headers, timeout=10
+            NOMINATIM_URL, params=params, headers=headers, timeout=5
         )
         response.raise_for_status()
         data = response.json()
@@ -56,6 +58,9 @@ def geocode_postcode(postcode: str) -> tuple[float, float] | None:
             # Cache the result
             cache.set(cache_key, result, CACHE_TIMEOUT)
             return result
+        else:
+            # Cache negative result to avoid hammering the API
+            cache.set(cache_key, "NONE", CACHE_TIMEOUT)
 
     except (requests.RequestException, KeyError, ValueError):
         # Log error but don't crash - return None
@@ -101,6 +106,7 @@ def calculate_distance_between_postcodes(
 ) -> float | None:
     """
     Calculate the straight-line distance between two postcodes.
+    Results are cached to avoid redundant geocoding API calls.
 
     Args:
         postcode1: First postcode
@@ -109,10 +115,35 @@ def calculate_distance_between_postcodes(
     Returns:
         Distance in miles or None if calculation fails
     """
+    if not postcode1 or not postcode2:
+        return None
+
+    # Normalize postcodes for caching
+    pc1 = postcode1.strip().upper().replace(" ", "")
+    pc2 = postcode2.strip().upper().replace(" ", "")
+
+    # Ensure consistent key regardless of order
+    sorted_pcs = sorted([pc1, pc2])
+    cache_key = f"dist:{sorted_pcs[0]}:{sorted_pcs[1]}"
+
+    # Check cache first
+    cached = cache.get(cache_key)
+    if cached == "NONE":
+        return None
+    if cached is not None:
+        return cached
+
     coords1 = geocode_postcode(postcode1)
     coords2 = geocode_postcode(postcode2)
 
     if coords1 is None or coords2 is None:
+        # Cache the failure to avoid re-calculating
+        cache.set(cache_key, "NONE", CACHE_TIMEOUT)
         return None
 
-    return haversine_distance(coords1[0], coords1[1], coords2[0], coords2[1])
+    distance = haversine_distance(coords1[0], coords1[1], coords2[0], coords2[1])
+
+    # Cache the distance result
+    cache.set(cache_key, distance, CACHE_TIMEOUT)
+
+    return distance

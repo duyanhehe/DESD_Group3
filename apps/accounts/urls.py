@@ -7,12 +7,14 @@ from .views import (
     UserProfileView,
     login_page,
     register_page,
+    profile_page,
 )
 
 urlpatterns = [
     # Template Views
     path("login/", login_page, name="login_page"),
     path("register/", register_page, name="register_page"),
+    path("profile/", profile_page, name="profile_page"),
     # API Views
     path("api/v1/register/", RegistrationView.as_view(), name="api_register"),
     path("api/v1/login/", LoginView.as_view(), name="api_login"),

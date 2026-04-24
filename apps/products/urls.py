@@ -12,6 +12,7 @@ from .views import (
     add_product,
     edit_product,
     delete_product,
+    producer_grading_page,
     ProductSearchView,
     search_results_page,
 )
@@ -22,6 +23,7 @@ urlpatterns = [
     path("search/", search_results_page, name="search_page"),
     path("<int:id>/", product_detail_page, name="product_detail_page"),
     path("producer/dashboard/", producer_dashboard, name="producer_dashboard"),
+    path("producer/grading/", producer_grading_page, name="producer_grading"),
     path("producer/add/", add_product, name="add_product"),
     path("producer/edit/<int:id>/", edit_product, name="edit_product"),
     path("producer/delete/<int:id>/", delete_product, name="delete_product"),

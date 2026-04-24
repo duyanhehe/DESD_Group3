@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Order History - Food Network{% endblock %}
+
+{% block content %}
+<div class="max-w-screen-xl mx-auto px-6 py-12 lg:py-20">
+    <!-- Header Section -->
+    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-8 mb-12 border-b border-outline-variant/10 pb-12">
+        <div class="max-w-2xl">
+            <span class="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-3 block">Purchase Ledger</span>
+            <h1 class="font-headline text-4xl lg:text-6xl font-extrabold text-on-background mb-4 tracking-tight">Order History</h1>
+            <p class="text-on-surface-variant text-lg font-medium leading-relaxed">Track your seasonal harvests and reorder your favorite farm-direct products.</p>
+        </div>
+    </div>
+
+    <!-- Orders List -->
+    <div id="orders-container" class="min-h-[400px]">
+        <!-- Skeleton Loading -->
+        <div class="space-y-6">
+            <div class="h-32 bg-surface-container-low rounded-[32px] animate-pulse"></div>
+            <div class="h-32 bg-surface-container-low rounded-[32px] animate-pulse"></div>
+            <div class="h-32 bg-surface-container-low rounded-[32px] animate-pulse"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Order Details Modal -->
+<div id="order-modal" class="fixed inset-0 z-[100] hidden overflow-y-auto" aria-modal="true" role="dialog">
+    <div class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="closeOrderModal()"></div>
+    <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+        <div id="order-modal-panel" class="relative transform overflow-hidden rounded-[40px] bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-3xl animate-in fade-in slide-in-from-bottom-8 duration-500">
+            <div id="order-modal-content">
+                <!-- Content injected via order_history.js -->
+            </div>
+            <button onclick="closeOrderModal()" class="absolute top-8 right-8 p-2 rounded-full hover:bg-zinc-100 transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/order_history.js' %}"></script>
+{% endblock %}

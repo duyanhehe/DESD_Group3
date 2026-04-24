@@ -1,8 +1,36 @@
 document.addEventListener('DOMContentLoaded', () => {
     fetchOrders();
+    setupFilters();
 });
 
+function setupFilters() {
+    const tabs = document.querySelectorAll('.status-tab');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => {
+                t.classList.remove('active', 'bg-primary', 'text-on-primary', 'shadow-lg', 'shadow-primary/20');
+                t.classList.add('bg-surface-container-low', 'text-on-surface-variant');
+            });
+            tab.classList.add('active', 'bg-primary', 'text-on-primary', 'shadow-lg', 'shadow-primary/20');
+            tab.classList.remove('bg-surface-container-low', 'text-on-surface-variant');
+            
+            currentFilter = tab.dataset.status;
+            renderTable();
+        });
+    });
+
+    const searchInput = document.getElementById('order-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            currentSearch = e.target.value.toLowerCase();
+            renderTable();
+        });
+    }
+}
+
 let ordersData = [];
+let currentFilter = 'all';
+let currentSearch = '';
 let currentOrderForStatus = null;
 let targetStatusStr = null;
 
@@ -64,20 +92,54 @@ function getCookie(name) {
 }
 
 async function fetchOrders() {
+    const token = localStorage.getItem('auth_token');
+    const headers = {
+        'Accept': 'application/json',
+    };
+    
+    // Only add Token if it looks like a real, non-placeholder token
+    // Real tokens are typically 40+ characters. 'null', 'undefined' etc are short.
+    const isValidToken = token && 
+                         token !== 'null' && 
+                         token !== 'undefined' && 
+                         token.trim().length > 20;
+
+    if (isValidToken) {
+        headers['Authorization'] = `Token ${token}`;
+    }
+
     try {
-        const res = await fetch('/orders/api/v1/producer/');
-        if (!res.ok) throw new Error('Failed to fetch orders');
+        const res = await fetch('/orders/api/v1/producer/', { headers });
+        
+        if (res.status === 401 && isValidToken) {
+            console.warn('Stored token is invalid/expired. Clearing and retrying with session...');
+            localStorage.removeItem('auth_token');
+            const retryRes = await fetch('/orders/api/v1/producer/', { 
+                headers: { 'Accept': 'application/json' } 
+            });
+            if (retryRes.ok) {
+                ordersData = await retryRes.json();
+                renderStats();
+                renderTable();
+                return;
+            }
+            throw new Error('Unauthorized');
+        }
+        
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         
         ordersData = await res.json();
         renderStats();
         renderTable();
     } catch (e) {
         console.error(e);
+        const errorMsg = e.message || 'Failed to sync with order relay.';
         document.getElementById('orders-tbody').innerHTML = `
             <tr>
                 <td colspan="6" class="px-8 py-20 text-center">
                     <span class="material-symbols-outlined text-4xl text-error mb-4">error</span>
-                    <p class="font-bold text-on-surface-variant">Failed to sync with order relay.</p>
+                    <p class="font-bold text-on-surface-variant">${errorMsg}</p>
+                    <p class="text-xs text-outline mt-2">Ensure you are logged in as a Producer.</p>
                 </td>
             </tr>
         `;
@@ -132,20 +194,36 @@ function renderStats() {
 function renderTable() {
     const tbody = document.getElementById('orders-tbody');
     
-    if (ordersData.length === 0) {
+    let filtered = ordersData;
+    
+    // Status Filter
+    if (currentFilter !== 'all') {
+        filtered = filtered.filter(o => o.status === currentFilter);
+    }
+    
+    // Search Filter (ID or Customer Name)
+    if (currentSearch) {
+        filtered = filtered.filter(o => 
+            o.id.toString().includes(currentSearch) || 
+            o.customer_name.toLowerCase().includes(currentSearch) ||
+            o.customer_email.toLowerCase().includes(currentSearch)
+        );
+    }
+
+    if (filtered.length === 0) {
         tbody.innerHTML = `
             <tr>
                 <td colspan="6" class="px-8 py-20 text-center">
                     <span class="material-symbols-outlined text-5xl text-outline mb-6">inbox</span>
-                    <h4 class="font-headline text-xl font-bold mb-1">Quiet on the farm</h4>
-                    <p class="text-on-surface-variant text-sm font-medium">No customer requests have arrived yet.</p>
+                    <h4 class="font-headline text-xl font-bold mb-1">No orders found</h4>
+                    <p class="text-on-surface-variant text-sm font-medium">Try adjusting your filters or search terms.</p>
                 </td>
             </tr>
         `;
         return;
     }
 
-    tbody.innerHTML = ordersData.map(order => {
+    tbody.innerHTML = filtered.map(order => {
         const style = STATUS_STYLES[order.status] || STATUS_STYLES['pending'];
         const allowed = VALID_TRANSITIONS[order.status] || [];
         
@@ -278,13 +356,19 @@ document.getElementById('status-modal-confirm').addEventListener('click', async 
     btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-sm">sync</span> Syncing...`;
     btn.disabled = true;
 
+    const token = localStorage.getItem('auth_token');
+    const headers = {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+    };
+    if (token && token !== 'null') {
+        headers['Authorization'] = `Token ${token}`;
+    }
+
     try {
         const res = await fetch(`/orders/api/v1/${currentOrderForStatus}/status/`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-            },
+            headers: headers,
             body: JSON.stringify({ status: targetStatusStr, note: note })
         });
         
@@ -304,8 +388,14 @@ document.getElementById('status-modal-confirm').addEventListener('click', async 
 });
 
 window.viewHistory = async function(orderId) {
+    const token = localStorage.getItem('auth_token');
+    const headers = {};
+    if (token && token !== 'null') {
+        headers['Authorization'] = `Token ${token}`;
+    }
+
     try {
-        const res = await fetch(`/orders/api/v1/${orderId}/history/`);
+        const res = await fetch(`/orders/api/v1/${orderId}/history/`, { headers });
         if (!res.ok) throw new Error('Failed to fetch history');
         
         const history = await res.json();

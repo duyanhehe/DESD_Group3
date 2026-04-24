@@ -142,6 +142,12 @@ class Order(models.Model):
     def can_transition_to(self, new_status):
         return new_status in self.VALID_TRANSITIONS.get(self.status, [])
 
+    def save(self, *args, **kwargs):
+        from django.utils.timezone import now
+        if self.status == self.DELIVERED and not self.delivered_at:
+            self.delivered_at = now()
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"Order #{self.pk} — {self.customer.username} ({self.status})"
 

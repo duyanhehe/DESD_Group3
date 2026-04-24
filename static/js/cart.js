@@ -1,4 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Check for payment cancellation
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('order') === 'cancel') {
+        window.showToast('Payment cancelled. Your items are still in the basket.', 'error');
+        // Clean up URL without refreshing
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     // Global Cart Badge Count
     refreshCartBadge();
 
@@ -103,7 +111,7 @@ window.addToCart = async function(productId, quantity = 1) {
 };
 
 // Lightweight toast — no library needed
-function showToast(message, type = 'error') {
+window.showToast = function(message, type = 'error') {
     const existing = document.getElementById('fn-toast');
     if (existing) existing.remove();
 
@@ -127,7 +135,7 @@ function showToast(message, type = 'error') {
         toast.style.opacity = '0';
         toast.style.transform = 'translateX(-50%) translateY(12px)';
         setTimeout(() => toast.remove(), 300);
-    }, 2500);
+    }, 4000); // Increased to 4s for better visibility
 }
 
 
@@ -188,29 +196,45 @@ async function clearCart() {
 async function checkout() {
     const btn = document.getElementById('checkout-btn');
     const originalText = btn.innerHTML;
-    btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-sm">sync</span> Finalizing...`;
+    btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-sm">sync</span> Redirecting to Stripe...`;
     btn.disabled = true;
 
     try {
-        const res = await fetch('/orders/api/v1/create/', {
+        const token = localStorage.getItem('auth_token');
+        const headers = {
+            'X-CSRFToken': getCookie('csrftoken')
+        };
+        
+        if (token) {
+            headers['Authorization'] = `Token ${token}`;
+        }
+
+        const res = await fetch('/payments/api/v1/checkout/', {
             method: 'POST',
-            headers: { 'X-CSRFToken': getCookie('csrftoken') }
+            headers: headers
         });
+        
         const data = await res.json();
+        
         if (!res.ok) {
             if (res.status === 401 || res.status === 403) {
                 window.showAuthModal(window.location.pathname);
             } else {
-                showToast(data.error || 'Checkout failed.', 'error');
+                window.showToast(data.error || 'Checkout failed.', 'error');
             }
             btn.innerHTML = originalText;
             btn.disabled = false;
+        } else if (data.checkout_url) {
+            // Redirect to Stripe
+            window.location.href = data.checkout_url;
         } else {
-            // Redirect to homepage with success message
-            window.location.href = '/?order=success';
+            window.showToast('Could not initiate payment session.', 'error');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
         }
     } catch (e) {
         console.error(e);
+        window.showToast('Network error during checkout.', 'error');
         btn.innerHTML = originalText;
         btn.disabled = false;
     }
@@ -230,17 +254,35 @@ function updateCartBadge(count) {
     }
 }
 
+// ─── Shared Fetch Cache ──────────────────────────────────────
+// Prevents multiple parallel requests to the heavy cart API
+let _pendingCartFetch = null;
+
+async function getCartData() {
+    if (_pendingCartFetch) return _pendingCartFetch;
+
+    _pendingCartFetch = fetch('/orders/api/v1/cart/').then(async res => {
+        if (!res.ok) {
+            _pendingCartFetch = null;
+            throw new Error('Cart fetch failed');
+        }
+        const data = await res.json();
+        _pendingCartFetch = null; // Clear after success
+        return data;
+    }).catch(err => {
+        _pendingCartFetch = null;
+        throw err;
+    });
+
+    return _pendingCartFetch;
+}
+
 async function refreshCartBadge() {
     try {
-        const res = await fetch('/orders/api/v1/cart/');
-        if (res.ok) {
-            const data = await res.json();
-            // Show total quantity, not distinct product count
-            const totalQty = data.items ? data.items.reduce((sum, i) => sum + i.quantity, 0) : 0;
-            updateCartBadge(totalQty);
-        } else {
-            updateCartBadge(0);
-        }
+        const data = await getCartData();
+        // Show total quantity, not distinct product count
+        const totalQty = data.items ? data.items.reduce((sum, i) => sum + i.quantity, 0) : 0;
+        updateCartBadge(totalQty);
     } catch (e) {
         updateCartBadge(0);
     }
@@ -308,21 +350,7 @@ async function renderCartPage() {
     const checkoutBtn = document.getElementById('checkout-btn');
     
     try {
-        const res = await fetch('/orders/api/v1/cart/');
-        
-        if (!res.ok) {
-            cartContent.innerHTML = `
-                <div class="flex flex-col items-center justify-center py-20 text-center bg-surface-container-low rounded-[32px] border border-dashed border-outline-variant">
-                    <span class="material-symbols-outlined text-6xl text-outline mb-6">lock</span>
-                    <h3 class="font-headline text-2xl font-bold mb-2">Member Access Only</h3>
-                    <p class="text-on-surface-variant font-medium mb-8">Please log in to review your cart and proceed to checkout.</p>
-                    <a href="/accounts/login/" class="px-8 py-3 bg-primary text-on-primary rounded-full font-bold shadow-lg shadow-primary/20">Sign In</a>
-                </div>
-            `;
-            return;
-        }
-
-        const data = await res.json();
+        const data = await getCartData();
         
         if (!data.items || data.items.length === 0) {
             cartContent.innerHTML = `
@@ -333,8 +361,8 @@ async function renderCartPage() {
                     <a href="/" class="px-8 py-4 bg-primary text-on-primary rounded-full font-bold shadow-xl shadow-primary/20 hover:scale-105 transition-all">Start Shopping</a>
                 </div>
             `;
-            clearBtn.classList.add('hidden');
-            checkoutBtn.classList.add('hidden');
+            if (clearBtn) clearBtn.classList.add('hidden');
+            if (checkoutBtn) checkoutBtn.classList.add('hidden');
             return;
         }
 
@@ -344,8 +372,8 @@ async function renderCartPage() {
             fetchCartRecommendations(itemNames);
         }
 
-        clearBtn.classList.remove('hidden');
-        checkoutBtn.classList.remove('hidden');
+        if (clearBtn) clearBtn.classList.remove('hidden');
+        if (checkoutBtn) checkoutBtn.classList.remove('hidden');
 
         let html = '<div class="space-y-12">';
         
@@ -358,7 +386,21 @@ async function renderCartPage() {
                         </div>
                         <div>
                             <h4 class="font-headline font-bold text-lg text-on-background">${item.product_name}</h4>
-                            <p class="text-sm font-bold text-primary">$${item.unit_price} <span class="text-xs text-outline font-medium tracking-tight">/ ${item.unit}</span></p>
+                            <div class="flex items-center gap-3">
+                                <p class="text-sm font-bold text-primary">$${item.unit_price} <span class="text-xs text-outline font-medium tracking-tight">/ ${item.unit}</span></p>
+                                ${(item.food_miles !== null && item.food_miles !== undefined) ? `
+                                <div class="flex items-center gap-1 text-xs text-outline group-hover:text-emerald-600 transition-colors px-2 py-0.5 bg-surface-container-high rounded-full cursor-help" title="Food Miles = khoảng cách từ nông trại đến bạn">
+                                    <span class="material-symbols-outlined text-[14px]">location_on</span>
+                                    <span class="font-bold">${Number(item.food_miles).toFixed(1)} km</span>
+                                    ${item.food_miles < 50 ? '<span class="material-symbols-outlined text-[14px] text-emerald-500 ml-0.5">eco</span><span class="text-[9px] uppercase font-bold text-emerald-600 tracking-widest ml-0.5">Local</span>' : ''}
+                                </div>
+                                ` : `
+                                <div class="flex items-center gap-1 text-[10px] text-outline/50 px-2 py-0.5 bg-surface-container-high rounded-full cursor-help" title="Không thể tính toán khoảng cách. Vui lòng cập nhật mã bưu điện (postcode) hợp lệ trong hồ sơ của bạn.">
+                                    <span class="material-symbols-outlined text-[14px]">location_off</span>
+                                    <span class="font-bold uppercase tracking-widest">N/A</span>
+                                </div>
+                                `}
+                            </div>
                         </div>
                     </div>
                     
@@ -412,7 +454,18 @@ async function renderCartPage() {
                 <div class="relative z-10">
                     <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-[0.3em] mb-3 block">Final Calculation</span>
                     <h3 class="font-headline text-3xl font-extrabold mb-1">Order Summary</h3>
-                    <p class="text-zinc-400 text-sm font-medium">Includes all service fees and local delivery.</p>
+                    <p class="text-zinc-400 text-sm font-medium mb-3">Includes all service fees and local delivery.</p>
+                    ${(data.total_food_miles !== null && data.total_food_miles !== undefined) ? `
+                    <div class="inline-flex items-center gap-2 bg-emerald-900/40 border border-emerald-500/20 px-3 py-1.5 rounded-full cursor-help" title="Food Miles = khoảng cách từ nông trại đến bạn">
+                        <span class="material-symbols-outlined text-emerald-400 text-sm">eco</span>
+                        <span class="text-[11px] font-bold text-emerald-100 uppercase tracking-widest">Total Food Miles: ${Number(data.total_food_miles).toFixed(1)} km</span>
+                    </div>
+                    ` : `
+                    <div class="inline-flex items-center gap-2 bg-zinc-800/80 border border-zinc-700/50 px-3 py-1.5 rounded-full cursor-help" title="Không thể tính toán do thiếu mã bưu điện hợp lệ.">
+                        <span class="material-symbols-outlined text-zinc-500 text-sm">location_off</span>
+                        <span class="text-[11px] font-bold text-zinc-400 uppercase tracking-widest">Total Food Miles: N/A</span>
+                    </div>
+                    `}
                 </div>
                 
                 <div class="flex items-center gap-12 relative z-10 w-full md:w-auto">
