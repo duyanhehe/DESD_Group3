@@ -2,29 +2,99 @@
   {
     "model": "categories.category",
     "fields": {
-      "name": "Fruits",
-      "slug": "fruits"
+      "name": "Apple",
+      "slug": "apple"
     }
   },
   {
     "model": "categories.category",
     "fields": {
-      "name": "Vegetables",
-      "slug": "vegetables"
+      "name": "Banana",
+      "slug": "banana"
     }
   },
   {
     "model": "categories.category",
     "fields": {
-      "name": "Dairy",
-      "slug": "dairy"
+      "name": "Bellpepper",
+      "slug": "bellpepper"
     }
   },
   {
     "model": "categories.category",
     "fields": {
-      "name": "Compost & Grade 2",
-      "slug": "compost"
+      "name": "Carrot",
+      "slug": "carrot"
+    }
+  },
+  {
+    "model": "categories.category",
+    "fields": {
+      "name": "Cucumber",
+      "slug": "cucumber"
+    }
+  },
+  {
+    "model": "categories.category",
+    "fields": {
+      "name": "Grape",
+      "slug": "grape"
+    }
+  },
+  {
+    "model": "categories.category",
+    "fields": {
+      "name": "Guava",
+      "slug": "guava"
+    }
+  },
+  {
+    "model": "categories.category",
+    "fields": {
+      "name": "Jujube",
+      "slug": "jujube"
+    }
+  },
+  {
+    "model": "categories.category",
+    "fields": {
+      "name": "Mango",
+      "slug": "mango"
+    }
+  },
+  {
+    "model": "categories.category",
+    "fields": {
+      "name": "Orange",
+      "slug": "orange"
+    }
+  },
+  {
+    "model": "categories.category",
+    "fields": {
+      "name": "Pomegranate",
+      "slug": "pomegranate"
+    }
+  },
+  {
+    "model": "categories.category",
+    "fields": {
+      "name": "Potato",
+      "slug": "potato"
+    }
+  },
+  {
+    "model": "categories.category",
+    "fields": {
+      "name": "Strawberry",
+      "slug": "strawberry"
+    }
+  },
+  {
+    "model": "categories.category",
+    "fields": {
+      "name": "Tomato",
+      "slug": "tomato"
     }
   }
 ]
