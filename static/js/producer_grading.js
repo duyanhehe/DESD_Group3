@@ -151,7 +151,8 @@ function renderResults(data) {
 
     // 2. Metrics
     if (data.metrics) {
-        const defectPct = data.metrics.defect_pct || 0;
+        // Backend key: cv_defect_estimation (not defect_pct)
+        const defectPct = data.metrics.cv_defect_estimation || 0;
         document.getElementById('metric-defect-val').textContent = `${defectPct.toFixed(1)}%`;
         document.getElementById('metric-defect-bar').style.width = `${Math.min(defectPct, 100)}%`;
         // Color code defect bar (high defect is bad/red, low is good/green)
@@ -160,17 +161,34 @@ function renderResults(data) {
 
         const sizeScore = data.metrics.size_score || 0;
         document.getElementById('metric-size-val').textContent = sizeScore.toFixed(2);
-        document.getElementById('metric-size-bar').style.width = `${(sizeScore * 100)}%`;
+        document.getElementById('metric-size-bar').style.width = `${Math.min(sizeScore, 100)}%`;
 
-        const shapeScore = data.metrics.shape_score || 0;
+        // Backend key: shape_solidity (not shape_score)
+        const shapeScore = data.metrics.shape_solidity || 0;
         document.getElementById('metric-shape-val').textContent = shapeScore.toFixed(2);
-        document.getElementById('metric-shape-bar').style.width = `${(shapeScore * 100)}%`;
+        document.getElementById('metric-shape-bar').style.width = `${Math.min(shapeScore, 100)}%`;
 
         const textureDensity = data.metrics.texture_density || 0;
         document.getElementById('metric-texture-val').textContent = textureDensity.toFixed(2);
-        document.getElementById('metric-texture-bar').style.width = `${(textureDensity * 100)}%`;
+        document.getElementById('metric-texture-bar').style.width = `${Math.min(textureDensity * 100, 100)}%`;
 
-        document.getElementById('metric-ripeness-val').textContent = data.metrics.ripeness || 'Unknown';
+        // Backend key: ripeness_pct (number 0-100), convert to human-readable label
+        const ripePct = data.metrics.ripeness_pct;
+        let ripenessLabel;
+        if (ripePct === undefined || ripePct === null) {
+            ripenessLabel = 'N/A';
+        } else if (ripePct === 0) {
+            ripenessLabel = 'Unripe';
+        } else if (ripePct < 30) {
+            ripenessLabel = 'Unripe (' + ripePct.toFixed(1) + '%)';
+        } else if (ripePct < 60) {
+            ripenessLabel = 'Partially Ripe (' + ripePct.toFixed(1) + '%)';
+        } else if (ripePct < 85) {
+            ripenessLabel = 'Ripe (' + ripePct.toFixed(1) + '%)';
+        } else {
+            ripenessLabel = 'Fully Ripe (' + ripePct.toFixed(1) + '%)';
+        }
+        document.getElementById('metric-ripeness-val').textContent = ripenessLabel;
     }
 
     // 3. XAI Reasons
