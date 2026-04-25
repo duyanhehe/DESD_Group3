@@ -10,9 +10,9 @@ class ProductSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source="category.name", read_only=True)
     category_slug = serializers.CharField(source="category.slug", read_only=True)
 
-    # accept allergen IDs
+    # accept allergen IDs (optional)
     allergens = serializers.PrimaryKeyRelatedField(
-        queryset=Allergen.objects.all(), many=True, required=True
+        queryset=Allergen.objects.all(), many=True, required=False
     )
 
     # show allergen names
@@ -26,6 +26,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "description",
             "price",
             "stock_quantity",
+            "image",
             "producer",
             "producer_name",
             "category",
@@ -48,14 +49,8 @@ class ProductSerializer(serializers.ModelSerializer):
     def get_allergen_names(self, obj):
         return [a.name for a in obj.allergens.all()]
 
-    # enforce requirement
-    def validate_allergens(self, value):
-        if not value or len(value) == 0:
-            raise serializers.ValidationError("You must specify at least one allergen.")
-        return value
-
     def create(self, validated_data):
-        allergens = validated_data.pop("allergens")
+        allergens = validated_data.pop("allergens", [])
         product = Product.objects.create(**validated_data)
         product.allergens.set(allergens)
         return product
