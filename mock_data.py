@@ -157,19 +157,21 @@ def seed():
     # ================================================================
     print("\n[2/4] Creating Categories...")
 
-    cat_fruits, _ = Category.objects.get_or_create(
-        name="Fruits", defaults={"slug": "fruits"}
-    )
-    cat_veg, _ = Category.objects.get_or_create(
-        name="Vegetables", defaults={"slug": "vegetables"}
-    )
-    cat_dairy, _ = Category.objects.get_or_create(
-        name="Dairy", defaults={"slug": "dairy"}
-    )
-    cat_compost, _ = Category.objects.get_or_create(
-        name="Compost & Grade 2", defaults={"slug": "compost"}
-    )
-    print(f"  ✓ {cat_fruits} | {cat_veg} | {cat_dairy} | {cat_compost}")
+    cat_apple, _ = Category.objects.get_or_create(name="Apple", defaults={"slug": "apple"})
+    cat_banana, _ = Category.objects.get_or_create(name="Banana", defaults={"slug": "banana"})
+    cat_bellpepper, _ = Category.objects.get_or_create(name="Bellpepper", defaults={"slug": "bellpepper"})
+    cat_carrot, _ = Category.objects.get_or_create(name="Carrot", defaults={"slug": "carrot"})
+    cat_cucumber, _ = Category.objects.get_or_create(name="Cucumber", defaults={"slug": "cucumber"})
+    cat_grape, _ = Category.objects.get_or_create(name="Grape", defaults={"slug": "grape"})
+    cat_guava, _ = Category.objects.get_or_create(name="Guava", defaults={"slug": "guava"})
+    cat_jujube, _ = Category.objects.get_or_create(name="Jujube", defaults={"slug": "jujube"})
+    cat_mango, _ = Category.objects.get_or_create(name="Mango", defaults={"slug": "mango"})
+    cat_orange, _ = Category.objects.get_or_create(name="Orange", defaults={"slug": "orange"})
+    cat_pomegranate, _ = Category.objects.get_or_create(name="Pomegranate", defaults={"slug": "pomegranate"})
+    cat_potato, _ = Category.objects.get_or_create(name="Potato", defaults={"slug": "potato"})
+    cat_strawberry, _ = Category.objects.get_or_create(name="Strawberry", defaults={"slug": "strawberry"})
+    cat_tomato, _ = Category.objects.get_or_create(name="Tomato", defaults={"slug": "tomato"})
+    print(f"  ✓ Categories: Apple, Banana, Bellpepper, Carrot, Cucumber, Grape, Guava, Jujube, Mango, Orange, Pomegranate, Potato, Strawberry, Tomato")
 
     # ================================================================
     # 3. ALLERGENS — Use existing 14 from fixtures
@@ -216,6 +218,7 @@ def seed():
         price,
         unit,
         stock_quantity,
+        image=None,
         is_available=True,
         available_from=None,
         available_to=None,
@@ -230,6 +233,10 @@ def seed():
         """
         nonlocal created_count, skipped_count
 
+        # Default image if not provided
+        if image is None:
+            image = f"products/{category.slug}/{name.lower().replace(' ', '_')}.jpg"
+
         product, created = Product.objects.get_or_create(
             name=name,
             defaults={
@@ -239,6 +246,7 @@ def seed():
                 "price": Decimal(str(price)),
                 "unit": unit,
                 "stock_quantity": stock_quantity,
+                "image": image,
                 "is_available": is_available,
                 "available_from": available_from,
                 "available_to": available_to,
@@ -271,7 +279,7 @@ def seed():
     create_product(
         name="Fresh Fuji Apple",
         producer=farmer1,
-        category=cat_fruits,
+        category=cat_apple,
         description="Crisp and sweet Fuji apples, freshly picked from our orchard. "
         "Perfect for snacking, baking, or salads.",
         price=3.50,
@@ -281,7 +289,7 @@ def seed():
     create_product(
         name="Cavendish Banana",
         producer=farmer1,
-        category=cat_fruits,
+        category=cat_banana,
         description="Ripe yellow Cavendish bananas. Rich in potassium and "
         "naturally sweet. Sold in bunches.",
         price=1.20,
@@ -291,7 +299,7 @@ def seed():
     create_product(
         name="Valencia Orange",
         producer=farmer1,
-        category=cat_fruits,
+        category=cat_orange,
         description="Juicy Valencia oranges, ideal for fresh juice or eating. "
         "Sourced from our sunny grove.",
         price=2.80,
@@ -299,9 +307,9 @@ def seed():
         stock_quantity=120,
     )
     create_product(
-        name="Seedless Watermelon",
+        name="Fresh Guava",
         producer=farmer2,
-        category=cat_fruits,
+        category=cat_guava,
         description="Large seedless watermelon, perfect for summer gatherings. "
         "Sweet and refreshing.",
         price=5.00,
@@ -311,7 +319,7 @@ def seed():
     create_product(
         name="Green Grapes",
         producer=farmer2,
-        category=cat_fruits,
+        category=cat_grape,
         description="Plump green seedless grapes. Great for snacking, "
         "cheese boards, or freezing as treats.",
         price=4.20,
@@ -319,9 +327,9 @@ def seed():
         stock_quantity=80,
     )
     create_product(
-        name="Fresh Blueberries",
+        name="Fresh Jujube",
         producer=farmer1,
-        category=cat_fruits,
+        category=cat_jujube,
         description="Hand-picked blueberries, bursting with antioxidants. "
         "Perfect for smoothies, cereals, or baking.",
         price=6.50,
@@ -331,7 +339,7 @@ def seed():
     create_product(
         name="Ripe Mango",
         producer=farmer2,
-        category=cat_fruits,
+        category=cat_mango,
         description="Sweet and fragrant ripe mangoes. Ready to eat. "
         "Excellent for desserts and tropical dishes.",
         price=2.50,
@@ -341,7 +349,7 @@ def seed():
     create_product(
         name="Fresh Tomato",
         producer=farmer1,
-        category=cat_veg,
+        category=cat_tomato,
         description="Vine-ripened tomatoes with rich, full flavour. "
         "Ideal for salads, sauces, and sandwiches.",
         price=2.00,
@@ -351,7 +359,7 @@ def seed():
     create_product(
         name="Organic Carrot",
         producer=farmer2,
-        category=cat_veg,
+        category=cat_carrot,
         description="Freshly harvested organic carrots. Naturally sweet, "
         "great for roasting, juicing, or raw snacking.",
         price=1.80,
@@ -361,7 +369,7 @@ def seed():
     create_product(
         name="Fresh Bell Pepper",
         producer=farmer1,
-        category=cat_veg,
+        category=cat_bellpepper,
         description="Mixed red, yellow, and green bell peppers. "
         "Crunchy and versatile for stir-fries and salads.",
         price=3.00,
@@ -371,7 +379,7 @@ def seed():
     create_product(
         name="Cherry Tomato",
         producer=farmer2,
-        category=cat_veg,
+        category=cat_tomato,
         description="Sweet cherry tomatoes, perfect for salads and pasta. "
         "Grown in our greenhouse for year-round supply.",
         price=3.50,
@@ -379,9 +387,9 @@ def seed():
         stock_quantity=110,
     )
     create_product(
-        name="Baby Spinach",
+        name="Fresh Potato",
         producer=farmer1,
-        category=cat_veg,
+        category=cat_potato,
         description="Tender baby spinach leaves. Pre-washed and ready to eat. "
         "Rich in iron and vitamins.",
         price=2.50,
@@ -389,9 +397,9 @@ def seed():
         stock_quantity=130,
     )
     create_product(
-        name="Sweet Corn",
+        name="Fresh Pomegranate",
         producer=farmer2,
-        category=cat_veg,
+        category=cat_pomegranate,
         description="Fresh corn on the cob, super sweet variety. "
         "Perfect for grilling, boiling, or barbecues.",
         price=1.50,
@@ -401,7 +409,7 @@ def seed():
     create_product(
         name="Fresh Cucumber",
         producer=farmer1,
-        category=cat_veg,
+        category=cat_cucumber,
         description="Crisp and cool cucumbers. Grown hydroponically for "
         "consistent quality and taste.",
         price=0.90,
@@ -409,9 +417,9 @@ def seed():
         stock_quantity=140,
     )
     create_product(
-        name="Broccoli Florets",
+        name="Fresh Strawberry",
         producer=farmer2,
-        category=cat_veg,
+        category=cat_strawberry,
         description="Fresh broccoli florets, pre-cut and ready to cook. "
         "Packed with vitamins C and K.",
         price=2.20,
@@ -444,7 +452,7 @@ def seed():
     create_product(
         name="Winter Strawberry",
         producer=farmer1,
-        category=cat_fruits,
+        category=cat_strawberry,
         description="Sweet winter strawberries grown in our heated greenhouse. "
         "Available during colder months only.",
         price=5.50,
@@ -457,7 +465,7 @@ def seed():
     create_product(
         name="Summer Mango",
         producer=farmer2,
-        category=cat_fruits,
+        category=cat_mango,
         description="Tropical Alphonso mangoes imported for the summer season. "
         "Limited seasonal availability.",
         price=3.80,
@@ -468,9 +476,9 @@ def seed():
         available_to=in_season_to,
     )
     create_product(
-        name="Autumn Pumpkin",
+        name="Autumn Bellpepper",
         producer=farmer1,
-        category=cat_veg,
+        category=cat_bellpepper,
         description="Large orange pumpkins, perfect for soups, pies, and "
         "Halloween decorations. Seasonal harvest.",
         price=4.00,
@@ -481,9 +489,9 @@ def seed():
         available_to=in_season_to,
     )
     create_product(
-        name="Spring Peas",
+        name="Spring Cucumber",
         producer=farmer2,
-        category=cat_veg,
+        category=cat_cucumber,
         description="Fresh garden peas harvested in spring. Sweet and tender, "
         "best eaten fresh or lightly steamed.",
         price=3.20,
@@ -494,9 +502,9 @@ def seed():
         available_to=in_season_to,
     )
     create_product(
-        name="Seasonal Pineapple",
+        name="Seasonal Guava",
         producer=farmer1,
-        category=cat_fruits,
+        category=cat_guava,
         description="Golden pineapples at peak ripeness. Only available during "
         "the tropical import season.",
         price=3.50,
@@ -512,9 +520,9 @@ def seed():
     out_of_season_to = date(2023, 12, 31)
 
     create_product(
-        name="Christmas Cherry",
+        name="Christmas Strawberry",
         producer=farmer2,
-        category=cat_fruits,
+        category=cat_strawberry,
         description="Special Christmas cherries, only harvested in December. "
         "This batch was from the 2023 season.",
         price=8.00,
@@ -525,9 +533,9 @@ def seed():
         available_to=out_of_season_to,
     )
     create_product(
-        name="Summer Raspberry",
+        name="Summer Jujube",
         producer=farmer1,
-        category=cat_fruits,
+        category=cat_jujube,
         description="Wild summer raspberries. Last season's listing — no longer "
         "available until next summer.",
         price=7.00,
@@ -538,9 +546,9 @@ def seed():
         available_to=out_of_season_to,
     )
     create_product(
-        name="Spring Asparagus",
+        name="Spring Carrot",
         producer=farmer2,
-        category=cat_veg,
+        category=cat_carrot,
         description="English asparagus, a spring delicacy. This listing "
         "has expired and will return next April.",
         price=6.00,
@@ -551,9 +559,9 @@ def seed():
         available_to=out_of_season_to,
     )
     create_product(
-        name="Autumn Fig",
+        name="Autumn Grape",
         producer=farmer1,
-        category=cat_fruits,
+        category=cat_grape,
         description="Fresh Turkish figs from the autumn harvest. "
         "Sweet and delicate. Season ended.",
         price=5.50,
@@ -564,9 +572,9 @@ def seed():
         available_to=out_of_season_to,
     )
     create_product(
-        name="Winter Parsnip",
+        name="Winter Potato",
         producer=farmer2,
-        category=cat_veg,
+        category=cat_potato,
         description="Frost-sweetened parsnips from our winter crop. "
         "Perfect for roasting. Season has passed.",
         price=2.50,
@@ -592,7 +600,7 @@ def seed():
     create_product(
         name="Rotten Tomato (For Compost)",
         producer=farmer1,
-        category=cat_compost,
+        category=cat_tomato,
         description="Batch of overripe tomatoes unsuitable for consumption. "
         "Ideal for composting or agricultural fertiliser.",
         price=0.50,
@@ -603,7 +611,7 @@ def seed():
     create_product(
         name="Spoiled Carrot Batch",
         producer=farmer2,
-        category=cat_compost,
+        category=cat_carrot,
         description="Carrots with surface damage and early rot. "
         "Suitable for animal feed or compost only.",
         price=0.30,
@@ -614,7 +622,7 @@ def seed():
     create_product(
         name="Damaged Apple Lot",
         producer=farmer1,
-        category=cat_compost,
+        category=cat_apple,
         description="Bruised and damaged apples from harvest sorting. "
         "Grade 2 — for juice production or compost.",
         price=0.80,
@@ -625,7 +633,7 @@ def seed():
     create_product(
         name="Overripe Banana Batch",
         producer=farmer2,
-        category=cat_compost,
+        category=cat_banana,
         description="Heavily spotted bananas past retail quality. "
         "Can be used for banana bread or compost.",
         price=0.40,
@@ -636,7 +644,7 @@ def seed():
     create_product(
         name="Moldy Grape Cluster",
         producer=farmer1,
-        category=cat_compost,
+        category=cat_grape,
         description="Grape clusters showing visible mold growth. "
         "Not safe for consumption. For composting only.",
         price=0.20,
@@ -645,9 +653,9 @@ def seed():
         is_available=False,
     )
     create_product(
-        name="Bruised Peach Batch",
+        name="Bruised Strawberry Batch",
         producer=farmer2,
-        category=cat_compost,
+        category=cat_strawberry,
         description="Peaches with impact damage from transport. "
         "Grade 2 quality — suitable for jam production.",
         price=1.00,
@@ -656,9 +664,9 @@ def seed():
         is_available=False,
     )
     create_product(
-        name="Wilted Lettuce For Composting",
+        name="Wilted Cucumber For Composting",
         producer=farmer1,
-        category=cat_compost,
+        category=cat_cucumber,
         description="Wilted iceberg lettuce past its shelf life. "
         "Intended for composting or green waste recycling.",
         price=0.10,
@@ -683,7 +691,7 @@ def seed():
     create_product(
         name="Strawberry Milk Smoothie",
         producer=farmer1,
-        category=cat_fruits,
+        category=cat_strawberry,
         description="Fresh strawberry smoothie made with whole milk. "
         "Creamy, sweet, and ready to drink.",
         price=4.50,
@@ -694,7 +702,7 @@ def seed():
     create_product(
         name="Walnut Banana Bread Mix",
         producer=farmer2,
-        category=cat_fruits,
+        category=cat_banana,
         description="Pre-mixed banana bread kit with crushed walnuts and "
         "wheat flour. Just add eggs and bake.",
         price=5.00,
@@ -705,7 +713,7 @@ def seed():
     create_product(
         name="Cucumber Salad with Tuna Dressing",
         producer=farmer1,
-        category=cat_veg,
+        category=cat_cucumber,
         description="Fresh cucumber salad kit with a tuna-based vinaigrette. "
         "Ready to assemble in 5 minutes.",
         price=6.00,
@@ -716,7 +724,7 @@ def seed():
     create_product(
         name="Sesame Carrot Sticks",
         producer=farmer2,
-        category=cat_veg,
+        category=cat_carrot,
         description="Crunchy carrot sticks coated in toasted sesame seeds. "
         "A healthy snack with an Asian twist.",
         price=3.50,
@@ -727,7 +735,7 @@ def seed():
     create_product(
         name="Soy Glazed Edamame",
         producer=farmer1,
-        category=cat_veg,
+        category=cat_potato,
         description="Steamed edamame pods with a sweet soy glaze. "
         "High in plant protein. Vegan-friendly.",
         price=4.00,
@@ -738,7 +746,7 @@ def seed():
     create_product(
         name="Peanut Butter Apple Slices",
         producer=farmer2,
-        category=cat_fruits,
+        category=cat_apple,
         description="Pre-sliced apples paired with creamy peanut butter dip. "
         "A classic protein-packed snack.",
         price=3.80,
@@ -749,7 +757,7 @@ def seed():
     create_product(
         name="Egg Fried Vegetable Rice Mix",
         producer=farmer1,
-        category=cat_veg,
+        category=cat_bellpepper,
         description="Stir-fry kit with mixed vegetables, egg strips, and soy sauce. "
         "Contains celery and soya.",
         price=5.50,
@@ -760,7 +768,7 @@ def seed():
     create_product(
         name="Celery and Mustard Soup Starter",
         producer=farmer2,
-        category=cat_veg,
+        category=cat_pomegranate,
         description="Soup base with fresh celery, wholegrain mustard, and herbs. "
         "Just add water and simmer.",
         price=3.00,

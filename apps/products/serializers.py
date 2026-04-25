@@ -72,6 +72,11 @@ class ProductSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Stock cannot be negative.")
         return value
 
+    def validate_image(self, value):
+        if not value:
+            raise serializers.ValidationError("Product image is required.")
+        return value
+
     def validate(self, data):
         available_from = data.get(
             "available_from", getattr(self.instance, "available_from", None)
