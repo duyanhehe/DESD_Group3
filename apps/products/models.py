@@ -44,6 +44,8 @@ class Product(models.Model):
 
     stock_quantity = models.PositiveIntegerField()
 
+    image = models.ImageField(upload_to='products/', default='products/placeholder.png')
+
     is_available = models.BooleanField(default=True)
 
     # seasonal availability
@@ -53,7 +55,7 @@ class Product(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     # allergens
-    allergens = models.ManyToManyField(Allergen, blank=False, related_name="products")
+    allergens = models.ManyToManyField(Allergen, blank=True, related_name="products")
     objects = ProductManager()
 
     class Meta:

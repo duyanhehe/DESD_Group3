@@ -40,6 +40,10 @@ def load_data():
             ["Fresh Tomato", "Organic Carrot"],
             ["Cavendish Banana", "Fresh Tomato"],
             ["Fresh Fuji Apple", "Cavendish Banana"],
+            ["Valencia Orange", "Ripe Mango", "Fresh Strawberry"],
+            ["Green Grapes", "Fresh Jujube", "Fresh Guava"],
+            ["Fresh Cucumber", "Fresh Bell Pepper", "Fresh Potato"],
+            ["Fresh Pomegranate", "Cherry Tomato", "Fresh Guava"],
         ]
 
     return transactions
