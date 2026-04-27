@@ -15,7 +15,7 @@ django.setup()
 from django.conf import settings
 
 MODEL_NAME = "cazofi/fruit-disease-v2/pyTorch/default"
-MODEL_DIR = settings.AI_MODELS_GRADING_WEIGHTS_DIR
+MODEL_DIR = settings.AI_GRADING_BEST_PT_PATH.parent
 
 
 def download_model():
