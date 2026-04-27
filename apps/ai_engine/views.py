@@ -30,7 +30,6 @@ class RecommendationView(APIView):
     POST /ai/recommend/
     General purpose recommendation endpoint.
     """
-    authentication_classes = []
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -101,7 +100,6 @@ class ProductRecommendationsView(APIView):
     GET /ai/recommendations/product/<product_id>/
     Returns 'Frequently Bought Together' for a specific product.
     """
-    authentication_classes = []
     permission_classes = [AllowAny]
 
     def get(self, request, product_id):
@@ -127,7 +125,6 @@ class CartRecommendationsView(APIView):
     POST /ai/recommendations/cart/
     Returns recommendations based on current cart items.
     """
-    authentication_classes = []
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -194,7 +191,6 @@ class GradingView(APIView):
     - XAI reasons for the grading decision
     - Optional heatmap for defective fruit
     """
-    authentication_classes = []
     permission_classes = [AllowAny]  # Change to IsAuthenticated in production
 
     def post(self, request):
@@ -289,7 +285,6 @@ class ChatbotView(APIView):
     POST /ai/chatbot/
     Provides an AI chat interface powered by local Ollama (qwen2.5:7b).
     """
-    authentication_classes = []
     permission_classes = [AllowAny] # Use IsAuthenticated in production
 
     def post(self, request):
