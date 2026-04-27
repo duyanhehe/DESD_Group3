@@ -186,6 +186,36 @@
                 }
             });
         }
+
+        // Date Validation Logic
+        const form = document.querySelector('form');
+        const fromDateInput = document.querySelector('input[name="available_from"]');
+        const toDateInput = document.querySelector('input[name="available_to"]');
+
+        form.addEventListener('submit', function(e) {
+            const fromDate = fromDateInput.value ? new Date(fromDateInput.value) : null;
+            const toDate = toDateInput.value ? new Date(toDateInput.value) : null;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            if (toDate) {
+                // 1. End date cannot be in the past
+                if (toDate < today) {
+                    e.preventDefault();
+                    alert('End date (To) cannot be in the past.');
+                    toDateInput.focus();
+                    return;
+                }
+
+                // 2. End date cannot be before Start date
+                if (fromDate && toDate < fromDate) {
+                    e.preventDefault();
+                    alert('End date (To) must be after the Start date (From).');
+                    toDateInput.focus();
+                    return;
+                }
+            }
+        });
     });
 </script>
 {% endblock %}

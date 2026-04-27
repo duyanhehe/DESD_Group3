@@ -241,7 +241,10 @@
 
     <!-- AI Chat Assistant Bubble -->
     <div class="fixed bottom-24 right-6 md:bottom-8 md:right-8 z-[60] flex flex-col items-end gap-4">
-        <div id="ai-chat-hint" class="bg-white/90 backdrop-blur-xl shadow-2xl rounded-2xl p-4 max-w-[280px] border border-outline-variant/10 hidden md:block opacity-0 translate-y-4 transition-all duration-500">
+        <div id="ai-chat-hint" class="bg-white/90 backdrop-blur-xl shadow-2xl rounded-2xl p-4 max-w-[280px] border border-outline-variant/10 hidden md:block opacity-0 translate-y-4 transition-all duration-500 relative">
+            <button id="close-ai-hint" class="absolute -top-2 -right-2 w-6 h-6 bg-zinc-900 text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-all z-20">
+                <span class="material-symbols-outlined text-[14px] font-bold">close</span>
+            </button>
             <p class="text-xs text-on-surface-variant font-medium leading-relaxed">
                 Hi! Looking for something specific? I can help you find seasonal produce or local artisan stores. 🌿
             </p>
@@ -281,6 +284,8 @@
     <script>
         // AI Chat Hint Animation
         window.addEventListener('load', () => {
+            if (localStorage.getItem('ai-hint-closed') === 'true') return;
+            
             setTimeout(() => {
                 const hint = document.getElementById('ai-chat-hint');
                 if (hint) hint.classList.remove('hidden', 'opacity-0', 'translate-y-4');

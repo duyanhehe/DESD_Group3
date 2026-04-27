@@ -1,6 +1,16 @@
 document.addEventListener('DOMContentLoaded', () => {
     const bubble = document.getElementById('ai-chat-bubble');
     const hint = document.getElementById('ai-chat-hint');
+    const closeHintBtn = document.getElementById('close-ai-hint');
+
+    if (closeHintBtn && hint) {
+        closeHintBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent bubble click
+            hint.classList.add('opacity-0', 'translate-y-4');
+            setTimeout(() => hint.classList.add('hidden'), 500);
+            localStorage.setItem('ai-hint-closed', 'true');
+        });
+    }
     
     // Create Chat Window if it doesn't exist
     let chatWindow = document.getElementById('ai-chat-window');
@@ -68,7 +78,10 @@ document.addEventListener('DOMContentLoaded', () => {
             // Open
             chatWindow.classList.remove('opacity-0', 'translate-y-8', 'pointer-events-none', 'scale-95');
             chatWindow.classList.add('opacity-100', 'translate-y-0', 'pointer-events-auto', 'scale-100');
-            if (hint) hint.classList.add('hidden');
+            if (hint) {
+                hint.classList.add('hidden');
+                localStorage.setItem('ai-hint-closed', 'true');
+            }
             inputField.focus();
         } else {
             // Close
