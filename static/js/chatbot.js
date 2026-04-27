@@ -180,11 +180,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (res.ok && data.success) {
                 appendMessage('assistant', data.reply || data.response || "No reply found.");
             } else {
-                appendMessage('assistant', "AI đang offline, vui lòng thử lại sau (Máy chủ trí tuệ nhân tạo đang nghỉ ngơi 🌿)");
+                appendMessage('assistant', "AI is offline, please try again later (AI server is resting 🌿)");
             }
         } catch (e) {
             document.getElementById(typingId).remove();
-            appendMessage('assistant', "AI đang offline, vui lòng thử lại sau. Hệ thống đang gặp sự cố kết nối.");
+            appendMessage('assistant', "AI is offline, please try again later. System connection error.");
         }
     }
 

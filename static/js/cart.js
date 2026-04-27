@@ -389,13 +389,13 @@ async function renderCartPage() {
                             <div class="flex items-center gap-3">
                                 <p class="text-sm font-bold text-primary">$${item.unit_price} <span class="text-xs text-outline font-medium tracking-tight">/ ${item.unit}</span></p>
                                 ${(item.food_miles !== null && item.food_miles !== undefined) ? `
-                                <div class="flex items-center gap-1 text-xs text-outline group-hover:text-emerald-600 transition-colors px-2 py-0.5 bg-surface-container-high rounded-full cursor-help" title="Food Miles = khoảng cách từ nông trại đến bạn">
+                                <div class="flex items-center gap-1 text-xs text-outline group-hover:text-emerald-600 transition-colors px-2 py-0.5 bg-surface-container-high rounded-full cursor-help" title="Food Miles = distance from the farm to you">
                                     <span class="material-symbols-outlined text-[14px]">location_on</span>
                                     <span class="font-bold">${Number(item.food_miles).toFixed(1)} km</span>
                                     ${item.food_miles < 50 ? '<span class="material-symbols-outlined text-[14px] text-emerald-500 ml-0.5">eco</span><span class="text-[9px] uppercase font-bold text-emerald-600 tracking-widest ml-0.5">Local</span>' : ''}
                                 </div>
                                 ` : `
-                                <div class="flex items-center gap-1 text-[10px] text-outline/50 px-2 py-0.5 bg-surface-container-high rounded-full cursor-help" title="Không thể tính toán khoảng cách. Vui lòng cập nhật mã bưu điện (postcode) hợp lệ trong hồ sơ của bạn.">
+                                <div class="flex items-center gap-1 text-[10px] text-outline/50 px-2 py-0.5 bg-surface-container-high rounded-full cursor-help" title="Cannot calculate distance. Please update a valid postcode in your profile.">
                                     <span class="material-symbols-outlined text-[14px]">location_off</span>
                                     <span class="font-bold uppercase tracking-widest">N/A</span>
                                 </div>
@@ -456,12 +456,12 @@ async function renderCartPage() {
                     <h3 class="font-headline text-3xl font-extrabold mb-1">Order Summary</h3>
                     <p class="text-zinc-400 text-sm font-medium mb-3">Includes all service fees and local delivery.</p>
                     ${(data.total_food_miles !== null && data.total_food_miles !== undefined) ? `
-                    <div class="inline-flex items-center gap-2 bg-emerald-900/40 border border-emerald-500/20 px-3 py-1.5 rounded-full cursor-help" title="Food Miles = khoảng cách từ nông trại đến bạn">
+                    <div class="inline-flex items-center gap-2 bg-emerald-900/40 border border-emerald-500/20 px-3 py-1.5 rounded-full cursor-help" title="Food Miles = distance from the farm to you">
                         <span class="material-symbols-outlined text-emerald-400 text-sm">eco</span>
                         <span class="text-[11px] font-bold text-emerald-100 uppercase tracking-widest">Total Food Miles: ${Number(data.total_food_miles).toFixed(1)} km</span>
                     </div>
                     ` : `
-                    <div class="inline-flex items-center gap-2 bg-zinc-800/80 border border-zinc-700/50 px-3 py-1.5 rounded-full cursor-help" title="Không thể tính toán do thiếu mã bưu điện hợp lệ.">
+                    <div class="inline-flex items-center gap-2 bg-zinc-800/80 border border-zinc-700/50 px-3 py-1.5 rounded-full cursor-help" title="Cannot calculate due to missing valid postcode.">
                         <span class="material-symbols-outlined text-zinc-500 text-sm">location_off</span>
                         <span class="text-[11px] font-bold text-zinc-400 uppercase tracking-widest">Total Food Miles: N/A</span>
                     </div>

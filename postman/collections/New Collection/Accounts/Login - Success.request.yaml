@@ -36,7 +36,12 @@ scripts:
       var jsonData = pm.response.json();
       if (pm.response.code === 200 && jsonData.token) {
           pm.environment.set("auth_token", jsonData.token);
-          console.log("✅ Token đã lưu:", jsonData.token);
+          if (jsonData.role === "producer") {
+              pm.environment.set("producer_token", jsonData.token);
+          } else if (jsonData.role === "customer") {
+              pm.environment.set("customer_token", jsonData.token);
+          }
+          console.log("✅ Token saved:", jsonData.token);
       }
     language: text/javascript
   - type: beforeRequest
