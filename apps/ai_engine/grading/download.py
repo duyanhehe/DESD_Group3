@@ -24,12 +24,25 @@ def download_model():
     print("Downloading model from Kaggle...")
 
     try:
-        path = kagglehub.model_download(MODEL_NAME)
-        print(f"Downloaded to: {path}")
+        path = Path(kagglehub.model_download(MODEL_NAME))
+        print(f"Kaggle path: {path}")
 
-        # Move files to your model directory
-        for file in Path(path).glob("*"):
-            shutil.move(str(file), MODEL_DIR / file.name)
+        # Check if the cache directory is empty (common if 'move' was used previously)
+        files = list(path.glob("*"))
+        if not files:
+            print("Cache is empty! Clearing and forcing re-download...")
+            shutil.rmtree(path)
+            path = Path(kagglehub.model_download(MODEL_NAME))
+            files = list(path.glob("*"))
+
+        if not files:
+            print("Warning: No files found in the model download.")
+            return
+
+        # Copy files to your model directory
+        for file in files:
+            print(f"Copying {file.name} to project...")
+            shutil.copy(str(file), MODEL_DIR / file.name)
 
         print("Model ready at:", MODEL_DIR)
 
