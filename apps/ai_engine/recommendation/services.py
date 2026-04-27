@@ -14,6 +14,9 @@ def get_recommendations(user_items):
         return {"recommendations": [], "explanation": "No items provided."}
 
     model = get_model()
+    if model is None:
+        return {"recommendations": [], "explanation": "Recommendation engine is initializing."}
+        
     recs = recommend(model, set(user_items))
 
     return {
