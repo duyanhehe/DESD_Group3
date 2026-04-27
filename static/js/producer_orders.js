@@ -48,31 +48,31 @@ const STATUS_STYLES = {
         bg: 'bg-amber-100/50', 
         text: 'text-amber-700', 
         dot: 'bg-amber-500',
-        label: 'Awaiting Action'
+        label: 'Pending'
     },
     'confirmed': { 
         bg: 'bg-blue-100/50', 
         text: 'text-blue-700', 
         dot: 'bg-blue-500',
-        label: 'Processing'
+        label: 'Confirmed'
     },
     'ready': { 
         bg: 'bg-emerald-100/50', 
         text: 'text-emerald-700', 
         dot: 'bg-emerald-500',
-        label: 'Packing Ready'
+        label: 'Ready'
     },
     'delivered': { 
         bg: 'bg-zinc-100/50', 
         text: 'text-zinc-600', 
         dot: 'bg-zinc-400',
-        label: 'Completed'
+        label: 'Delivered'
     },
     'cancelled': { 
         bg: 'bg-error-container/20', 
         text: 'text-error', 
         dot: 'bg-error',
-        label: 'Voided'
+        label: 'Cancelled'
     }
 };
 

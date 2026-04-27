@@ -29,7 +29,7 @@ class ProducerPaymentsView(TemplateView):
 
 
 from apps.orders.models import Cart, Order, OrderItem, OrderStatusLog
-from .models import ProducerWeeklySettlement, SettlementOrderItem, SettlementAuditLog
+from .models import ProducerWeeklySettlement, SettlementOrderItem, SettlementAuditLog, PaymentTransaction
 from .serializers import (
     ProducerWeeklySettlementSerializer,
     ProducerWeeklySettlementDetailSerializer,
@@ -522,20 +522,77 @@ class AdminSettlementExportView(APIView):
 # Customer Checkout Endpoints (Stripe)
 # ═══════════════════════════════════════════════════════════════
 
+COMMISSION_RATE = Decimal("0.05")  # 5% platform fee
+
+
 class CreateCheckoutSessionView(APIView):
-    """POST — Create a Stripe checkout session from the customer's cart."""
+    """POST — Create a Stripe checkout session from the customer's cart.
+
+    Flow:
+    1. Calculate cart total and per-producer commission breakdown
+    2. Create a PaymentTransaction record (status=pending)
+    3. Create Stripe Checkout Session with commission metadata
+    4. Return checkout_url for frontend redirect
+    """
 
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        # Validate cart exists and has items
         try:
             cart = Cart.objects.get(customer=request.user)
-            cart_items = cart.items.select_related("product").all()
+            cart_items = cart.items.select_related("product", "product__producer").all()
         except Cart.DoesNotExist:
             return Response({"error": "Cart is empty."}, status=status.HTTP_400_BAD_REQUEST)
 
         if not cart_items.exists():
             return Response({"error": "Cart is empty."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate stock availability before proceeding to payment
+        for item in cart_items:
+            if not item.product.is_active():
+                return Response(
+                    {"error": f"'{item.product.name}' is no longer available."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if item.quantity > item.product.stock_quantity:
+                return Response(
+                    {"error": f"Not enough stock for '{item.product.name}'."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        # Calculate totals and per-producer commission breakdown
+        total_amount = Decimal("0.00")
+        producer_totals = {}  # {producer_id: {"username": ..., "subtotal": Decimal}}
+
+        for item in cart_items:
+            subtotal = item.product.price * item.quantity
+            total_amount += subtotal
+            producer = item.product.producer
+
+            if producer.id not in producer_totals:
+                producer_totals[producer.id] = {
+                    "username": producer.username,
+                    "subtotal": Decimal("0.00"),
+                }
+            producer_totals[producer.id]["subtotal"] += subtotal
+
+        # Commission calculation: 5% platform, 95% producers
+        network_commission = (total_amount * COMMISSION_RATE).quantize(Decimal("0.01"))
+        producer_payout_total = (total_amount - network_commission).quantize(Decimal("0.01"))
+
+        # Per-producer breakdown for audit trail
+        producer_breakdown = []
+        for pid, data in producer_totals.items():
+            commission = (data["subtotal"] * COMMISSION_RATE).quantize(Decimal("0.01"))
+            payout = (data["subtotal"] - commission).quantize(Decimal("0.01"))
+            producer_breakdown.append({
+                "producer_id": pid,
+                "username": data["username"],
+                "subtotal": str(data["subtotal"].quantize(Decimal("0.01"))),
+                "commission": str(commission),
+                "payout": str(payout),
+            })
 
         # Build Stripe line items
         line_items = []
@@ -552,102 +609,148 @@ class CreateCheckoutSessionView(APIView):
             })
 
         try:
-            # Create a Stripe Checkout Session
-            frontend_url = request.build_absolute_uri('/')[:-1] # e.g. http://localhost:8000
-            
-            if settings.STRIPE_SECRET_KEY == "sk_test_mock":
-                StripeWebhookView().fulfill_order(request.user.id)
-                return Response({'checkout_url': frontend_url + '/orders/success/'})
-            
+            frontend_url = request.build_absolute_uri('/')[:-1]
+
+            # Create Stripe Checkout Session with commission metadata
             checkout_session = stripe.checkout.Session.create(
-                payment_method_types=['card'],
+                payment_method_types=["card"],
                 line_items=line_items,
-                mode='payment',
-                success_url=frontend_url + '/orders/success/',
-                cancel_url=frontend_url + '/cart/?order=cancel',
+                mode="payment",
+                success_url=frontend_url + "/orders/success/?session_id={CHECKOUT_SESSION_ID}",
+                cancel_url=frontend_url + "/orders/cart/?order=cancel",
                 client_reference_id=str(request.user.id),
                 metadata={
-                    "user_id": request.user.id
-                }
+                    "user_id": str(request.user.id),
+                    "total_amount": str(total_amount.quantize(Decimal("0.01"))),
+                    "network_commission": str(network_commission),
+                    "producer_payout": str(producer_payout_total),
+                },
             )
-            return Response({'checkout_url': checkout_session.url})
+
+            # Create PaymentTransaction record for audit trail
+            PaymentTransaction.objects.create(
+                customer=request.user,
+                stripe_session_id=checkout_session.id,
+                total_amount=total_amount.quantize(Decimal("0.01")),
+                network_commission=network_commission,
+                producer_payout=producer_payout_total,
+                producer_breakdown=producer_breakdown,
+                status=PaymentTransaction.STATUS_PENDING,
+            )
+
+            return Response({"checkout_url": checkout_session.url})
+
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 class StripeWebhookView(APIView):
-    """POST — Handle Stripe webhooks (e.g., checkout.session.completed)."""
+    """POST — Handle Stripe webhooks for payment confirmation.
+
+    Security: Verifies webhook signature to ensure requests come from Stripe.
+    On checkout.session.completed:
+    1. Update PaymentTransaction status → succeeded
+    2. Create Master Order + Sub-Orders (grouped by producer)
+    3. Deduct stock quantities
+    4. Clear the customer's cart
+    """
 
     permission_classes = []  # Stripe doesn't send auth headers
+    authentication_classes = []  # Bypass DRF token auth
 
     def post(self, request):
         payload = request.body
-        sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
-        endpoint_secret = getattr(settings, 'STRIPE_WEBHOOK_SECRET', '')
+        sig_header = request.META.get("HTTP_STRIPE_SIGNATURE")
+        endpoint_secret = settings.STRIPE_WEBHOOK_SECRET
 
-        event = None
-
+        # Verify webhook signature (MO4 security compliance)
         try:
             event = stripe.Webhook.construct_event(
                 payload, sig_header, endpoint_secret
             )
-        except ValueError as e:
-            # Invalid payload
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-        except stripe.error.SignatureVerificationError as e:
-            # Invalid signature
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        except ValueError:
+            return Response(
+                {"error": "Invalid payload"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except stripe.error.SignatureVerificationError:
+            return Response(
+                {"error": "Invalid signature"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-        # Handle the checkout.session.completed event
-        if event['type'] == 'checkout.session.completed':
-            session = event['data']['object']
-            
-            user_id = session.get('client_reference_id')
-            if user_id:
-                self.fulfill_order(user_id)
+        # Handle checkout completion
+        if event["type"] == "checkout.session.completed":
+            session = event["data"]["object"]
+            self._fulfill_order(session)
 
         return Response(status=status.HTTP_200_OK)
 
-    def fulfill_order(self, user_id):
+    def _fulfill_order(self, session):
+        """Create orders, deduct stock, clear cart after successful payment."""
         from django.contrib.auth import get_user_model
+
         User = get_user_model()
-        
+        # Use attribute access instead of .get() to avoid AttributeError on some Stripe library versions
+        stripe_session_id = getattr(session, "id", None)
+        user_id = getattr(session, "client_reference_id", None)
+        payment_intent_id = getattr(session, "payment_intent", "")
+
+        if not user_id or not stripe_session_id:
+            return
+
         try:
             user = User.objects.get(id=user_id)
             cart = Cart.objects.get(customer=user)
-            cart_items = cart.items.select_related("product").all()
-            
+            cart_items = cart.items.select_related(
+                "product", "product__producer"
+            ).all()
+
             if not cart_items.exists():
                 return
-                
+
+            # Find the pending PaymentTransaction
+            payment_txn = PaymentTransaction.objects.filter(
+                stripe_session_id=stripe_session_id
+            ).first()
+
+            if not payment_txn:
+                return
+
             with transaction.atomic():
-                # 1. Create Master Order
-                total = sum(item.product.price * item.quantity for item in cart_items)
-                
+                # Calculate total from actual cart items
+                total = sum(
+                    item.product.price * item.quantity for item in cart_items
+                )
+
+                # 1. Create Master Order (status=CONFIRMED because payment succeeded)
                 master_order = Order.objects.create(
                     customer=user,
-                    status=Order.CONFIRMED, # Paid via Stripe
+                    status=Order.CONFIRMED,
                     total_price=total,
                 )
-                
+
                 OrderStatusLog.objects.create(
                     order=master_order,
                     old_status="",
                     new_status=Order.CONFIRMED,
                     note="Paid via Stripe Checkout",
                 )
-                
-                # Group items by producer
+
+                # 2. Group items by producer and create Sub-Orders
                 items_by_producer = {}
                 for item in cart_items:
                     producer = item.product.producer
                     if producer not in items_by_producer:
                         items_by_producer[producer] = []
                     items_by_producer[producer].append(item)
-                
-                # 2. Create Sub-Orders
+
                 for producer, items in items_by_producer.items():
                     sub_total = sum(i.product.price * i.quantity for i in items)
+
                     sub_order = Order.objects.create(
                         customer=user,
                         parent_order=master_order,
@@ -655,14 +758,14 @@ class StripeWebhookView(APIView):
                         status=Order.CONFIRMED,
                         total_price=sub_total,
                     )
-                    
+
                     OrderStatusLog.objects.create(
                         order=sub_order,
                         old_status="",
                         new_status=Order.CONFIRMED,
-                        note="Sub-order created from Master Order",
+                        note="Sub-order created from Stripe payment",
                     )
-                    
+
                     for item in items:
                         OrderItem.objects.create(
                             order=sub_order,
@@ -671,16 +774,25 @@ class StripeWebhookView(APIView):
                             quantity=item.quantity,
                             unit_price=item.product.price,
                         )
-                        # deduct stock
+                        # Deduct stock
                         item.product.stock_quantity -= item.quantity
                         item.product.save()
 
-                # 3. Clear cart
+                # 3. Update PaymentTransaction → succeeded
+                payment_txn.order = master_order
+                payment_txn.stripe_payment_intent_id = payment_intent_id
+                payment_txn.status = PaymentTransaction.STATUS_SUCCEEDED
+                payment_txn.save()
+
+                # 4. Clear cart
                 cart.items.all().delete()
-                
+
         except Exception as e:
-            # In production, log this error securely
-            print(f"Error fulfilling order: {str(e)}")
+            # Log error; mark PaymentTransaction as failed if possible
+            print(f"[Stripe Webhook] Error fulfilling order: {e}")
+            if 'payment_txn' in locals() and payment_txn:
+                payment_txn.status = PaymentTransaction.STATUS_FAILED
+                payment_txn.save()
 
 
 class AdminSettlementsPageView(TemplateView):

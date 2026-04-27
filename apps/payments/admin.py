@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import ProducerWeeklySettlement, SettlementOrderItem, SettlementAuditLog
+from .models import ProducerWeeklySettlement, SettlementOrderItem, SettlementAuditLog, PaymentTransaction
 
 
 class SettlementOrderItemInline(admin.TabularInline):
@@ -58,3 +58,19 @@ class SettlementAuditLogAdmin(admin.ModelAdmin):
     list_filter = ["action", "created_at"]
     search_fields = ["settlement__producer__username", "notes"]
     readonly_fields = ["id", "created_at"]
+
+
+@admin.register(PaymentTransaction)
+class PaymentTransactionAdmin(admin.ModelAdmin):
+    list_display = [
+        "id", "customer", "total_amount", "network_commission",
+        "producer_payout", "status", "created_at",
+    ]
+    list_filter = ["status", "created_at"]
+    search_fields = ["customer__username", "stripe_session_id", "stripe_payment_intent_id"]
+    readonly_fields = [
+        "id", "stripe_session_id", "stripe_payment_intent_id",
+        "total_amount", "network_commission", "producer_payout",
+        "producer_breakdown", "created_at", "updated_at",
+    ]
+    date_hierarchy = "created_at"

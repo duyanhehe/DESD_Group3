@@ -191,3 +191,73 @@ class SettlementAuditLog(models.Model):
     def __str__(self):
         return f"{self.action} - Settlement {self.settlement.id} at {self.created_at}"
 
+
+class PaymentTransaction(models.Model):
+    """Tracks each Stripe Checkout payment with commission breakdown.
+
+    Stores the financial audit trail for every customer payment:
+    - total_amount: What the customer paid
+    - network_commission: 5% kept by the BRFN platform
+    - producer_payout: 95% distributed to producers
+    """
+
+    STATUS_PENDING = "pending"
+    STATUS_SUCCEEDED = "succeeded"
+    STATUS_FAILED = "failed"
+
+    STATUS_CHOICES = [
+        (STATUS_PENDING, "Pending"),
+        (STATUS_SUCCEEDED, "Succeeded"),
+        (STATUS_FAILED, "Failed"),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    order = models.OneToOneField(
+        "orders.Order",
+        on_delete=models.CASCADE,
+        related_name="payment_transaction",
+        null=True,
+        blank=True,
+        help_text="Linked after Stripe confirms payment",
+    )
+    customer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="payment_transactions",
+    )
+
+    # Stripe tracking fields
+    stripe_session_id = models.CharField(max_length=255, unique=True)
+    stripe_payment_intent_id = models.CharField(max_length=255, blank=True, default="")
+
+    # Financial breakdown
+    total_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    network_commission = models.DecimalField(
+        max_digits=12, decimal_places=2,
+        help_text="5% platform fee",
+    )
+    producer_payout = models.DecimalField(
+        max_digits=12, decimal_places=2,
+        help_text="95% to producers",
+    )
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+
+    # Per-producer breakdown stored as JSON for transparency
+    # Format: [{"producer_id": 1, "username": "farm_a", "subtotal": "100.00", "commission": "5.00", "payout": "95.00"}, ...]
+    producer_breakdown = models.JSONField(default=list, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["stripe_session_id"]),
+            models.Index(fields=["status"]),
+            models.Index(fields=["customer", "-created_at"]),
+        ]
+
+    def __str__(self):
+        return f"Payment {self.id} — ${self.total_amount} ({self.status})"
+

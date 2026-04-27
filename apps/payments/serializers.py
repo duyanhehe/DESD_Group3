@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import ProducerWeeklySettlement, SettlementOrderItem, SettlementAuditLog
+from .models import ProducerWeeklySettlement, SettlementOrderItem, SettlementAuditLog, PaymentTransaction
 
 
 class SettlementOrderItemSerializer(serializers.ModelSerializer):
@@ -171,3 +171,28 @@ class CSVExportSerializer(serializers.Serializer):
         required=False
     )
     producer_id = serializers.IntegerField(required=False)
+
+
+class PaymentTransactionSerializer(serializers.ModelSerializer):
+    """Serializer for payment transactions with commission breakdown."""
+
+    customer_name = serializers.CharField(source="customer.username", read_only=True)
+
+    class Meta:
+        model = PaymentTransaction
+        fields = [
+            "id",
+            "order",
+            "customer",
+            "customer_name",
+            "stripe_session_id",
+            "stripe_payment_intent_id",
+            "total_amount",
+            "network_commission",
+            "producer_payout",
+            "status",
+            "producer_breakdown",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = fields
