@@ -212,7 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="absolute inset-0 flex items-center justify-center text-5xl opacity-40 group-hover:scale-110 transition-transform duration-500">
                         ${icon}
                     </div>
-                    ${product.image_url ? `<img src="${product.image_url}" class="w-full h-full object-cover relative z-10 group-hover:scale-105 transition-transform duration-500" alt="${product.name}">` : ''}
+                    ${(product.image_url || product.image) ? `<img src="${product.image_url || product.image}" class="w-full h-full object-cover relative z-10 group-hover:scale-105 transition-transform duration-500" alt="${product.name}">` : ''}
 
                     <div class="absolute top-4 left-4 z-20">
                         <span class="px-3 py-1 bg-white/80 backdrop-blur-md text-primary text-[10px] font-bold rounded-full uppercase tracking-widest border border-white/20">

@@ -89,6 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="absolute inset-0 flex items-center justify-center text-4xl opacity-30 group-hover:scale-105 transition-transform">
                         ${icon}
                     </div>
+                    ${product.image_url ? `<img src="${product.image_url}" class="w-full h-full object-cover relative z-10 group-hover:scale-105 transition-transform duration-500" alt="${product.name}">` : ''}
                 </div>
                 <div class="p-5 flex-grow flex flex-col">
                     <h3 class="font-headline font-bold text-on-background text-sm mb-1 group-hover:text-primary transition-colors">${product.name}</h3>
@@ -115,9 +116,12 @@ document.addEventListener('DOMContentLoaded', () => {
         detailContent.innerHTML = `
             <div class="grid lg:grid-cols-2 gap-16 items-start">
                 <!-- Visual Panel -->
-                <div class="relative">
-                    <div class="aspect-square bg-surface-container-low rounded-[32px] flex items-center justify-center text-9xl shadow-inner border border-outline-variant/5">
-                        ${prodIcon}
+                <div class="relative group">
+                    <div class="aspect-square bg-surface-container-low rounded-[32px] flex items-center justify-center text-9xl shadow-inner border border-outline-variant/5 overflow-hidden">
+                        <div class="absolute inset-0 flex items-center justify-center opacity-20 group-hover:scale-110 transition-transform duration-700">
+                            ${prodIcon}
+                        </div>
+                        ${(product.image_url || product.image) ? `<img src="${product.image_url || product.image}" class="w-full h-full object-cover relative z-10 group-hover:scale-105 transition-transform duration-700" alt="${product.name}">` : ''}
                     </div>
                     <!-- Category Badge -->
                     <div class="absolute top-6 left-6">

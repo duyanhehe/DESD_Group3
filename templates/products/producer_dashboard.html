@@ -32,12 +32,6 @@
                         Payments
                     </a>
                 </li>
-                <li>
-                    <a href="{% url 'producer_grading' %}" class="flex items-center gap-4 px-8 py-4 text-outline font-bold hover:bg-emerald-50 hover:text-primary transition-all md:rounded-r-full group">
-                        <span class="material-symbols-outlined group-hover:scale-110 transition-transform">center_focus_strong</span>
-                        AI Grading
-                    </a>
-                </li>
             </ul>
 
         </nav>
@@ -147,7 +141,11 @@
                             <td class="px-8 py-6">
                                 <div class="flex items-center gap-4">
                                     <div class="w-14 h-14 rounded-2xl overflow-hidden bg-surface-container-high flex-shrink-0">
+                                        {% if product.image %}
+                                        <img src="{{ product.image.url }}" class="w-full h-full object-cover" alt="{{ product.name }}">
+                                        {% else %}
                                         <div class="w-full h-full flex items-center justify-center text-xl opacity-20">🥦</div>
+                                        {% endif %}
                                     </div>
                                     <div>
                                         <p class="font-extrabold text-on-background text-sm group-hover:text-primary transition-colors">{{ product.name }}</p>

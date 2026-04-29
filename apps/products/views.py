@@ -43,7 +43,7 @@ class ProductListView(APIView):
 
         products = Product.objects.active()
 
-        serializer = ProductSerializer(products, many=True)
+        serializer = ProductSerializer(products, many=True, context={"request": request})
         return Response(serializer.data)
 
 
@@ -55,7 +55,7 @@ class ProductDetailView(APIView):
 
         product = get_object_or_404(Product.objects.active(), id=id)
 
-        serializer = ProductSerializer(product)
+        serializer = ProductSerializer(product, context={"request": request})
         return Response(serializer.data)
 
 
@@ -64,7 +64,7 @@ class CategoryProductsView(APIView):
         today = now().date()
 
         products = Product.objects.active().filter(category__slug=slug)
-        serializer = ProductSerializer(products, many=True)
+        serializer = ProductSerializer(products, many=True, context={"request": request})
         return Response(serializer.data)
 
 
@@ -123,22 +123,13 @@ def producer_dashboard(request):
     return render(request, "products/producer_dashboard.html", {"products": products})
 
 @login_required
-def producer_grading_page(request):
-    if not request.user.is_producer:
-        messages.error(request, "Only producers can access the grading dashboard.")
-        return redirect("/")
-
-    return render(request, "products/producer_grading.html")
-
-
-@login_required
 def add_product(request):
     if not request.user.is_producer:
         messages.error(request, "Only producers can add products.")
         return redirect("/")
 
     if request.method == "POST":
-        form = ProductForm(request.POST)
+        form = ProductForm(request.POST, request.FILES)
         if form.is_valid():
             product = form.save(commit=False)
             product.producer = request.user
@@ -162,7 +153,7 @@ def edit_product(request, id):
         return redirect("producer_dashboard")
 
     if request.method == "POST":
-        form = ProductForm(request.POST, instance=product)
+        form = ProductForm(request.POST, request.FILES, instance=product)
         if form.is_valid():
             form.save()
             messages.success(request, f"Product '{product.name}' updated successfully!")
@@ -210,7 +201,7 @@ class ProductSearchView(APIView):
             Q(name__icontains=query) | Q(description__icontains=query)
         )
 
-        serializer = ProductSerializer(products, many=True)
+        serializer = ProductSerializer(products, many=True, context={"request": request})
 
         # Handle no results
         if not products.exists():

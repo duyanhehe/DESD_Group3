@@ -39,6 +39,7 @@ class ProductForm(forms.ModelForm):
             "description",
             "price",
             "unit",
+            "image",
             "available_from",
             "available_to",
             "stock_quantity",
@@ -61,9 +62,14 @@ class ProductForm(forms.ModelForm):
             "allergens": forms.CheckboxSelectMultiple(
                 attrs={"class": "allergen-checkbox-group"}
             ),
+            "image": forms.FileInput(attrs={"id": "image-upload", "accept": "image/*"}),
         }
         labels = {
             "available_from": "Available From (Optional)",
             "available_to": "Available To (Optional)",
             "stock_quantity": "Stock Quantity",
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['allergens'].required = False

@@ -19,10 +19,13 @@
             <p class="text-on-surface-variant font-medium max-w-lg mx-auto leading-relaxed">Fill in the details below to list your fresh harvests for the Food Network community.</p>
         </div>
 
-        <form method="post" class="space-y-12">
+        <form method="post" enctype="multipart/form-data" class="space-y-12">
             {% csrf_token %}
             
-            <!-- Section 1: Basic Information -->
+            <!-- Section 1: AI Diagnostics & Image -->
+            {% include "products/_ai_grading_ui.html" %}
+
+            <!-- Section 2: Basic Information -->
             <div class="space-y-8">
                 <div class="flex items-center gap-3 pb-4 border-b border-outline-variant/10">
                     <span class="material-symbols-outlined text-primary">potted_plant</span>
@@ -56,7 +59,7 @@
             <div class="space-y-8">
                 <div class="flex items-center gap-3 pb-4 border-b border-outline-variant/10">
                     <span class="material-symbols-outlined text-primary">payments</span>
-                    <h2 class="font-headline font-extrabold text-xs uppercase tracking-[0.2em] text-on-background">2. Pricing & Stock</h2>
+                    <h2 class="font-headline font-extrabold text-xs uppercase tracking-[0.2em] text-on-background">3. Pricing & Stock</h2>
                 </div>
                 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-8">
@@ -79,7 +82,7 @@
             <div class="space-y-8">
                 <div class="flex items-center gap-3 pb-4 border-b border-outline-variant/10">
                     <span class="material-symbols-outlined text-primary">health_and_safety</span>
-                    <h2 class="font-headline font-extrabold text-xs uppercase tracking-[0.2em] text-on-background">3. Availability & Health</h2>
+                    <h2 class="font-headline font-extrabold text-xs uppercase tracking-[0.2em] text-on-background">4. Availability & Health</h2>
                 </div>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -127,6 +130,10 @@
     </div>
 </div>
 
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/producer_grading.js' %}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Inject class names into Django form fields

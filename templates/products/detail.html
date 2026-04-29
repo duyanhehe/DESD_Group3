@@ -37,5 +37,5 @@
 <script>
     const PRODUCT_ID = "{{ product_id }}";
 </script>
-<script src="{% static 'js/product_detail.js' %}"></script>
+<script src="{% static 'js/product_detail.js' %}?v={% now 'U' %}"></script>
 {% endblock %}

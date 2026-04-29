@@ -103,8 +103,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                              onclick="window.location.href='/products/${product.id}/'">
                             
                             <!-- Large Floating Icon Placeholder -->
-                            <div class="aspect-square bg-surface-container-low rounded-[24px] flex items-center justify-center text-5xl group-hover:scale-110 transition-transform duration-500">
-                                ${icon}
+                            <div class="aspect-square bg-surface-container-low rounded-[24px] flex items-center justify-center text-5xl group-hover:scale-110 transition-transform duration-500 overflow-hidden relative">
+                                <div class="absolute inset-0 flex items-center justify-center opacity-20">
+                                    ${icon}
+                                </div>
+                                ${(product.image_url || product.image) ? `<img src="${product.image_url || product.image}" class="w-full h-full object-cover relative z-10 group-hover:scale-105 transition-transform duration-500" alt="${product.name}">` : ''}
                             </div>
 
                             <!-- Add to Cart Badge -->

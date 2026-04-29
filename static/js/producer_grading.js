@@ -31,13 +31,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const dt = e.dataTransfer;
         const files = dt.files;
         if (files.length > 0) {
+            console.log('File dropped:', files[0].name);
+            fileInput.files = files; // Ensure file is attached to form for submission
             handleFile(files[0]);
         }
     });
 
-    // Handle Click Selection
+    // Handle Click Selection (Now handled by <label for="image-upload">)
     fileInput.addEventListener('change', function() {
         if (this.files && this.files.length > 0) {
+            console.log('File selected via picker:', this.files[0].name);
             handleFile(this.files[0]);
         }
     });
