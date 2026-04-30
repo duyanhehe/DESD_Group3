@@ -51,7 +51,8 @@ class SettlementService:
         producer: User,
         week_start: datetime.date,
         week_end: datetime.date,
-        dry_run: bool = False
+        dry_run: bool = False,
+        exclude_order_item_ids: Optional[List[int]] = None
     ) -> Dict:
         """
         Calculate settlement for a single producer for a given week.
@@ -66,6 +67,9 @@ class SettlementService:
             order__delivered_at__date__gte=week_start,
             order__delivered_at__date__lte=week_end,
         ).select_related("order", "product")
+
+        if exclude_order_item_ids:
+            order_items = order_items.exclude(id__in=exclude_order_item_ids)
 
         if not order_items.exists():
             return {
@@ -111,6 +115,81 @@ class SettlementService:
         }
 
     @classmethod
+    def recalculate_settlement(
+        cls,
+        settlement: ProducerWeeklySettlement,
+        performed_by: Optional[User] = None
+    ) -> ProducerWeeklySettlement:
+        """
+        Recalculate an existing unpaid settlement. 
+        If supplementary, excludes items already settled in paid settlements for this week.
+        """
+        if settlement.status == ProducerWeeklySettlement.STATUS_PAID:
+            raise SettlementCalculationError(
+                "Cannot recalculate a paid settlement. Use supplementary settlement instead."
+            )
+            
+        other_paid_settlements = ProducerWeeklySettlement.objects.filter(
+            producer=settlement.producer,
+            week_start=settlement.week_start,
+            status=ProducerWeeklySettlement.STATUS_PAID
+        )
+        
+        settled_order_item_ids = list(SettlementOrderItem.objects.filter(
+            settlement__in=other_paid_settlements,
+            original_order_item__isnull=False
+        ).values_list('original_order_item_id', flat=True))
+            
+        data = cls.calculate_producer_settlement(
+            settlement.producer, 
+            settlement.week_start, 
+            settlement.week_end,
+            exclude_order_item_ids=settled_order_item_ids
+        )
+        
+        with transaction.atomic():
+            old_status = settlement.status
+            settlement.order_items.all().delete()
+            
+            settlement.total_sales = data["total_sales"]
+            settlement.commission_amount = data["commission_amount"]
+            settlement.payout_amount = data["payout_amount"]
+            settlement.status = ProducerWeeklySettlement.STATUS_CALCULATED
+            
+            calc_data = settlement.calculation_data or {}
+            calc_data["item_count"] = len(data["items"])
+            calc_data["recalculated_at"] = now().isoformat()
+            calc_data["recalculated_by"] = performed_by.username if performed_by else "system"
+            settlement.calculation_data = calc_data
+            settlement.save()
+            
+            for item_data in data["items"]:
+                SettlementOrderItem.objects.create(
+                    settlement=settlement,
+                    order_id=item_data["order_id"],
+                    order_item_id=item_data["order_item_id"],
+                    product_name=item_data["product_name"],
+                    quantity=item_data["quantity"],
+                    unit_price=item_data["unit_price"],
+                    subtotal=item_data["subtotal"],
+                    commission=item_data["commission"],
+                    payout=item_data["payout"],
+                    original_order_item=item_data["original_order_item"],
+                    delivered_at=item_data["delivered_at"],
+                )
+            
+            SettlementAuditLog.objects.create(
+                settlement=settlement,
+                action=SettlementAuditLog.ACTION_CALCULATED,
+                performed_by=performed_by,
+                old_status=old_status,
+                new_status=ProducerWeeklySettlement.STATUS_CALCULATED,
+                notes=f"Recalculated settlement. Found {len(data['items'])} items.",
+            )
+            
+        return settlement
+
+    @classmethod
     def create_settlement(
         cls,
         producer: User,
@@ -121,30 +200,33 @@ class SettlementService:
     ) -> Optional[ProducerWeeklySettlement]:
         """
         Create a settlement record for a producer.
-
-        Args:
-            producer: The producer user
-            week_start: Start date of the week
-            week_end: End date of the week
-            performed_by: User performing the action (for audit log)
-            dry_run: If True, don't actually create database records
-
-        Returns:
-            ProducerWeeklySettlement instance or None if no sales
+        Recalculates if an unpaid settlement exists.
+        Creates supplementary settlement if paid ones exist.
         """
-        # Check if settlement already exists
-        existing = ProducerWeeklySettlement.objects.filter(
+        existing_settlements = ProducerWeeklySettlement.objects.filter(
             producer=producer,
             week_start=week_start
-        ).first()
+        )
 
-        if existing:
-            raise SettlementCalculationError(
-                f"Settlement already exists for {producer.username} for week {week_start}"
-            )
+        unpaid_existing = existing_settlements.exclude(status=ProducerWeeklySettlement.STATUS_PAID).first()
+        if unpaid_existing:
+            if dry_run:
+                return unpaid_existing
+            return cls.recalculate_settlement(unpaid_existing, performed_by)
 
-        # Calculate settlement data
-        data = cls.calculate_producer_settlement(producer, week_start, week_end)
+        settled_order_item_ids = []
+        if existing_settlements.exists():
+            settled_order_item_ids = list(SettlementOrderItem.objects.filter(
+                settlement__in=existing_settlements,
+                original_order_item__isnull=False
+            ).values_list('original_order_item_id', flat=True))
+
+        data = cls.calculate_producer_settlement(
+            producer, 
+            week_start, 
+            week_end, 
+            exclude_order_item_ids=settled_order_item_ids
+        )
 
         if not data["has_data"]:
             return None
@@ -153,7 +235,7 @@ class SettlementService:
             return None
 
         with transaction.atomic():
-            # Create settlement record
+            is_supplementary = existing_settlements.exists()
             settlement = ProducerWeeklySettlement.objects.create(
                 producer=producer,
                 week_start=week_start,
@@ -167,10 +249,10 @@ class SettlementService:
                     "item_count": len(data["items"]),
                     "calculated_at": now().isoformat(),
                     "calculated_by": performed_by.username if performed_by else "system",
+                    "is_supplementary": is_supplementary,
                 },
             )
 
-            # Create settlement order items (audit trail)
             for item_data in data["items"]:
                 SettlementOrderItem.objects.create(
                     settlement=settlement,
@@ -186,14 +268,13 @@ class SettlementService:
                     delivered_at=item_data["delivered_at"],
                 )
 
-            # Create audit log
             SettlementAuditLog.objects.create(
                 settlement=settlement,
                 action=SettlementAuditLog.ACTION_CALCULATED,
                 performed_by=performed_by,
                 old_status=ProducerWeeklySettlement.STATUS_PENDING,
                 new_status=ProducerWeeklySettlement.STATUS_CALCULATED,
-                notes=f"Calculated settlement for {len(data['items'])} items",
+                notes=f"Calculated {'supplementary ' if is_supplementary else ''}settlement for {len(data['items'])} items",
             )
 
             return settlement

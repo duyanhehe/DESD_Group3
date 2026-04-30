@@ -67,7 +67,6 @@ class ProducerWeeklySettlement(models.Model):
 
     class Meta:
         ordering = ["-week_start", "-created_at"]
-        unique_together = ["producer", "week_start"]
         indexes = [
             models.Index(fields=["producer", "week_start"]),
             models.Index(fields=["status"]),
