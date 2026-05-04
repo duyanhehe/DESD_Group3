@@ -15,14 +15,14 @@ def get_recommendations(user_items):
 
     model = get_model()
     if model is None:
-        return {"recommendations": [], "explanation": "Recommendation engine is initializing."}
-        
+        return {
+            "recommendations": [],
+            "explanation": "Recommendation engine is initializing.",
+        }
+
     recs = recommend(model, set(user_items))
 
-    return {
-        "recommendations": recs,
-        "explanation": f"Based on {len(user_items)} items in your selection.",
-    }
+    return {"recommendations": [r["item"] for r in recs], "explanations": recs}
 
 
 def get_product_recommendations(product_name):
@@ -50,12 +50,16 @@ def get_order_recommendations(order_id):
         order = Order.objects.get(id=order_id)
         if order.status == "cancelled":
             return {"recommendations": [], "explanation": "Order was cancelled."}
-            
+
         order_ids = [order.id]
-        order_ids.extend(order.sub_orders.values_list('id', flat=True))
-        
-        items = list(OrderItem.objects.filter(order_id__in=order_ids).values_list('product__name', flat=True).distinct())
-        
+        order_ids.extend(order.sub_orders.values_list("id", flat=True))
+
+        items = list(
+            OrderItem.objects.filter(order_id__in=order_ids)
+            .values_list("product__name", flat=True)
+            .distinct()
+        )
+
         return get_recommendations(items)
     except Order.DoesNotExist:
         return {"recommendations": [], "explanation": "Order not found."}
@@ -102,18 +106,26 @@ def get_user_recommendations(user_id, limit=10):
         }
 
     # Get all items from user's orders (including from sub-orders if it's a master order)
-    order_ids = list(orders.values_list('id', flat=True))
-    sub_order_ids = list(Order.objects.filter(parent_order_id__in=order_ids).values_list('id', flat=True))
+    order_ids = list(orders.values_list("id", flat=True))
+    sub_order_ids = list(
+        Order.objects.filter(parent_order_id__in=order_ids).values_list("id", flat=True)
+    )
     all_order_ids = order_ids + sub_order_ids
-    
-    all_items = list(OrderItem.objects.filter(order_id__in=all_order_ids).values_list('product__name', flat=True).distinct())
-    print(f"DEBUG: Found {len(all_items)} historical items for user {user_id}: {all_items}")
+
+    all_items = list(
+        OrderItem.objects.filter(order_id__in=all_order_ids)
+        .values_list("product__name", flat=True)
+        .distinct()
+    )
+    print(
+        f"DEBUG: Found {len(all_items)} historical items for user {user_id}: {all_items}"
+    )
 
     # Get recommendations based on user's purchase history
     if all_items:
         result = get_recommendations(list(set(all_items)))
         # print(f"DEBUG: AI Recs for user {user_id}: {result}")
-        
+
         # If AI found nothing specific, fallback to trending
         if not result.get("recommendations"):
             return {
