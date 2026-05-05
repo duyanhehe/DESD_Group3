@@ -289,11 +289,13 @@ class ChatbotView(APIView):
 
     def post(self, request):
         user_message = request.data.get("message")
+        recommendation_data = request.data.get("recommendation_data")
+        
         if not user_message:
             return Response({"error": "Message is required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Delegate to modular logic
-        result = chatbot_logic.get_response(user_message)
+        # Delegate to modular logic with optional XAI context and user history
+        result = chatbot_logic.get_response(user_message, recommendation_data=recommendation_data, user=request.user)
 
         if result.get("success") is False:
             return Response(result, status=status.HTTP_503_SERVICE_UNAVAILABLE)
