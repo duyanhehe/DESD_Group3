@@ -88,7 +88,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     </div>
                 `;
-                trendingContainer.classList.remove('hidden');
+                
+                // Only show if "All Items" is currently selected (or if pills aren't rendered yet)
+                const activePill = categoryPillsContainer.querySelector('.bg-primary');
+                if (!activePill || activePill.getAttribute('data-id') === 'all') {
+                    trendingContainer.classList.remove('hidden');
+                }
             }
 
             // 2. Render Personalized
@@ -112,11 +117,38 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     </div>
                 `;
-                personaContainer.classList.remove('hidden');
+                
+                // Only show if "All Items" is currently selected (or if pills aren't rendered yet)
+                const activePill = categoryPillsContainer.querySelector('.bg-primary');
+                if (!activePill || activePill.getAttribute('data-id') === 'all') {
+                    personaContainer.classList.remove('hidden');
+                }
             }
 
         } catch (error) {
             console.error('Error fetching AI recommendations:', error);
+        }
+    }
+
+    /**
+     * Toggles the visibility of AI recommendation sections.
+     * @param {boolean} show - Whether to show or hide sections.
+     */
+    function toggleRecommendationSections(show) {
+        const personaContainer = document.getElementById('personalized-recommendations');
+        const trendingContainer = document.getElementById('trending-recommendations');
+
+        if (show) {
+            // Show only if they have been populated with content
+            if (personaContainer && personaContainer.innerHTML.trim() !== '') {
+                personaContainer.classList.remove('hidden');
+            }
+            if (trendingContainer && trendingContainer.innerHTML.trim() !== '') {
+                trendingContainer.classList.remove('hidden');
+            }
+        } else {
+            personaContainer?.classList.add('hidden');
+            trendingContainer?.classList.add('hidden');
         }
     }
 
@@ -149,6 +181,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 pill.classList.add(...activeClass.split(' '));
                 
                 const categoryId = pill.getAttribute('data-id');
+
+                // Toggle AI sections: Show only for "All Items"
+                toggleRecommendationSections(categoryId === 'all');
+
                 if (categoryId === 'all') {
                     renderMarketplace(allCategories, allProducts);
                 } else {
@@ -254,9 +290,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function filterProducts(term) {
         if (!term) {
+            const activePill = categoryPillsContainer.querySelector('.bg-primary');
+            const isAll = activePill && activePill.getAttribute('data-id') === 'all';
+            toggleRecommendationSections(isAll);
             renderMarketplace(allCategories, allProducts);
             return;
         }
+
+        // Hide recommendations during search to focus on results
+        toggleRecommendationSections(false);
 
         const filtered = allProducts.filter(p => 
             p.name.toLowerCase().includes(term) || 
