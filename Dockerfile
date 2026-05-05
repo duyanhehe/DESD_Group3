@@ -24,7 +24,7 @@ COPY pyproject.toml uv.lock ./
 
 # Install dependencies using uv
 # We use --no-install-project because we haven't copied the source code yet
-RUN uv sync --no-install-project --frozen --no-cache
+RUN uv sync --no-install-project --frozen --no-cache --no-dev
 
 # Ensure the virtual environment is used
 ENV PATH="/app/.venv/bin:$PATH"
