@@ -130,6 +130,82 @@ http://127.0.0.1:8000/admin/
 
 ---
 
+# Docker Usage
+
+You can run the entire application, including the database, using Docker Compose.
+
+## Prerequisites
+
+1.  **Docker & Docker Compose** installed on your system.
+2.  **Local Ollama** (required for the AI Chatbot):
+    -   Ensure Ollama is running on your host machine.
+    -   Configure it to allow connections from Docker containers:
+        ```powershell
+        # Run in PowerShell as Administrator
+        [System.Environment]::SetEnvironmentVariable('OLLAMA_HOST', '0.0.0.0', 'User')
+        [System.Environment]::SetEnvironmentVariable('OLLAMA_ORIGINS', '*', 'User')
+        ```
+    -   **Restart Ollama** after applying these changes.
+3.  **Stripe Keys**: Ensure `STRIPE_PUBLIC_KEY` and `STRIPE_SECRET_KEY` are configured in your `.env` file.
+
+## Running with Docker
+
+1.  **Prepare Environment**:
+    ```bash
+    cp .env.example .env
+    # Edit .env to include your Stripe keys and database credentials
+    ```
+
+2.  **Build and Start**:
+    ```bash
+    docker-compose up --build
+    ```
+    This command builds the Django container (Python 3.11), starts the PostgreSQL database, and automatically runs all migrations.
+
+3.  **Accessing the Services**:
+    - **Marketplace**: [http://localhost:8000](http://localhost:8000)
+    - **Admin Panel**: [http://localhost:8000/admin](http://localhost:8000/admin)
+
+4.  **Useful Commands**:
+    - **Create Superuser**:
+      ```bash
+      docker exec -it brfn_app python manage.py createsuperuser
+      ```
+    - **Stop Services**:
+      ```bash
+      docker-compose down
+      ```
+
+# Admin & Treasury Management
+
+To access the administrative back-end and the Treasury (Settlement) system, follow these steps.
+
+## 1. Create a Superuser
+You must first create a main administrator account to log in to the admin panel.
+
+**With Docker:**
+```bash
+docker exec -it brfn_app python manage.py createsuperuser
+```
+
+**Locally:**
+```bash
+uv run python manage.py createsuperuser
+```
+
+## 2. Promote Users to Staff (Treasury Access)
+Regular users (like Producers or Customers) cannot access the Treasury dashboard by default. To promote a user so they can manage settlements:
+
+1.  Log in to the **Admin Panel**: [http://localhost:8000/admin](http://localhost:8000/admin) using your Superuser account.
+2.  Navigate to **Users** (under the Accounts section).
+3.  Click on the **Username** of the account you wish to promote.
+4.  Scroll down to the **Permissions** section.
+5.  Check the box for **Staff status** (Designates whether the user can log into this admin site).
+6.  Click **Save** at the bottom of the page.
+7.  This user can now access the **Treasury** link in the main site navigation to manage settlements and payouts.
+
+---
+
 # Development Workflow
 
 | Task              | Command                                  |
