@@ -147,7 +147,7 @@ You can run the entire application, including the database, using Docker Compose
         ```
     -   **Pull the Model**:
         ```bash
-        ollama pull qwen2.5:7b
+        ollama pull qwen2.5:7b-instruct
         ```
     -   **Restart Ollama** after applying these changes.
 3.  **Stripe Keys**: Ensure `STRIPE_PUBLIC_KEY` and `STRIPE_SECRET_KEY` are configured in your `.env` file.
