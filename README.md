@@ -145,6 +145,10 @@ You can run the entire application, including the database, using Docker Compose
         [System.Environment]::SetEnvironmentVariable('OLLAMA_HOST', '0.0.0.0', 'User')
         [System.Environment]::SetEnvironmentVariable('OLLAMA_ORIGINS', '*', 'User')
         ```
+    -   **Pull the Model**:
+        ```bash
+        ollama pull qwen2.5:7b
+        ```
     -   **Restart Ollama** after applying these changes.
 3.  **Stripe Keys**: Ensure `STRIPE_PUBLIC_KEY` and `STRIPE_SECRET_KEY` are configured in your `.env` file.
 
@@ -165,6 +169,10 @@ You can run the entire application, including the database, using Docker Compose
 3.  **Accessing the Services**:
     - **Marketplace**: [http://localhost:8000](http://localhost:8000)
     - **Admin Panel**: [http://localhost:8000/admin](http://localhost:8000/admin)
+    - **Stripe Webhooks**: The `stripe` container automatically forwards events to the app. Check the logs to get your signing secret:
+      ```bash
+      docker logs brfn_stripe
+      ```
 
 4.  **Useful Commands**:
     - **Create Superuser**:

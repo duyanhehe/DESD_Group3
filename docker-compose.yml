@@ -50,5 +50,14 @@ services:
       db:
         condition: service_healthy
 
+  stripe:
+    image: stripe/stripe-cli
+    container_name: brfn_stripe
+    command: listen --forward-to app:8000/payments/api/v1/webhook/ --api-key ${STRIPE_SECRET_KEY}
+    environment:
+      - STRIPE_API_KEY=${STRIPE_SECRET_KEY}
+    depends_on:
+      - app
+
 volumes:
   postgres_data:
