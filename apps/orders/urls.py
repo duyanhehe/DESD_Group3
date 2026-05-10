@@ -20,7 +20,6 @@ from .views import (
     ReorderView,
     # orders (producer)
     ProducerOrderListView,
-    ProducerOrderListView,
     ProducerOrderDetailView,
     # refunds
     CustomerRefundRequestView,

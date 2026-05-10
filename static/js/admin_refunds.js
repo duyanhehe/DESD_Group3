@@ -1,6 +1,11 @@
 /**
  * Admin Refund Review Logic
+ * Uses a data store to avoid inline JSON serialization issues.
  */
+
+// Store refund data by ID for safe access from onclick handlers
+let refundStore = {};
+let currentRefundId = null;
 
 document.addEventListener('DOMContentLoaded', function() {
     loadRefundRequests();
@@ -13,32 +18,24 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-let currentRefundId = null;
-
 async function loadRefundRequests() {
-    const status = document.getElementById('status-filter').value;
+    const statusVal = document.getElementById('status-filter').value;
     const tbody = document.getElementById('refunds-table-body');
     const token = localStorage.getItem('auth_token');
     
-    const headers = {
-        'Accept': 'application/json'
-    };
+    const headers = { 'Accept': 'application/json' };
     
     if (token && token !== 'null' && token !== 'undefined' && token.length > 10) {
         headers['Authorization'] = `Token ${token}`;
     }
     
     try {
-        const response = await fetch(`/orders/api/v1/refund/review/list/?status=${status}`, { headers });
+        let response = await fetch(`/orders/api/v1/refund/review/list/?status=${statusVal}`, { headers });
         
+        // Retry with session auth if token fails
         if (response.status === 401 && headers['Authorization']) {
-            // Token failed, try without it (session auth)
             delete headers['Authorization'];
-            const retryRes = await fetch(`/orders/api/v1/refund/review/list/?status=${status}`, { headers });
-            if (!retryRes.ok) throw new Error('Unauthorized');
-            const refunds = await retryRes.json();
-            renderRefundTable(refunds);
-            return;
+            response = await fetch(`/orders/api/v1/refund/review/list/?status=${statusVal}`, { headers });
         }
 
         if (!response.ok) throw new Error('Failed to fetch refunds');
@@ -47,12 +44,13 @@ async function loadRefundRequests() {
         renderRefundTable(refunds);
     } catch (error) {
         console.error('Error:', error);
-        tbody.innerHTML = `<tr><td colspan="6" class="px-8 py-10 text-center text-red-500 font-bold">Error loading data.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="px-8 py-10 text-center text-red-500 font-bold">Error loading data. Please refresh.</td></tr>`;
     }
 }
 
 function renderRefundTable(refunds) {
     const tbody = document.getElementById('refunds-table-body');
+    refundStore = {}; // Reset store
     
     if (refunds.length === 0) {
         tbody.innerHTML = `<tr><td colspan="6" class="px-8 py-20 text-center text-zinc-400 font-bold">No refund requests found.</td></tr>`;
@@ -60,21 +58,32 @@ function renderRefundTable(refunds) {
     }
 
     tbody.innerHTML = refunds.map(r => {
+        // Store each refund by ID for safe onclick access
+        refundStore[r.id] = r;
+
         const date = new Date(r.created_at).toLocaleDateString();
         const amount = parseFloat(r.requested_amount).toFixed(2);
+        const st = (r.status || '').toLowerCase();
+        const isPending = st === 'pending';
         
+        // Button label changes based on status
+        const btnLabel = isPending ? 'Review' : 'View Details';
+        const btnClass = isPending 
+            ? 'bg-zinc-900 text-white hover:bg-zinc-700' 
+            : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200';
+
         return `
             <tr class="border-b border-zinc-50 hover:bg-zinc-50/50 transition-colors">
                 <td class="px-8 py-6 text-sm font-medium text-zinc-900">${date}</td>
                 <td class="px-8 py-6">
                     <div class="flex flex-col">
-                        <span class="text-sm font-bold text-zinc-900">${r.customer_name}</span>
+                        <span class="text-sm font-bold text-zinc-900">${escapeHtml(r.customer_name)}</span>
                         <span class="text-[11px] text-zinc-400 font-medium">Order #${r.order_id}</span>
                     </div>
                 </td>
                 <td class="px-8 py-6">
                     <div class="flex flex-col">
-                        <span class="text-sm font-bold text-zinc-900">${r.item_name}</span>
+                        <span class="text-sm font-bold text-zinc-900">${escapeHtml(r.item_name)}</span>
                         <span class="text-[11px] text-zinc-500 font-medium">${formatReason(r.reason_category)}</span>
                     </div>
                 </td>
@@ -82,11 +91,11 @@ function renderRefundTable(refunds) {
                     <span class="text-sm font-black text-zinc-900">$${amount}</span>
                 </td>
                 <td class="px-8 py-6">
-                    <span class="status-badge status-${r.status.toLowerCase()}">${r.status}</span>
+                    <span class="status-badge status-${st}">${r.status}</span>
                 </td>
                 <td class="px-8 py-6 text-right">
-                    <button onclick="openReviewModal(${JSON.stringify(r).replace(/"/g, '&quot;')})" class="action-btn px-4 py-2 bg-zinc-900 text-white rounded-lg text-xs font-bold hover:bg-zinc-700 transition-all">
-                        Review
+                    <button onclick="openReviewModal(${r.id})" class="action-btn px-4 py-2 ${btnClass} rounded-lg text-xs font-bold transition-all">
+                        ${btnLabel}
                     </button>
                 </td>
             </tr>
@@ -104,11 +113,24 @@ function formatReason(reason) {
     return map[reason] || reason;
 }
 
-function openReviewModal(refund) {
+// Escape HTML to prevent XSS and broken attributes
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function openReviewModal(refundId) {
+    const refund = refundStore[refundId];
+    if (!refund) {
+        console.error('Refund not found in store:', refundId);
+        return;
+    }
+
     currentRefundId = refund.id;
     const details = document.getElementById('modal-details');
     const actions = document.getElementById('modal-actions');
     const adminNoteArea = document.getElementById('admin-note');
+    const modalTitle = document.getElementById('modal-title');
     
     adminNoteArea.value = refund.admin_note || '';
     
@@ -117,7 +139,7 @@ function openReviewModal(refund) {
         evidenceHtml = `
             <div>
                 <label class="text-[10px] font-black uppercase text-zinc-400 block mb-2">Evidence Photo</label>
-                <img src="${refund.evidence_image}" class="evidence-preview shadow-sm border border-zinc-100" onclick="showBigImage('${refund.evidence_image}')">
+                <img src="${escapeHtml(refund.evidence_image)}" class="evidence-preview shadow-sm border border-zinc-100" onclick="showBigImage(${refund.id})">
                 <p class="text-[10px] text-zinc-400 mt-2 italic">Click to enlarge</p>
             </div>
         `;
@@ -127,7 +149,7 @@ function openReviewModal(refund) {
         <div class="grid grid-cols-2 gap-6">
             <div>
                 <label class="text-[10px] font-black uppercase text-zinc-400 block mb-1">Customer</label>
-                <p class="text-sm font-bold text-zinc-900">${refund.customer_name}</p>
+                <p class="text-sm font-bold text-zinc-900">${escapeHtml(refund.customer_name)}</p>
             </div>
             <div>
                 <label class="text-[10px] font-black uppercase text-zinc-400 block mb-1">Order</label>
@@ -135,7 +157,7 @@ function openReviewModal(refund) {
             </div>
             <div class="col-span-2">
                 <label class="text-[10px] font-black uppercase text-zinc-400 block mb-1">Item / Scope</label>
-                <p class="text-sm font-bold text-zinc-900">${refund.item_name}</p>
+                <p class="text-sm font-bold text-zinc-900">${escapeHtml(refund.item_name)}</p>
             </div>
             <div>
                 <label class="text-[10px] font-black uppercase text-zinc-400 block mb-1">Reason</label>
@@ -151,7 +173,7 @@ function openReviewModal(refund) {
             <div>
                 <label class="text-[10px] font-black uppercase text-zinc-400 block mb-1">Customer Message</label>
                 <div class="p-4 bg-zinc-50 rounded-xl border border-zinc-100 text-sm text-zinc-600 font-medium leading-relaxed">
-                    ${refund.reason_text}
+                    ${escapeHtml(refund.reason_text)}
                 </div>
             </div>
         ` : ''}
@@ -160,14 +182,16 @@ function openReviewModal(refund) {
     `;
 
     // Show/Hide actions based on status
-    const status = refund.status.toLowerCase();
-    if (status === 'pending') {
+    const st = (refund.status || '').toLowerCase();
+    if (st === 'pending') {
+        modalTitle.innerText = 'Review Refund';
         actions.style.display = 'flex';
         adminNoteArea.disabled = false;
         
         document.getElementById('btn-modal-approve').onclick = () => submitReview('approve');
         document.getElementById('btn-modal-reject').onclick = () => submitReview('reject');
     } else {
+        modalTitle.innerText = st === 'approved' ? 'Refund Approved' : 'Refund Rejected';
         actions.style.display = 'none';
         adminNoteArea.disabled = true;
     }
@@ -180,6 +204,15 @@ function closeReviewModal() {
 }
 
 async function submitReview(action) {
+    const approveBtn = document.getElementById('btn-modal-approve');
+    const rejectBtn = document.getElementById('btn-modal-reject');
+    
+    // Disable buttons to prevent double-clicks
+    approveBtn.disabled = true;
+    rejectBtn.disabled = true;
+    const originalApproveHtml = approveBtn.innerHTML;
+    approveBtn.innerHTML = '<span class="material-symbols-outlined animate-spin text-sm align-middle">sync</span> Processing...';
+    
     const adminNote = document.getElementById('admin-note').value;
     const token = localStorage.getItem('auth_token');
     
@@ -193,48 +226,47 @@ async function submitReview(action) {
     }
     
     try {
-        const response = await fetch(`/orders/api/v1/refund/review/${currentRefundId}/`, {
+        let response = await fetch(`/orders/api/v1/refund/review/${currentRefundId}/`, {
             method: 'POST',
             headers: headers,
             body: JSON.stringify({ action, admin_note: adminNote })
         });
         
+        // Retry with session auth if token fails
         if (response.status === 401 && headers['Authorization']) {
-             delete headers['Authorization'];
-             const retryRes = await fetch(`/orders/api/v1/refund/review/${currentRefundId}/`, {
+            delete headers['Authorization'];
+            response = await fetch(`/orders/api/v1/refund/review/${currentRefundId}/`, {
                 method: 'POST',
                 headers: headers,
                 body: JSON.stringify({ action, admin_note: adminNote })
             });
-            const retryData = await retryRes.json();
-            if (retryRes.ok) {
-                showToast(retryData.message || `Refund ${action}ed successfully`, 'success');
-                closeReviewModal();
-                loadRefundRequests();
-            } else {
-                showToast(retryData.error || 'Failed to submit review', 'error');
-            }
-            return;
         }
 
         const data = await response.json();
         
         if (response.ok) {
-            showToast(data.message || `Refund ${action}ed successfully`, 'success');
+            notify(data.message || `Refund ${action}ed successfully`, 'success');
             closeReviewModal();
             loadRefundRequests();
         } else {
-            showToast(data.error || 'Failed to submit review', 'error');
+            notify(data.error || 'Failed to submit review', 'error');
         }
     } catch (error) {
         console.error('Error:', error);
-        showToast('Connection error', 'error');
+        notify('Connection error. Please try again.', 'error');
+    } finally {
+        approveBtn.disabled = false;
+        rejectBtn.disabled = false;
+        approveBtn.innerHTML = originalApproveHtml;
     }
 }
 
-function showBigImage(url) {
-    document.getElementById('big-evidence-image').src = url;
-    document.getElementById('image-modal').style.display = 'flex';
+function showBigImage(refundId) {
+    const refund = refundStore[refundId];
+    if (refund && refund.evidence_image) {
+        document.getElementById('big-evidence-image').src = refund.evidence_image;
+        document.getElementById('image-modal').style.display = 'flex';
+    }
 }
 
 function getCookie(name) {
@@ -252,10 +284,24 @@ function getCookie(name) {
     return cookieValue;
 }
 
-function showToast(message, type = 'info') {
+/**
+ * Non-blocking notification. Falls back to a temporary DOM toast if window.showToast is unavailable.
+ */
+function notify(message, type = 'info') {
     if (window.showToast) {
         window.showToast(message, type);
-    } else {
-        alert(message);
+        return;
     }
+    // Fallback: create a temporary toast element instead of blocking alert()
+    const toast = document.createElement('div');
+    const bgColor = type === 'success' ? '#166534' : type === 'error' ? '#991b1b' : '#1e3a5f';
+    toast.style.cssText = `position:fixed;top:24px;right:24px;z-index:9999;padding:16px 24px;border-radius:16px;background:${bgColor};color:white;font-weight:700;font-size:14px;box-shadow:0 8px 30px rgba(0,0,0,0.2);transition:opacity 0.5s;`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => { toast.style.opacity = '0'; }, 2500);
+    setTimeout(() => { toast.remove(); }, 3000);
 }
+
+// Export functions for onclick handlers in dynamically generated HTML
+window.openReviewModal = openReviewModal;
+window.showBigImage = showBigImage;

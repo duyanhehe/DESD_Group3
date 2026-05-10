@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from django.views.generic import TemplateView
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
 from django.shortcuts import get_object_or_404
 from django.db import transaction
@@ -429,6 +430,32 @@ class UpdateOrderStatusView(APIView):
             note=note,
         )
 
+        # Sync UP to Master Order
+        if order.parent_order:
+            parent = order.parent_order
+            sub_statuses = [so.status for so in parent.sub_orders.all()]
+            
+            # Only update master when ALL sub-orders reach the same status
+            if all(s == new_status for s in sub_statuses):
+                new_parent_status = new_status
+            else:
+                new_parent_status = parent.status  # don't change yet
+            
+            if parent.status != new_parent_status:
+                old_p_status = parent.status
+                parent.status = new_parent_status
+                if new_parent_status == Order.DELIVERED and not parent.delivered_at:
+                    parent.delivered_at = now()
+                parent.save()
+                
+                OrderStatusLog.objects.create(
+                    order=parent,
+                    old_status=old_p_status,
+                    new_status=new_parent_status,
+                    changed_by=request.user,
+                    note=f"Auto-synced from sub-order"
+                )
+
         serializer = OrderSerializer(order)
         return Response(serializer.data)
 
@@ -533,9 +560,14 @@ class CustomerRefundRequestView(APIView):
         if not order.can_transition_to(Order.REFUND_REQUESTED):
             return Response({"error": f"Cannot request refund for order in status {order.status}."}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Prevent duplicate pending refund requests for the same order
+        if RefundRequest.objects.filter(order=order, status=RefundRequest.STATUS_PENDING).exists():
+            return Response({"error": "A refund request is already pending for this order."}, status=status.HTTP_400_BAD_REQUEST)
+
         order_item = None
         if order_item_id:
-            order_item = get_object_or_404(OrderItem, id=order_item_id, order=order)
+            # OrderItem belongs to a sub-order, so we filter by order__parent_order=order
+            order_item = get_object_or_404(OrderItem, id=order_item_id, order__parent_order=order)
 
         # Validate delivery rules
         if reason_category in [RefundRequest.REASON_SPOILED, RefundRequest.REASON_FRESH_RETURN]:
@@ -579,6 +611,19 @@ class CustomerRefundRequestView(APIView):
                 changed_by=request.user,
                 note="Customer requested a refund"
             )
+            
+            # Sync sub-orders
+            for sub_order in order.sub_orders.all():
+                if sub_order.can_transition_to(Order.REFUND_REQUESTED):
+                    sub_order.status = Order.REFUND_REQUESTED
+                    sub_order.save()
+                    OrderStatusLog.objects.create(
+                        order=sub_order,
+                        old_status=old_status,
+                        new_status=Order.REFUND_REQUESTED,
+                        changed_by=request.user,
+                        note="Customer requested a refund for Master Order"
+                    )
 
         serializer = RefundRequestSerializer(refund_req)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -632,9 +677,12 @@ class AdminRefundListView(APIView):
         return Response(serializer.data)
 
 
-class AdminRefundReviewPageView(TemplateView):
-    """TemplateView for the admin refund review dashboard."""
+class AdminRefundReviewPageView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    """TemplateView for the admin refund review dashboard. Staff-only access."""
     template_name = "orders/admin_refunds.html"
+
+    def test_func(self):
+        return self.request.user.is_staff
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

@@ -108,7 +108,7 @@ class Order(models.Model):
 
     # which transitions are allowed from each status
     VALID_TRANSITIONS = {
-        PENDING: [CONFIRMED, CANCELLED],
+        PENDING: [CONFIRMED, CANCELLED, REFUND_REQUESTED],
         CONFIRMED: [READY, CANCELLED, REFUND_REQUESTED],
         READY: [DELIVERED, CANCELLED, REFUND_REQUESTED],
         DELIVERED: [REFUND_REQUESTED],  # can request refund after delivery

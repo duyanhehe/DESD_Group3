@@ -18,11 +18,13 @@ function getCookie(name) {
 }
 
 const statusColors = {
-    'PENDING': 'bg-amber-100 text-amber-700',
-    'CONFIRMED': 'bg-blue-100 text-blue-700',
-    'READY': 'bg-purple-100 text-purple-700',
-    'DELIVERED': 'bg-emerald-100 text-emerald-700',
-    'CANCELLED': 'bg-rose-100 text-rose-700'
+    'pending': 'bg-amber-100 text-amber-700',
+    'confirmed': 'bg-blue-100 text-blue-700',
+    'ready': 'bg-purple-100 text-purple-700',
+    'delivered': 'bg-emerald-100 text-emerald-700',
+    'cancelled': 'bg-rose-100 text-rose-700',
+    'refund_requested': 'bg-orange-100 text-orange-700',
+    'refunded': 'bg-violet-100 text-violet-700'
 };
 
 async function renderOrders() {
@@ -97,7 +99,7 @@ async function renderOrders() {
                         <div>
                             <div class="flex items-center gap-3 mb-1">
                                 <h3 class="font-headline font-extrabold text-on-background uppercase text-xs tracking-widest">Order #${order.id}</h3>
-                                <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${statusClass}">${order.status}</span>
+                                <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${statusClass}">${order.status.toUpperCase()}</span>
                             </div>
                             <p class="text-sm font-medium text-on-surface-variant">Placed on ${date} • ${order.sub_orders?.length || 0} Sub-orders</p>
                         </div>
@@ -267,11 +269,12 @@ function closeOrderModal() {
 }
 
 function renderRefundButtons(order) {
-    if (order.status === 'CANCELLED' || order.status === 'REFUNDED' || order.status === 'REFUND_REQUESTED') {
+    const st = order.status.toLowerCase();
+    if (st === 'cancelled' || st === 'refunded' || st === 'refund_requested') {
         return '';
     }
 
-    if (order.status === 'DELIVERED') {
+    if (st === 'delivered') {
         // Check if within 2 days
         const deliveredAt = order.delivered_at ? new Date(order.delivered_at) : new Date(order.updated_at);
         const now = new Date();
@@ -447,3 +450,5 @@ async function reorder(orderId) {
 window.reorder = reorder;
 window.viewOrderDetails = viewOrderDetails;
 window.closeOrderModal = closeOrderModal;
+window.openRefundModal = openRefundModal;
+window.closeRefundModal = closeRefundModal;

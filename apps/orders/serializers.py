@@ -123,9 +123,9 @@ class OrderSerializer(serializers.ModelSerializer):
             "id", "customer", "customer_name",
             "status", "total_price",
             "items", "sub_orders", "status_logs",
-            "created_at", "updated_at",
+            "created_at", "updated_at", "delivered_at",
         ]
-        read_only_fields = ["customer", "total_price", "created_at", "updated_at"]
+        read_only_fields = ["customer", "total_price", "created_at", "updated_at", "delivered_at"]
 
     def get_items(self, obj):
         # If it's a Master Order, fetch items from its sub_orders

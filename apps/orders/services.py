@@ -78,11 +78,8 @@ class RefundService:
         # The exact amount the item was originally sold for
         original_value = refund_request.order_item.subtotal if refund_request.order_item else order.total_price
         
-        # Calculate how much producer and platform lose. 
-        # Note: If it's a fresh return, we refund 50% minus fee. 
-        # The producer still loses the item, so their payout should theoretically be reduced by the full 95% of the original value?
-        # The requirements said: "tự động trừ đi số tiền tương ứng trong báo cáo doanh thu của Producer và phần hoa hồng 5% ... giảm đi".
-        # We will deduct based on the *original value* of the item returned/spoiled, because the producer doesn't get paid for returned/spoiled items.
+        # Deduct based on the *original value* of the returned item/order,
+        # because the producer doesn't get paid for returned/spoiled items.
         deduct_commission = (original_value * Decimal("0.05")).quantize(Decimal("0.01"))
         deduct_payout = (original_value - deduct_commission).quantize(Decimal("0.01"))
         
@@ -90,20 +87,30 @@ class RefundService:
         payment_txn.network_commission -= deduct_commission
         payment_txn.producer_payout -= deduct_payout
         
-        # Also adjust the producer_breakdown JSON
+        # Adjust producer_breakdown JSON for each affected producer
         if refund_request.order_item:
-            producer_id = refund_request.order_item.producer.id
+            # Partial refund: only one producer affected
+            affected_producers = {refund_request.order_item.producer.id: refund_request.order_item.subtotal}
+        elif order.sub_orders.exists():
+            # Master Order refund: deduct each sub-order's value from its producer
+            affected_producers = {}
+            for sub in order.sub_orders.select_related('producer').all():
+                if sub.producer_id:
+                    affected_producers[sub.producer_id] = sub.total_price
+        elif order.producer_id:
+            # Single-producer sub-order
+            affected_producers = {order.producer_id: original_value}
         else:
-            producer_id = order.producer.id if order.producer else None
+            affected_producers = {}
 
-        if producer_id:
+        for pid, value in affected_producers.items():
+            p_commission = (value * Decimal("0.05")).quantize(Decimal("0.01"))
+            p_payout = (value - p_commission).quantize(Decimal("0.01"))
             for breakdown in payment_txn.producer_breakdown:
-                if breakdown.get("producer_id") == producer_id:
-                    current_subtotal = Decimal(breakdown["subtotal"])
-                    current_subtotal -= original_value
-                    breakdown["subtotal"] = str(max(Decimal("0.00"), current_subtotal))
-                    breakdown["commission"] = str(max(Decimal("0.00"), Decimal(breakdown["commission"]) - deduct_commission))
-                    breakdown["payout"] = str(max(Decimal("0.00"), Decimal(breakdown["payout"]) - deduct_payout))
+                if breakdown.get("producer_id") == pid:
+                    breakdown["subtotal"] = str(max(Decimal("0.00"), Decimal(breakdown["subtotal"]) - value))
+                    breakdown["commission"] = str(max(Decimal("0.00"), Decimal(breakdown["commission"]) - p_commission))
+                    breakdown["payout"] = str(max(Decimal("0.00"), Decimal(breakdown["payout"]) - p_payout))
                     break
 
         payment_txn.save()
@@ -127,6 +134,32 @@ class RefundService:
             changed_by=admin_user,
             note=f"Refund approved. Amount: ${amount_to_refund}. Note: {admin_note}"
         )
+        
+        # Sync sub-orders
+        for sub_order in order.sub_orders.all():
+            sub_order.status = Order.REFUNDED
+            sub_order.save()
+            OrderStatusLog.objects.create(
+                order=sub_order,
+                old_status=old_status,
+                new_status=Order.REFUNDED,
+                changed_by=admin_user,
+                note=f"Refund approved for Master Order. Note: {admin_note}"
+            )
+
+        # 4. Restock products if order was cancelled before delivery or returned fresh
+        if refund_request.reason_category in [RefundRequest.REASON_NOT_DELIVERED, RefundRequest.REASON_FRESH_RETURN]:
+            if refund_request.order_item:
+                items_to_restock = [refund_request.order_item]
+            elif order.sub_orders.exists():
+                # Master Order: items live inside sub-orders, not on the master itself
+                items_to_restock = OrderItem.objects.filter(order__parent_order=order)
+            else:
+                items_to_restock = order.items.all()
+            for item in items_to_restock:
+                if item and item.product:
+                    item.product.stock_quantity += item.quantity
+                    item.product.save()
 
         return refund_request
 
@@ -142,8 +175,16 @@ class RefundService:
         refund_request.save()
 
         old_status = refund_request.order.status
-        # Revert order status from REFUND_REQUESTED to previous state based on delivery status
-        target_status = Order.DELIVERED if refund_request.order.delivered_at else Order.CONFIRMED # Simplification
+        # Revert order to the status it had *before* REFUND_REQUESTED by querying audit log
+        previous_log = OrderStatusLog.objects.filter(
+            order=refund_request.order,
+            new_status=Order.REFUND_REQUESTED
+        ).order_by('-timestamp').first()
+        if previous_log and previous_log.old_status:
+            target_status = previous_log.old_status
+        else:
+            # Fallback: guess from delivered_at
+            target_status = Order.DELIVERED if refund_request.order.delivered_at else Order.CONFIRMED
         
         refund_request.order.status = target_status
         refund_request.order.save()
@@ -155,5 +196,17 @@ class RefundService:
             changed_by=admin_user,
             note=f"Refund rejected. Note: {admin_note}"
         )
+        
+        # Sync sub-orders
+        for sub_order in refund_request.order.sub_orders.all():
+            sub_order.status = target_status
+            sub_order.save()
+            OrderStatusLog.objects.create(
+                order=sub_order,
+                old_status=old_status,
+                new_status=target_status,
+                changed_by=admin_user,
+                note=f"Refund rejected for Master Order. Note: {admin_note}"
+            )
 
         return refund_request
