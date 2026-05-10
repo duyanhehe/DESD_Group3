@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Cart, CartItem, Order, OrderItem, OrderStatusLog
+from .models import Cart, CartItem, Order, OrderItem, OrderStatusLog, RefundRequest
 
 
 # ─── Cart ───────────────────────────────────────────────────
@@ -203,3 +203,22 @@ class ProducerOrderSerializer(serializers.ModelSerializer):
         producer = self.context.get("request").user
         items = obj.items.filter(producer=producer)
         return sum(item.subtotal for item in items)
+
+
+# ─── Refund Requests ──────────────────────────────────────────
+
+class RefundRequestSerializer(serializers.ModelSerializer):
+    order_id = serializers.IntegerField(source="order.id", read_only=True)
+    customer_name = serializers.CharField(source="customer.username", read_only=True)
+    item_name = serializers.CharField(source="order_item.product.name", read_only=True, default="Entire Order")
+
+    class Meta:
+        model = RefundRequest
+        fields = [
+            "id", "order_id", "order_item", "customer_name", "item_name",
+            "reason_category", "reason_text", "evidence_image",
+            "requested_amount", "status", "admin_note",
+            "created_at", "resolved_at"
+        ]
+        read_only_fields = ["id", "order_id", "customer_name", "item_name", "requested_amount", "status", "admin_note", "resolved_at", "created_at"]
+

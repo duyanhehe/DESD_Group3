@@ -20,7 +20,11 @@ from .views import (
     ReorderView,
     # orders (producer)
     ProducerOrderListView,
+    ProducerOrderListView,
     ProducerOrderDetailView,
+    # refunds
+    CustomerRefundRequestView,
+    AdminRefundReviewView,
 )
 
 app_name = "orders"
@@ -50,4 +54,8 @@ urlpatterns = [
     # -- Orders (producer) --
     path("api/v1/producer/", ProducerOrderListView.as_view(), name="producer_order_list"),
     path("api/v1/producer/<int:order_id>/", ProducerOrderDetailView.as_view(), name="producer_order_detail"),
+
+    # -- Refunds --
+    path("api/v1/refund/request/", CustomerRefundRequestView.as_view(), name="refund_request"),
+    path("api/v1/refund/review/<int:refund_id>/", AdminRefundReviewView.as_view(), name="refund_review"),
 ]
