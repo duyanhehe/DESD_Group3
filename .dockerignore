@@ -1,0 +1,23 @@
+# Exclude everything by default
+*
+
+# Allow only source code and config
+!apps/
+!core/
+!static/
+!templates/
+!manage.py
+!mock_data.py
+!pyproject.toml
+!uv.lock
+!.env
+!.env.example
+
+# Exclude specific heavy sub-folders even if allowed above
+**/.venv
+**/.git
+**/__pycache__
+**/*.pyc
+media/
+ai_models/
+notebooks/

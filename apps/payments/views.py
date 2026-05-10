@@ -546,6 +546,7 @@ class CreateCheckoutSessionView(APIView):
             return Response({"error": "Cart is empty."}, status=status.HTTP_400_BAD_REQUEST)
 
         if not cart_items.exists():
+            print(f"DEBUG: User {request.user} has an empty cart.")
             return Response({"error": "Cart is empty."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Validate stock availability before proceeding to payment

@@ -26,6 +26,7 @@ ai_models/
 # Media
 media/
 *.sqlite3
+staticfiles/
 
 # IDEs
 .vscode/
