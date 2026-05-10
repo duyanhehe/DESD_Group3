@@ -19,6 +19,9 @@ from .serializers import (
 from apps.products.models import Product
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
+from .models import RefundRequest
+from .serializers import RefundRequestSerializer
+from .services import RefundService, RefundServiceError
 
 
 @login_required
@@ -505,3 +508,106 @@ class ProducerOrderDetailView(APIView):
 
         serializer = ProducerOrderSerializer(order, context={"request": request})
         return Response(serializer.data)
+
+
+# ─── Refund Views ──────────────────────────────────────────
+
+class CustomerRefundRequestView(APIView):
+    """POST — Customer requests a refund."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        order_id = request.data.get("order_id")
+        order_item_id = request.data.get("order_item_id")
+        reason_category = request.data.get("reason_category")
+        reason_text = request.data.get("reason_text", "")
+        evidence_image = request.FILES.get("evidence_image")
+
+        if not order_id or not reason_category:
+            return Response({"error": "Missing order_id or reason_category"}, status=status.HTTP_400_BAD_REQUEST)
+
+        order = get_object_or_404(Order, id=order_id, customer=request.user)
+        
+        if not order.can_transition_to(Order.REFUND_REQUESTED):
+            return Response({"error": f"Cannot request refund for order in status {order.status}."}, status=status.HTTP_400_BAD_REQUEST)
+
+        order_item = None
+        if order_item_id:
+            order_item = get_object_or_404(OrderItem, id=order_item_id, order=order)
+
+        # Validate delivery rules
+        if reason_category in [RefundRequest.REASON_SPOILED, RefundRequest.REASON_FRESH_RETURN]:
+            if order.status != Order.DELIVERED:
+                return Response({"error": "Order must be delivered to return items."}, status=status.HTTP_400_BAD_REQUEST)
+            if order.delivered_at:
+                delta = now() - order.delivered_at
+                if delta.days > 2:
+                    return Response({"error": "Return window (2 days) has expired."}, status=status.HTTP_400_BAD_REQUEST)
+                    
+            if reason_category == RefundRequest.REASON_SPOILED and not evidence_image:
+                 return Response({"error": "Evidence image is required for spoiled items."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if reason_category == RefundRequest.REASON_NOT_DELIVERED and order.status == Order.DELIVERED:
+             return Response({"error": "Order is already delivered."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            requested_amount = RefundService.calculate_refund_amount(order, order_item, reason_category)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        with transaction.atomic():
+            refund_req = RefundRequest.objects.create(
+                order=order,
+                order_item=order_item,
+                customer=request.user,
+                reason_category=reason_category,
+                reason_text=reason_text,
+                evidence_image=evidence_image,
+                requested_amount=requested_amount
+            )
+            
+            old_status = order.status
+            order.status = Order.REFUND_REQUESTED
+            order.save()
+            
+            OrderStatusLog.objects.create(
+                order=order,
+                old_status=old_status,
+                new_status=Order.REFUND_REQUESTED,
+                changed_by=request.user,
+                note="Customer requested a refund"
+            )
+
+        serializer = RefundRequestSerializer(refund_req)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class AdminRefundReviewView(APIView):
+    """POST — Admin approves or rejects a refund request."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, refund_id):
+        if not request.user.is_staff:
+            return Response({"error": "Admin access required."}, status=status.HTTP_403_FORBIDDEN)
+
+        refund_req = get_object_or_404(RefundRequest, id=refund_id)
+        action = request.data.get("action") # 'approve' or 'reject'
+        admin_note = request.data.get("admin_note", "")
+
+        if action not in ["approve", "reject"]:
+            return Response({"error": "Action must be 'approve' or 'reject'"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            if action == "approve":
+                refund_req = RefundService.process_refund_approval(refund_req, request.user, admin_note)
+            else:
+                refund_req = RefundService.reject_refund(refund_req, request.user, admin_note)
+                
+            serializer = RefundRequestSerializer(refund_req)
+            return Response({"message": f"Refund {action}d successfully", "data": serializer.data})
+            
+        except RefundServiceError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+

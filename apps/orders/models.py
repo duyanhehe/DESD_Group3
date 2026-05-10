@@ -93,6 +93,8 @@ class Order(models.Model):
     READY = "ready"
     DELIVERED = "delivered"
     CANCELLED = "cancelled"
+    REFUND_REQUESTED = "refund_requested"
+    REFUNDED = "refunded"
 
     STATUS_CHOICES = [
         (PENDING, "Pending"),
@@ -100,15 +102,19 @@ class Order(models.Model):
         (READY, "Ready"),
         (DELIVERED, "Delivered"),
         (CANCELLED, "Cancelled"),
+        (REFUND_REQUESTED, "Refund Requested"),
+        (REFUNDED, "Refunded"),
     ]
 
     # which transitions are allowed from each status
     VALID_TRANSITIONS = {
         PENDING: [CONFIRMED, CANCELLED],
-        CONFIRMED: [READY, CANCELLED],
-        READY: [DELIVERED, CANCELLED],
-        DELIVERED: [],  # terminal state
+        CONFIRMED: [READY, CANCELLED, REFUND_REQUESTED],
+        READY: [DELIVERED, CANCELLED, REFUND_REQUESTED],
+        DELIVERED: [REFUND_REQUESTED],  # can request refund after delivery
         CANCELLED: [],  # terminal state
+        REFUND_REQUESTED: [REFUNDED, DELIVERED, CONFIRMED, READY], # can go back if rejected
+        REFUNDED: [], # terminal state
     }
 
     customer = models.ForeignKey(
@@ -193,3 +199,52 @@ class OrderStatusLog(models.Model):
 
     def __str__(self):
         return f"Order #{self.order.pk}: {self.old_status} → {self.new_status}"
+
+
+class RefundRequest(models.Model):
+    """Tracks refund requests submitted by customers."""
+
+    STATUS_PENDING = "pending"
+    STATUS_APPROVED = "approved"
+    STATUS_REJECTED = "rejected"
+
+    STATUS_CHOICES = [
+        (STATUS_PENDING, "Pending"),
+        (STATUS_APPROVED, "Approved"),
+        (STATUS_REJECTED, "Rejected"),
+    ]
+
+    REASON_SPOILED = "spoiled"
+    REASON_FRESH_RETURN = "fresh_return"
+    REASON_NOT_DELIVERED = "not_delivered"
+    REASON_OTHER = "other"
+
+    REASON_CHOICES = [
+        (REASON_SPOILED, "Spoiled/Damaged (100% or partial)"),
+        (REASON_FRESH_RETURN, "Return Fresh Item (50% refund)"),
+        (REASON_NOT_DELIVERED, "Not Delivered/Cancel Before Delivery"),
+        (REASON_OTHER, "Other"),
+    ]
+
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="refund_requests")
+    order_item = models.ForeignKey(OrderItem, on_delete=models.SET_NULL, null=True, blank=True, help_text="Specific item if partial refund")
+    customer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    
+    reason_category = models.CharField(max_length=20, choices=REASON_CHOICES)
+    reason_text = models.TextField(blank=True, default="", help_text="Detailed explanation or 'Other' reason")
+    evidence_image = models.ImageField(upload_to="refunds/evidence/", null=True, blank=True)
+    
+    requested_amount = models.DecimalField(max_digits=10, decimal_places=2, help_text="Calculated based on rules")
+    
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    admin_note = models.TextField(blank=True, default="")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Refund #{self.pk} for Order #{self.order.pk} ({self.status})"
+
