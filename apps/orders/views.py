@@ -3,6 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
+from django.views.generic import TemplateView
 
 from django.shortcuts import get_object_or_404
 from django.db import transaction
@@ -610,4 +611,33 @@ class AdminRefundReviewView(APIView):
             
         except RefundServiceError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AdminRefundListView(APIView):
+    """GET — List all refund requests with status filtering."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if not request.user.is_staff:
+            return Response({"error": "Admin access required."}, status=status.HTTP_403_FORBIDDEN)
+
+        refunds = RefundRequest.objects.all().order_by("-created_at")
+        
+        status_filter = request.query_params.get("status")
+        if status_filter:
+            refunds = refunds.filter(status=status_filter.lower())
+
+        serializer = RefundRequestSerializer(refunds, many=True)
+        return Response(serializer.data)
+
+
+class AdminRefundReviewPageView(TemplateView):
+    """TemplateView for the admin refund review dashboard."""
+    template_name = "orders/admin_refunds.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Refund Review Dashboard"
+        return context
 

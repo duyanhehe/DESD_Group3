@@ -25,6 +25,8 @@ from .views import (
     # refunds
     CustomerRefundRequestView,
     AdminRefundReviewView,
+    AdminRefundListView,
+    AdminRefundReviewPageView,
 )
 
 app_name = "orders"
@@ -35,6 +37,7 @@ urlpatterns = [
     path("success/", order_success_page, name="order_success_page"),
     path("history/", order_history_page, name="order_history_page"),
     path("producer/", producer_orders_page, name="producer_orders_page"),
+    path("admin/refunds/", AdminRefundReviewPageView.as_view(), name="admin_refunds_page"),
 
     # -- Cart --
     path("api/v1/cart/", CartDetailView.as_view(), name="cart_detail"),
@@ -57,5 +60,6 @@ urlpatterns = [
 
     # -- Refunds --
     path("api/v1/refund/request/", CustomerRefundRequestView.as_view(), name="refund_request"),
+    path("api/v1/refund/review/list/", AdminRefundListView.as_view(), name="refund_review_list"),
     path("api/v1/refund/review/<int:refund_id>/", AdminRefundReviewView.as_view(), name="refund_review"),
 ]

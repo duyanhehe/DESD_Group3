@@ -167,6 +167,7 @@ async function viewOrderDetails(orderId) {
                         <p class="text-on-surface-variant font-medium">${date}</p>
                     </div>
                     <div class="flex flex-wrap gap-3">
+                        ${renderRefundButtons(order)}
                         <button onclick="reorder(${order.id})" class="px-8 py-4 bg-primary text-on-primary rounded-full font-bold text-sm shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
                             <span class="material-symbols-outlined text-base">refresh</span>
                             Reorder All
@@ -230,6 +231,31 @@ async function viewOrderDetails(orderId) {
         `;
         content.innerHTML = html;
 
+        // Initialize Refund Form listener if not already done
+        const refundForm = document.getElementById('refund-form');
+        if (refundForm && !refundForm.hasAttribute('data-listener')) {
+            refundForm.addEventListener('submit', handleRefundSubmit);
+            refundForm.setAttribute('data-listener', 'true');
+            
+            // Handle reason change to show/hide evidence
+            document.getElementById('refund-reason-category').addEventListener('change', (e) => {
+                const container = document.getElementById('evidence-upload-container');
+                if (e.target.value === 'spoiled') {
+                    container.classList.remove('hidden');
+                    document.getElementById('refund-evidence-image').setAttribute('required', 'true');
+                } else {
+                    container.classList.add('hidden');
+                    document.getElementById('refund-evidence-image').removeAttribute('required');
+                }
+            });
+
+            // Handle file name display
+            document.getElementById('refund-evidence-image').addEventListener('change', (e) => {
+                const fileName = e.target.files[0]?.name || 'Click or drag to upload photo';
+                document.getElementById('file-name-display').innerText = fileName;
+            });
+        }
+
     } catch (e) {
         console.error(e);
         content.innerHTML = `<div class="p-20 text-center text-error"><p class="font-bold">Error loading details.</p></div>`;
@@ -238,6 +264,133 @@ async function viewOrderDetails(orderId) {
 
 function closeOrderModal() {
     document.getElementById('order-modal').classList.add('hidden');
+}
+
+function renderRefundButtons(order) {
+    if (order.status === 'CANCELLED' || order.status === 'REFUNDED' || order.status === 'REFUND_REQUESTED') {
+        return '';
+    }
+
+    if (order.status === 'DELIVERED') {
+        // Check if within 2 days
+        const deliveredAt = order.delivered_at ? new Date(order.delivered_at) : new Date(order.updated_at);
+        const now = new Date();
+        const diffDays = (now - deliveredAt) / (1000 * 60 * 60 * 24);
+        
+        if (diffDays <= 2) {
+            return `
+                <button onclick="openRefundModal(${order.id}, ${JSON.stringify(order.items).replace(/"/g, '&quot;')})" class="px-8 py-4 bg-surface-container-high text-on-surface rounded-full font-bold text-sm hover:bg-surface-container-highest transition-all flex items-center gap-2">
+                    <span class="material-symbols-outlined text-base">assignment_return</span>
+                    Return / Refund
+                </button>
+            `;
+        }
+        return '';
+    }
+
+    // Otherwise show Cancel Order (for PENDING, CONFIRMED, READY)
+    return `
+        <button onclick="openRefundModal(${order.id}, ${JSON.stringify(order.items).replace(/"/g, '&quot;')}, true)" class="px-8 py-4 bg-rose-50 text-rose-700 border border-rose-100 rounded-full font-bold text-sm hover:bg-rose-100 transition-all flex items-center gap-2">
+            <span class="material-symbols-outlined text-base">cancel</span>
+            Cancel Order
+        </button>
+    `;
+}
+
+function openRefundModal(orderId, items, isCancellation = false) {
+    document.getElementById('refund-order-id').value = orderId;
+    const title = document.getElementById('refund-modal-title');
+    const reasonSelect = document.getElementById('refund-reason-category');
+    const itemSelect = document.getElementById('refund-item-select');
+    
+    // Set title and default reason
+    if (isCancellation) {
+        title.innerText = "Cancel Order";
+        reasonSelect.value = "not_delivered";
+        // Lock to not_delivered if it's a cancellation before delivery
+        Array.from(reasonSelect.options).forEach(opt => {
+            opt.disabled = opt.value !== 'not_delivered';
+        });
+    } else {
+        title.innerText = "Request Return / Refund";
+        Array.from(reasonSelect.options).forEach(opt => {
+            opt.disabled = opt.value === 'not_delivered';
+            if (opt.value === "") opt.disabled = false;
+        });
+        reasonSelect.value = "";
+    }
+
+    // Populate items
+    itemSelect.innerHTML = '<option value="">Entire Order</option>';
+    items.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item.id;
+        opt.innerText = `${item.product_name} (${item.quantity} × $${item.unit_price})`;
+        itemSelect.appendChild(opt);
+    });
+
+    // Reset evidence field
+    document.getElementById('evidence-upload-container').classList.add('hidden');
+    document.getElementById('refund-evidence-image').value = '';
+    document.getElementById('file-name-display').innerText = 'Click or drag to upload photo';
+    document.getElementById('refund-reason-text').value = '';
+
+    document.getElementById('refund-modal').classList.remove('hidden');
+}
+
+function closeRefundModal() {
+    document.getElementById('refund-modal').classList.add('hidden');
+}
+
+async function handleRefundSubmit(e) {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+    const token = localStorage.getItem('auth_token');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalBtnContent = submitBtn.innerHTML;
+
+    // Validation for 'other' reason
+    if (formData.get('reason_category') === 'other' && !formData.get('reason_text').trim()) {
+        if (window.showToast) window.showToast('Please provide details for the "Other" reason.', 'error');
+        return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `<span class="material-symbols-outlined animate-spin">sync</span> Submitting...`;
+
+    const headers = {
+        'X-CSRFToken': getCookie('csrftoken')
+    };
+    if (token && token !== 'null') {
+        headers['Authorization'] = `Token ${token}`;
+    }
+
+    try {
+        const res = await fetch('/orders/api/v1/refund/request/', {
+            method: 'POST',
+            headers: headers,
+            body: formData
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            if (window.showToast) window.showToast('Refund request submitted successfully!', 'success');
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            if (window.showToast) window.showToast(data.error || 'Failed to submit refund request.', 'error');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnContent;
+        }
+    } catch (err) {
+        console.error(err);
+        if (window.showToast) window.showToast('Network error during submission.', 'error');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnContent;
+    }
 }
 
 async function reorder(orderId) {

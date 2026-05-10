@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Admin Refund Review - Food Network{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-stats-card {
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .status-pending { background: #fff7ed; color: #9a3412; }
+    .status-approved { background: #f0fdf4; color: #166534; }
+    .status-rejected { background: #fef2f2; color: #991b1b; }
+
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(4px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 24px;
+        width: 100%;
+        max-width: 600px;
+        padding: 32px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .evidence-preview {
+        max-width: 100%;
+        border-radius: 12px;
+        margin-top: 12px;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    
+    .evidence-preview:hover {
+        transform: scale(1.02);
+    }
+
+    .action-btn {
+        padding: 8px 16px;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 13px;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-approve { background: #166534; color: white; }
+    .btn-approve:hover { background: #14532d; transform: translateY(-1px); }
+    
+    .btn-reject { background: #991b1b; color: white; }
+    .btn-reject:hover { background: #7f1d1d; transform: translateY(-1px); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-screen-2xl mx-auto px-6 py-12">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-8">
+        <div>
+            <span class="text-xs font-black text-primary uppercase tracking-[0.3em] mb-3 block">Customer Service</span>
+            <h1 class="text-5xl font-black text-zinc-900 tracking-tight mb-2">Refund Review</h1>
+            <p class="text-zinc-500 font-medium text-lg">Approve or reject customer refund and cancellation requests.</p>
+        </div>
+    </div>
+
+    <!-- Main Table -->
+    <div class="bg-white rounded-3xl shadow-sm border border-zinc-100 overflow-hidden">
+        <div class="p-8 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
+            <h3 class="font-black text-zinc-900">Refund Requests</h3>
+            
+            <div class="flex items-center gap-4">
+                <select id="status-filter" class="px-6 py-2.5 bg-white border border-zinc-200 rounded-xl text-sm outline-none">
+                    <option value="">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="text-[10px] uppercase font-black text-zinc-400 tracking-widest border-b border-zinc-100">
+                        <th class="px-8 py-5">Date</th>
+                        <th class="px-8 py-5">Customer</th>
+                        <th class="px-8 py-5">Item / Reason</th>
+                        <th class="px-8 py-5">Amount</th>
+                        <th class="px-8 py-5">Status</th>
+                        <th class="px-8 py-5 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="refunds-table-body">
+                    <tr>
+                        <td colspan="6" class="px-8 py-20 text-center">
+                            <div class="flex flex-col items-center gap-4">
+                                <div class="animate-spin rounded-full h-10 w-10 border-4 border-primary border-t-transparent"></div>
+                                <p class="font-bold text-zinc-400">Loading requests...</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Review Modal -->
+<div id="review-modal" class="modal-overlay">
+    <div class="modal-content">
+        <h2 class="text-3xl font-black mb-2" id="modal-title">Review Refund</h2>
+        <p class="text-zinc-500 mb-8 font-medium">Verify evidence and decide on the request.</p>
+        
+        <div id="modal-details" class="space-y-6 mb-8">
+            <!-- Details injected by JS -->
+        </div>
+
+        <div class="space-y-6">
+            <div>
+                <label class="text-xs font-black uppercase text-zinc-400 block mb-2">Decision Note</label>
+                <textarea id="admin-note" rows="3" class="w-full px-6 py-4 bg-zinc-50 border border-zinc-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20" placeholder="Explain your decision (optional)..."></textarea>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4 mt-10">
+            <button id="close-review-modal" class="flex-1 py-4 font-black text-zinc-400 hover:text-zinc-900 transition-colors">Cancel</button>
+            <div class="flex gap-4" id="modal-actions">
+                <button id="btn-modal-reject" class="px-8 py-4 bg-red-600 text-white rounded-2xl font-black shadow-lg shadow-red-600/20 hover:scale-[1.02] transition-all">Reject</button>
+                <button id="btn-modal-approve" class="px-8 py-4 bg-emerald-600 text-white rounded-2xl font-black shadow-lg shadow-emerald-600/20 hover:scale-[1.02] transition-all">Approve & Refund</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Big Image Modal -->
+<div id="image-modal" class="modal-overlay" style="background: rgba(0,0,0,0.9);">
+    <div class="max-w-4xl max-h-[90vh] p-4 relative">
+        <button id="close-image-modal" class="absolute -top-12 right-0 text-white flex items-center gap-2 font-bold">
+            <span class="material-symbols-outlined">close</span> Close
+        </button>
+        <img id="big-evidence-image" src="" alt="Evidence" class="max-w-full max-h-[80vh] rounded-2xl">
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/admin_refunds.js' %}"></script>
+{% endblock %}
