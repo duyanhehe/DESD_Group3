@@ -22,7 +22,8 @@ services:
     command: >
       sh -c "python manage.py migrate &&
              python mock_data.py &&
-             python manage.py runserver 0.0.0.0:8000"
+             python manage.py collectstatic --noinput &&
+             gunicorn --bind 0.0.0.0:8000 --workers 3 --timeout 120 core.wsgi:application"
     volumes:
       - .:/app
       - /app/.venv
