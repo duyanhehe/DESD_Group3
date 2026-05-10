@@ -6,12 +6,12 @@ A multi-vendor food marketplace built with **Django (full-stack with HTML templa
 
 # Features
 
-*  Customer & Producer roles
+*  Customer & Producer
 *  Product browsing and cart system
 *  Order processing
-*  Payment simulation
-*  Logistics tracking (basic)
-*  Settlement system (planned)
+*  Payment
+*  Logistics tracking
+*  Settlement system
 
 ---
 
@@ -20,26 +20,53 @@ A multi-vendor food marketplace built with **Django (full-stack with HTML templa
 ```
 food_network/
 │
-├── core/              # Django project settings
+├── core/                 # Django project settings
+│   ├── settings.py
+│   ├── urls.py
+│   └── wsgi.py
 │
-├── accounts/          # User model (customer, producer)
-├── products/          # Product listings (by producers)
-├── orders/            # Cart + order management
-├── payments/          # Payment processing logic
-├── logistics/         # Delivery & shipping
+├── apps/                 # Django applications
+│   ├── accounts/         # User authentication (customer, producer)
+│   ├── products/         # Product listings & management
+│   ├── orders/           # Cart & order processing
+│   ├── payments/         # Payment processing & settlements
+│   ├── logistics/        # Delivery & shipping tracking
+│   ├── ai_engine/        # AI features (chatbot, grading, recommendations)
+│   ├── allergens/        # Allergen management
+│   └── categories/       # Product categories
 │
-├── templates/         # HTML templates
-├── static/            # CSS, JS
-├── media/             # Uploaded images
+├── templates/            # HTML templates
+│   ├── accounts/
+│   ├── orders/
+│   ├── payments/
+│   └── products/
 │
-├── .env               # Environment variables
-├── pyproject.toml     # uv dependency management
+├── static/               # CSS, JavaScript
+├── media/                # Uploaded images
+│
+├── docker-compose.yml    # Docker orchestration
+├── Dockerfile            # Container definition
+├── pyproject.toml        # uv dependency management
 └── manage.py
 ```
 
 ---
 
-# Setup Guide
+# Local Setup Guide
+
+---
+
+## Prerequisites
+
+Before starting local setup, ensure you have:
+
+1. **Stripe CLI** (for webhook forwarding):
+   - Install from [stripe.com/docs/stripe-cli](https://stripe.com/docs/stripe-cli)
+   - Login: `stripe login`
+
+2. **Ollama** (for AI chatbot features):
+   - Install from [ollama.com](https://ollama.com)
+   - Pull the model: `ollama pull qwen2.5:7b`
 
 ---
 
@@ -88,7 +115,17 @@ uv sync
 cp .env.example .env
 ```
 
-Edit `.env`:
+Edit `.env` with your environment variables:
+
+| Variable | Purpose | Source |
+|----------|---------|--------|
+| `SECRET_KEY` | Django security key | Generate a random string |
+| `DEBUG` | Development mode | `True` for local dev |
+| `DB_NAME`, `DB_USER`, `DB_PASSWORD` | PostgreSQL credentials | Your local database |
+| `STRIPE_PUBLIC_KEY`, `STRIPE_SECRET_KEY` | Payment processing | [Stripe Dashboard](https://dashboard.stripe.com/apikeys) |
+| `STRIPE_WEBHOOK_SECRET` | Webhook verification | `stripe listen` CLI output |
+| `KAGGLE_USERNAME`, `KAGGLE_KEY` | Download AI models | [Kaggle Account](https://www.kaggle.com/settings/account) |
+| `OLLAMA_API_URL` | AI chatbot endpoint | Default: `http://localhost:11434/api/generate` |
 
 
 ---
@@ -114,6 +151,12 @@ uv run python manage.py createsuperuser
 
 ```
 uv run python manage.py runserver
+```
+
+In a separate terminal, start Stripe webhook forwarding:
+
+```
+stripe listen --forward-to localhost:8000/payments/api/v1/webhook/
 ```
 
 Visit:
@@ -150,7 +193,7 @@ You can run the entire application, including the database, using Docker Compose
         ollama pull qwen2.5:7b-instruct
         ```
     -   **Restart Ollama** after applying these changes.
-3.  **Stripe Keys**: Ensure `STRIPE_PUBLIC_KEY` and `STRIPE_SECRET_KEY` are configured in your `.env` file.
+3.  **Environment Keys**: Ensure environment variables are configured in your `.env` file.
 
 ## Running with Docker
 
@@ -160,9 +203,14 @@ You can run the entire application, including the database, using Docker Compose
     # Edit .env to include your Stripe keys and database credentials
     ```
 
-2.  **Build and Start**:
+2.  **Build and Start**: \
+    Build
     ```bash
     docker-compose up --build
+    ```
+    Run
+    ```bash
+    docker-compose up -d
     ```
     This command builds the Django container (Python 3.11), starts the PostgreSQL database, and automatically runs all migrations.
 
