@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Privacy Policy | Food Network{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-surface">
+    <div class="max-w-4xl mx-auto px-6 py-20">
+        <header class="mb-16">
+            <h1 class="text-4xl md:text-5xl font-black text-on-background font-headline mb-4">Privacy Policy.</h1>
+            <p class="text-on-surface-variant font-medium">Your data, protected. Last updated: May 2026</p>
+        </header>
+
+        <div class="prose prose-emerald max-w-none space-y-12 text-on-surface-variant text-lg leading-relaxed">
+            <section>
+                <h2 class="text-2xl font-bold text-on-background font-headline mb-4">Our Commitment</h2>
+                <p>
+                    At Food Network, your privacy is paramount. We only collect the information necessary to provide you with the best marketplace experience and to support our local producers.
+                </p>
+            </section>
+
+            <section>
+                <h2 class="text-2xl font-bold text-on-background font-headline mb-4">Information We Collect</h2>
+                <ul class="list-disc pl-6 space-y-2">
+                    <li>Account information (name, email, password)</li>
+                    <li>Delivery address and contact details</li>
+                    <li>Order history and preferences</li>
+                    <li>Payment information (processed securely via Stripe)</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2 class="text-2xl font-bold text-on-background font-headline mb-4">How We Use Your Data</h2>
+                <p>
+                    We use your data to process orders, facilitate communication between you and producers, and improve our services. We never sell your personal information to third parties.
+                </p>
+            </section>
+
+            <section>
+                <h2 class="text-2xl font-bold text-on-background font-headline mb-4">Security</h2>
+                <p>
+                    We use industry-standard encryption and security measures to protect your data. Your payment details are handled directly by Stripe and never stored on our servers.
+                </p>
+            </section>
+        </div>
+    </div>
+</div>
+{% endblock %}

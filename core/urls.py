@@ -20,6 +20,7 @@ from django.urls import path, include
 from django.shortcuts import render
 from django.conf import settings
 from django.conf.urls.static import static
+from django.views.generic import TemplateView
 
 
 def home(request):
@@ -34,6 +35,16 @@ urlpatterns = [
     path("categories/", include("apps.categories.urls")),
     path("payments/", include("apps.payments.urls")),
     path("ai/", include("apps.ai_engine.urls")),
+    
+    # Static Info Pages
+    path("about/", TemplateView.as_view(template_name="info/about.html"), name="about"),
+    path("producer-terms/", TemplateView.as_view(template_name="info/producer_terms.html"), name="producer_terms"),
+    path("privacy/", TemplateView.as_view(template_name="info/privacy.html"), name="privacy"),
+    path("help/", TemplateView.as_view(template_name="info/help.html"), name="help"),
+    path("contact/", TemplateView.as_view(template_name="info/contact.html"), name="contact"),
+    path("seasonal-box/", TemplateView.as_view(template_name="info/seasonal_box.html"), name="seasonal_box"),
+    path("gift-cards/", TemplateView.as_view(template_name="info/gift_cards.html"), name="gift_cards"),
+    
     path("", home, name="home"),
 ]
 

@@ -203,40 +203,66 @@
     </main>
 
     <!-- Editorial Footer -->
-    <footer class="w-full pt-12 pb-8 bg-zinc-50 dark:bg-zinc-900 border-t-0 mt-20">
-        <div class="max-w-screen-2xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div class="md:col-span-1">
-                <span class="text-lg font-black text-emerald-900 font-headline mb-4 block">Food Network</span>
-                <p class="text-zinc-500 font-body text-xs leading-relaxed max-w-xs">
-                    Building a sustainable future by connecting people with the source of their food. Locally grown, globally inspired.
-                </p>
-            </div>
-            <div>
-                <h5 class="text-emerald-800 dark:text-emerald-400 font-bold mb-4 font-headline text-sm uppercase tracking-widest">Shop</h5>
-                <ul class="space-y-3">
-                    <li><a class="text-zinc-500 font-body text-xs hover:text-emerald-600" href="/">Seasonal Box</a></li>
+    <footer class="w-full pt-24 pb-12 bg-white dark:bg-zinc-950 border-t border-outline-variant/5">
+        <div class="max-w-screen-2xl mx-auto px-6">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-12 mb-20">
+                <div class="md:col-span-4">
+                    <a href="/" class="text-2xl font-black text-emerald-900 dark:text-emerald-400 font-headline mb-6 block">Food Network</a>
+                    <p class="text-on-surface-variant font-body text-sm leading-relaxed max-w-sm mb-8">
+                        We're building a sustainable future by connecting people with the source of their food. Locally grown, globally inspired, and delivered with care.
+                    </p>
+                    <div class="flex gap-4">
+                        <a href="#" class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center hover:bg-primary hover:text-white transition-all">
+                            <span class="material-symbols-outlined text-sm">share</span>
+                        </a>
+                        <a href="#" class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center hover:bg-primary hover:text-white transition-all">
+                            <span class="material-symbols-outlined text-sm">public</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="md:col-span-2">
+                    <h5 class="text-on-background font-bold mb-6 font-headline text-xs uppercase tracking-[0.2em]">Shop</h5>
+                    <ul class="space-y-4">
+                        <li><a class="text-on-surface-variant font-medium text-sm hover:text-primary transition-colors" href="{% url 'seasonal_box' %}">Seasonal Box</a></li>
+                        <li><a class="text-on-surface-variant font-medium text-sm hover:text-primary transition-colors" href="{% url 'gift_cards' %}">Gift Cards</a></li>
+                        <li><a class="text-on-surface-variant font-medium text-sm hover:text-primary transition-colors" href="/">All Producers</a></li>
+                    </ul>
+                </div>
 
-                    <li><a class="text-zinc-500 font-body text-xs hover:text-emerald-600" href="/">Gift Cards</a></li>
-                </ul>
+                <div class="md:col-span-2">
+                    <h5 class="text-on-background font-bold mb-6 font-headline text-xs uppercase tracking-[0.2em]">Company</h5>
+                    <ul class="space-y-4">
+                        <li><a class="text-on-surface-variant font-medium text-sm hover:text-primary transition-colors" href="{% url 'about' %}">About Us</a></li>
+                        <li><a class="text-on-surface-variant font-medium text-sm hover:text-primary transition-colors" href="{% url 'producer_terms' %}">Producer Terms</a></li>
+                        <li><a class="text-on-surface-variant font-medium text-sm hover:text-primary transition-colors" href="{% url 'privacy' %}">Privacy Policy</a></li>
+                    </ul>
+                </div>
+
+                <div class="md:col-span-2">
+                    <h5 class="text-on-background font-bold mb-6 font-headline text-xs uppercase tracking-[0.2em]">Support</h5>
+                    <ul class="space-y-4">
+                        <li><a class="text-on-surface-variant font-medium text-sm hover:text-primary transition-colors" href="{% url 'help' %}">Help Center</a></li>
+                        <li><a class="text-on-surface-variant font-medium text-sm hover:text-primary transition-colors" href="{% url 'contact' %}">Contact Us</a></li>
+                    </ul>
+                </div>
+
+                <div class="md:col-span-2">
+                    <h5 class="text-on-background font-bold mb-6 font-headline text-xs uppercase tracking-[0.2em]">Legal</h5>
+                    <ul class="space-y-4">
+                        <li><a class="text-on-surface-variant font-medium text-sm hover:text-primary transition-colors" href="#">Shipping</a></li>
+                        <li><a class="text-on-surface-variant font-medium text-sm hover:text-primary transition-colors" href="#">Returns</a></li>
+                    </ul>
+                </div>
             </div>
-            <div>
-                <h5 class="text-emerald-800 dark:text-emerald-400 font-bold mb-4 font-headline text-sm uppercase tracking-widest">Company</h5>
-                <ul class="space-y-3">
-                    <li><a class="text-zinc-500 font-body text-xs hover:text-emerald-600" href="/">About Us</a></li>
-                    <li><a class="text-zinc-500 font-body text-xs hover:text-emerald-600" href="/">Producer Terms</a></li>
-                    <li><a class="text-zinc-500 font-body text-xs hover:text-emerald-600" href="/">Privacy</a></li>
-                </ul>
+
+            <div class="pt-8 border-t border-outline-variant/10 flex flex-col md:flex-row justify-between items-center gap-4">
+                <p class="text-on-surface-variant font-body text-xs">© 2026 Food Network Market. Organic & Sustainable.</p>
+                <div class="flex gap-8">
+                    <a href="#" class="text-on-surface-variant text-[10px] font-bold uppercase tracking-widest hover:text-primary transition-colors">Terms of Service</a>
+                    <a href="#" class="text-on-surface-variant text-[10px] font-bold uppercase tracking-widest hover:text-primary transition-colors">Cookies</a>
+                </div>
             </div>
-            <div>
-                <h5 class="text-emerald-800 dark:text-emerald-400 font-bold mb-4 font-headline text-sm uppercase tracking-widest">Support</h5>
-                <ul class="space-y-3">
-                    <li><a class="text-zinc-500 font-body text-xs hover:text-emerald-600" href="/">Help Center</a></li>
-                    <li><a class="text-zinc-500 font-body text-xs hover:text-emerald-600" href="/">Contact Us</a></li>
-                </ul>
-            </div>
-        </div>
-        <div class="max-w-screen-2xl mx-auto px-6 mt-12 pt-8 border-t border-zinc-200 dark:border-zinc-800">
-            <p class="text-zinc-500 font-body text-xs text-center">© 2024 Food Network Market. Organic & Sustainable.</p>
         </div>
     </footer>
 

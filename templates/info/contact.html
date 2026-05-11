@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Contact Us | Food Network{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-surface">
+    <div class="max-w-screen-xl mx-auto px-6 py-20">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-20">
+            <div>
+                <h1 class="text-5xl font-black text-on-background font-headline mb-8">Get in touch.</h1>
+                <p class="text-xl text-on-surface-variant leading-relaxed mb-12">
+                    Have a question, feedback, or just want to say hi? We'd love to hear from you.
+                </p>
+
+                <div class="space-y-8">
+                    <div class="flex items-start gap-6">
+                        <div class="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center flex-shrink-0">
+                            <span class="material-symbols-outlined text-primary">mail</span>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-on-background font-headline mb-1">Email Us</h3>
+                            <p class="text-on-surface-variant">hello@foodnetwork.market</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-6">
+                        <div class="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center flex-shrink-0">
+                            <span class="material-symbols-outlined text-primary">location_on</span>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-on-background font-headline mb-1">Our Hub</h3>
+                            <p class="text-on-surface-variant">123 Sustainable Way,<br>Eco City, EC1 2AB</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-6">
+                        <div class="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center flex-shrink-0">
+                            <span class="material-symbols-outlined text-primary">schedule</span>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-on-background font-headline mb-1">Support Hours</h3>
+                            <p class="text-on-surface-variant">Mon - Fri: 9am - 6pm<br>Sat - Sun: 10am - 4pm</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-10 rounded-[40px] shadow-xl shadow-emerald-900/5 border border-outline-variant/10">
+                <form class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-bold text-on-background mb-2">First Name</label>
+                            <input type="text" class="w-full px-5 py-4 bg-surface rounded-2xl border-none focus:ring-2 focus:ring-primary/20" placeholder="Jane">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-on-background mb-2">Last Name</label>
+                            <input type="text" class="w-full px-5 py-4 bg-surface rounded-2xl border-none focus:ring-2 focus:ring-primary/20" placeholder="Doe">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-on-background mb-2">Email Address</label>
+                        <input type="email" class="w-full px-5 py-4 bg-surface rounded-2xl border-none focus:ring-2 focus:ring-primary/20" placeholder="jane@example.com">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-on-background mb-2">Message</label>
+                        <textarea rows="5" class="w-full px-5 py-4 bg-surface rounded-2xl border-none focus:ring-2 focus:ring-primary/20" placeholder="How can we help you?"></textarea>
+                    </div>
+                    <button type="button" class="w-full py-5 bg-primary text-white rounded-full font-bold text-lg hover:bg-primary-container transition-all shadow-lg shadow-primary/20">
+                        Send Message
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

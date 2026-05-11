@@ -1,0 +1,63 @@
+<!-- Sidebar: Producer Suite -->
+<aside class="w-full md:w-72 bg-white dark:bg-zinc-950 border-r border-outline-variant/5 flex flex-col md:sticky md:top-[72px] md:h-[calc(100vh-72px)] z-10 shadow-[20px_0_40px_rgba(0,0,0,0.02)]">
+    <!-- Header: Refined Branding -->
+    <div class="p-10">
+        <div class="flex items-center gap-3 mb-2">
+            <div class="w-10 h-10 rounded-2xl bg-emerald-800 flex items-center justify-center shadow-lg shadow-emerald-900/20">
+                <span class="material-symbols-outlined text-white text-xl">agriculture</span>
+            </div>
+            <div>
+                <h2 class="font-headline text-xl font-black text-emerald-900 dark:text-emerald-400 leading-none">Suite</h2>
+                <p class="text-[9px] font-black text-outline-variant uppercase tracking-[0.2em] mt-1.5">Management Hub</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Navigation: Seamless Items -->
+    <nav class="flex-grow px-4">
+        <ul class="space-y-2">
+            <li>
+                <a href="{% url 'producer_dashboard' %}" class="flex items-center gap-4 px-6 py-4 rounded-[20px] font-bold transition-all group {% if request.resolver_match.url_name == 'producer_dashboard' %}bg-emerald-50 text-emerald-800 shadow-sm{% else %}text-zinc-400 hover:text-emerald-700 hover:bg-emerald-50/50{% endif %}">
+                    <span class="material-symbols-outlined group-hover:scale-110 transition-transform" {% if request.resolver_match.url_name == 'producer_dashboard' %}style="font-variation-settings: 'FILL' 1;"{% endif %}>inventory_2</span>
+                    Inventory
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'orders:producer_orders_page' %}" class="flex items-center gap-4 px-6 py-4 rounded-[20px] font-bold transition-all group {% if 'orders' in request.resolver_match.url_name %}bg-emerald-50 text-emerald-800 shadow-sm{% else %}text-zinc-400 hover:text-emerald-700 hover:bg-emerald-50/50{% endif %}">
+                    <span class="material-symbols-outlined group-hover:scale-110 transition-transform" {% if 'orders' in request.resolver_match.url_name %}style="font-variation-settings: 'FILL' 1;"{% endif %}>receipt_long</span>
+                    Orders
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'producer_payments' %}" class="flex items-center gap-4 px-6 py-4 rounded-[20px] font-bold transition-all group {% if 'payments' in request.resolver_match.url_name or 'settlement' in request.resolver_match.url_name %}bg-emerald-50 text-emerald-800 shadow-sm{% else %}text-zinc-400 hover:text-emerald-700 hover:bg-emerald-50/50{% endif %}">
+                    <span class="material-symbols-outlined group-hover:scale-110 transition-transform" {% if 'payments' in request.resolver_match.url_name or 'settlement' in request.resolver_match.url_name %}style="font-variation-settings: 'FILL' 1;"{% endif %}>payments</span>
+                    Payments
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Bottom Action: Seamless Integrated Card -->
+    <div class="p-6 mt-auto">
+        <div class="bg-emerald-900 rounded-[32px] p-6 shadow-2xl shadow-emerald-900/20 relative overflow-hidden group/card">
+            <!-- Decorative background elements -->
+            <div class="absolute -top-4 -right-4 w-20 h-20 bg-white/5 rounded-full blur-2xl group-hover/card:scale-150 transition-transform duration-700"></div>
+            <div class="absolute -bottom-8 -left-8 w-24 h-24 bg-emerald-400/10 rounded-full blur-2xl group-hover/card:scale-150 transition-transform duration-700"></div>
+            
+            <div class="relative z-10">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <p class="text-[9px] font-black text-emerald-300 uppercase tracking-widest">Growth Engine</p>
+                </div>
+                <p class="text-sm text-white font-bold mb-5 leading-tight">Harvest ready for the market?</p>
+                
+                <a href="{% url 'add_product' %}" class="w-full py-3.5 bg-white text-emerald-900 rounded-2xl flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest hover:bg-emerald-50 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all shadow-lg">
+                    <span class="material-symbols-outlined text-sm">add_circle</span>
+                    Add Product
+                </a>
+            </div>
+        </div>
+        
+        <p class="text-[8px] text-center text-outline-variant font-black uppercase tracking-[0.3em] mt-6 opacity-40"></p>
+    </div>
+</aside>

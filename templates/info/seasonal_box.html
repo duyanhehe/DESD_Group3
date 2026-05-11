@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Seasonal Box | Food Network{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-surface">
+    <!-- Hero -->
+    <div class="relative py-32 bg-emerald-900 overflow-hidden">
+        <div class="absolute inset-0">
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-gradient-to-b from-transparent to-emerald-950/50"></div>
+        </div>
+        <div class="max-w-screen-xl mx-auto px-6 relative z-10 text-center">
+            <span class="inline-block px-4 py-1 bg-emerald-500/20 text-emerald-300 rounded-full text-xs font-bold uppercase tracking-widest mb-6">The Best of the Season</span>
+            <h1 class="text-5xl md:text-8xl font-black text-white font-headline mb-8 tracking-tighter">
+                Seasonal Box.
+            </h1>
+            <p class="text-xl text-emerald-100 max-w-2xl mx-auto font-body leading-relaxed mb-12">
+                A curated selection of the freshest produce from our local farms, delivered straight to your door every week.
+            </p>
+            <a href="{% url 'register_page' %}" class="px-10 py-5 bg-white text-emerald-900 rounded-full font-black text-lg hover:scale-105 transition-all shadow-2xl">Subscribe Now</a>
+        </div>
+    </div>
+
+    <!-- How it works -->
+    <div class="max-w-screen-xl mx-auto px-6 py-24">
+        <h2 class="text-4xl font-bold text-on-background font-headline text-center mb-20">How it works.</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+            <div class="text-center">
+                <div class="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-8">
+                    <span class="text-3xl font-black text-primary font-headline">01</span>
+                </div>
+                <h3 class="text-2xl font-bold text-on-background font-headline mb-4">Choose your size</h3>
+                <p class="text-on-surface-variant leading-relaxed">
+                    Select from small, medium, or large boxes based on your household needs.
+                </p>
+            </div>
+
+            <div class="text-center">
+                <div class="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-8">
+                    <span class="text-3xl font-black text-primary font-headline">02</span>
+                </div>
+                <h3 class="text-2xl font-bold text-on-background font-headline mb-4">We curate</h3>
+                <p class="text-on-surface-variant leading-relaxed">
+                    We hand-pick the best seasonal items from our producers each week.
+                </p>
+            </div>
+
+            <div class="text-center">
+                <div class="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-8">
+                    <span class="text-3xl font-black text-primary font-headline">03</span>
+                </div>
+                <h3 class="text-2xl font-bold text-on-background font-headline mb-4">Fast delivery</h3>
+                <p class="text-on-surface-variant leading-relaxed">
+                    Delivered in eco-friendly packaging within 24 hours of harvest.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

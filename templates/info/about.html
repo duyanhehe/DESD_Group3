@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}About Us | Food Network{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-surface">
+    <!-- Hero Section -->
+    <div class="relative py-24 bg-primary overflow-hidden">
+        <div class="absolute inset-0 opacity-10">
+            <div class="absolute top-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+            <div class="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
+        </div>
+        
+        <div class="max-w-screen-xl mx-auto px-6 relative z-10 text-center">
+            <h1 class="text-5xl md:text-7xl font-black text-white font-headline mb-6 tracking-tight">
+                Our Story.
+            </h1>
+            <p class="text-xl text-emerald-50 max-w-2xl mx-auto font-body leading-relaxed">
+                We're on a mission to reconnect people with the source of their food, building a more sustainable and transparent food system.
+            </p>
+        </div>
+    </div>
+
+    <!-- Content Section -->
+    <div class="max-w-4xl mx-auto px-6 py-20">
+        <div class="space-y-16">
+            <section>
+                <h2 class="text-3xl font-bold text-on-background font-headline mb-6">The Vision</h2>
+                <p class="text-on-surface-variant text-lg leading-relaxed mb-6">
+                    Food Network began with a simple question: Why is it so hard to know where our food actually comes from? In a world of globalized supply chains, the connection between producers and consumers has been lost.
+                </p>
+                <p class="text-on-surface-variant text-lg leading-relaxed">
+                    We built this platform to bridge that gap. By providing local producers with the tools they need to sell directly to their community, we're empowering small-scale agriculture and ensuring that "local" means more than just a label.
+                </p>
+            </section>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="p-8 bg-white rounded-3xl shadow-sm border border-outline-variant/10">
+                    <span class="material-symbols-outlined text-primary text-4xl mb-4">eco</span>
+                    <h3 class="text-xl font-bold text-on-background font-headline mb-3">Sustainability</h3>
+                    <p class="text-on-surface-variant leading-relaxed">
+                        Reducing food miles and supporting regenerative farming practices is at the core of everything we do.
+                    </p>
+                </div>
+                <div class="p-8 bg-white rounded-3xl shadow-sm border border-outline-variant/10">
+                    <span class="material-symbols-outlined text-primary text-4xl mb-4">groups</span>
+                    <h3 class="text-xl font-bold text-on-background font-headline mb-3">Community</h3>
+                    <p class="text-on-surface-variant leading-relaxed">
+                        We believe in the power of community-supported agriculture to create resilient local economies.
+                    </p>
+                </div>
+            </div>
+
+            <section class="bg-emerald-50 rounded-[40px] p-12">
+                <h2 class="text-3xl font-bold text-primary font-headline mb-6 text-center">Join the Movement</h2>
+                <p class="text-on-secondary-container text-lg leading-relaxed text-center max-w-2xl mx-auto mb-10">
+                    Whether you're a producer looking to grow your business or a consumer looking for the freshest ingredients, there's a place for you in the Food Network.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="{% url 'register_page' %}" class="px-8 py-4 bg-primary text-white rounded-full font-bold hover:scale-105 transition-all text-center">Start Shopping</a>
+                    <a href="{% url 'register_page' %}" class="px-8 py-4 bg-white text-primary border-2 border-primary rounded-full font-bold hover:bg-emerald-50 transition-all text-center">Become a Producer</a>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+{% endblock %}

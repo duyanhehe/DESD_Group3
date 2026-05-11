@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Producer Terms | Food Network{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-surface">
+    <div class="max-w-4xl mx-auto px-6 py-20">
+        <header class="mb-16">
+            <h1 class="text-4xl md:text-5xl font-black text-on-background font-headline mb-4">Producer Terms.</h1>
+            <p class="text-on-surface-variant font-medium">Last updated: May 2026</p>
+        </header>
+
+        <div class="prose prose-emerald max-w-none space-y-12 text-on-surface-variant text-lg leading-relaxed">
+            <section>
+                <h2 class="text-2xl font-bold text-on-background font-headline mb-4">1. Eligibility</h2>
+                <p>
+                    To sell on Food Network, producers must be legally authorized to sell food products in their jurisdiction. This includes maintaining all necessary health permits, licenses, and insurance.
+                </p>
+            </section>
+
+            <section>
+                <h2 class="text-2xl font-bold text-on-background font-headline mb-4">2. Product Standards</h2>
+                <p>
+                    We prioritize producers who follow organic, sustainable, or regenerative farming practices. All products must be accurately described, including any relevant certifications or growing methods.
+                </p>
+            </section>
+
+            <section>
+                <h2 class="text-2xl font-bold text-on-background font-headline mb-4">3. Fees and Payments</h2>
+                <p>
+                    Food Network charges a small commission on each sale to maintain the platform and support our mission. Payments are processed through our secure payment gateway and settled according to our settlement schedule.
+                </p>
+            </section>
+
+            <section>
+                <h2 class="text-2xl font-bold text-on-background font-headline mb-4">4. Fulfillment</h2>
+                <p>
+                    Producers are responsible for fulfilling orders within the specified timeframe and ensuring that products are packaged safely for transport.
+                </p>
+            </section>
+
+            <div class="p-8 bg-surface-container-high rounded-3xl border border-outline-variant/10 mt-12">
+                <p class="font-bold text-on-background mb-2">Need clarification?</p>
+                <p class="text-sm">If you have questions about these terms, please contact our producer support team at producers@foodnetwork.market</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
