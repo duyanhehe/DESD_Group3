@@ -8,8 +8,6 @@ class LLMClient:
     """
     def __init__(self):
         self.url = getattr(settings, "OLLAMA_API_URL", "http://localhost:11434/api/generate")
-        self.model = getattr(settings, "OLLAMA_MODEL", "qwen2.5:7b")
-        self.timeout = 30
 
     def generate_response(self, system_prompt, user_message):
         """

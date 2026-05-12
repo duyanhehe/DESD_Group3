@@ -66,7 +66,7 @@ Before starting local setup, ensure you have:
 
 2. **Ollama** (for AI chatbot features):
    - Install from [ollama.com](https://ollama.com)
-   - Pull the model: `ollama pull qwen2.5:7b`
+   - Pull the model: `ollama pull qwen2.5:7b-instruct`
 
 ---
 

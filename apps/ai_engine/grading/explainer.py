@@ -11,11 +11,11 @@ This module mirrors the proven approach from notebook 03_yolov10_xai_visualizati
 import cv2
 import numpy as np
 import torch
-from pathlib import Path
 
 try:
     from pytorch_grad_cam import EigenCAM
     from pytorch_grad_cam.utils.image import show_cam_on_image
+
     GRADCAM_AVAILABLE = True
 except ImportError:
     GRADCAM_AVAILABLE = False
@@ -28,6 +28,7 @@ class YoloModelWrapper(torch.nn.Module):
 
     This is identical to the wrapper used in notebook 03.
     """
+
     def __init__(self, model):
         super().__init__()
         self.model = model
@@ -36,7 +37,7 @@ class YoloModelWrapper(torch.nn.Module):
         # YOLOv10 forward pass returns a tuple/list
         # We return only the first element (the predictions tensor)
         results = self.model(x)
-        if isinstance(results, (list, tuple)):
+        if isinstance(results, list | tuple):
             return results[0]
         return results
 
@@ -61,11 +62,9 @@ def get_yolo_xai_data(results):
             class_id = int(box.cls[0].item())
             class_name = r.names[class_id]
 
-            xai_data.append({
-                "class": class_name,
-                "confidence": f"{confidence}%",
-                "bbox": [int(x1), int(y1), int(x2), int(y2)]
-            })
+            xai_data.append(
+                {"class": class_name, "confidence": f"{confidence}%", "bbox": [int(x1), int(y1), int(x2), int(y2)]}
+            )
     return xai_data
 
 
@@ -111,7 +110,20 @@ def generate_yolo_heatmap(model, img_rgb, target_layer_idx=-2):
         # 6. Generate grayscale cam
         grayscale_cam = cam(input_tensor=input_tensor)[0, :]
 
-        # 7. Overlay on the RESIZED image (key difference vs old code)
+        # 7. Fix inverted heatmap: PCA principal component has arbitrary sign.
+        #    If the center of the image (where the fruit is) has LOWER activation
+        #    than the edges (background), the heatmap is inverted — flip it.
+        h, w = grayscale_cam.shape
+        center_region = grayscale_cam[h // 4 : 3 * h // 4, w // 4 : 3 * w // 4]
+        edge_mask = np.ones_like(grayscale_cam, dtype=bool)
+        edge_mask[h // 4 : 3 * h // 4, w // 4 : 3 * w // 4] = False
+        edge_region = grayscale_cam[edge_mask]
+
+        if center_region.mean() < edge_region.mean():
+            # Heatmap is inverted: background is hot, object is cold -> flip it
+            grayscale_cam = 1.0 - grayscale_cam
+
+        # 8. Overlay on the RESIZED image (key difference vs old code)
         #    The notebook overlays on img_resized/255.0, NOT on the original image.
         #    This ensures the heatmap aligns perfectly with what the model actually sees.
         rgb_norm = img_resized / 255.0
@@ -137,7 +149,7 @@ class HeatmapExplainer:
             model: YOLO model instance from ultralytics
         """
         self.model = model
-        self.device = next(model.model.parameters()).device if hasattr(model, 'model') else torch.device('cpu')
+        self.device = next(model.model.parameters()).device if hasattr(model, "model") else torch.device("cpu")
 
     def get_detection_metadata(self, results):
         """
@@ -196,5 +208,5 @@ class HeatmapExplainer:
             "detections": detections,
             "heatmap": heatmap,
             "is_defective": is_defective,
-            "model_device": str(self.device)
+            "model_device": str(self.device),
         }
