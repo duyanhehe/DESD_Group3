@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Our Ethics | Food Network Marketplace{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-surface">
+    <!-- Hero Section -->
+    <div class="relative py-24 bg-primary overflow-hidden">
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-primary-container/20 via-transparent to-transparent"></div>
+        <div class="max-w-screen-xl mx-auto px-6 relative z-10 text-center">
+            <span class="inline-block px-4 py-1.5 rounded-full bg-white/10 text-white text-[10px] font-bold tracking-widest uppercase mb-6 backdrop-blur-md">Integrity in every byte</span>
+            <h1 class="text-5xl md:text-7xl font-black text-white font-headline mb-8 leading-tight">
+                Our Ethical <br/><span class="text-primary-fixed italic">Promise.</span>
+            </h1>
+            <p class="text-xl text-white/80 max-w-2xl mx-auto leading-relaxed">
+                We believe technology should empower local food systems, not exploit them. Here is how we ensure fairness, privacy, and transparency.
+            </p>
+        </div>
+    </div>
+
+    <!-- Ethics Grid -->
+    <div class="max-w-screen-xl mx-auto px-6 py-24">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+            <!-- 1. Fair Judging -->
+            <div class="bg-white p-12 rounded-[40px] shadow-xl shadow-emerald-900/5 border border-outline-variant/10 group hover:scale-[1.02] transition-all duration-500">
+                <div class="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mb-8 group-hover:rotate-6 transition-transform">
+                    <span class="material-symbols-outlined text-4xl text-primary" style="font-variation-settings: 'FILL' 1;">balance</span>
+                </div>
+                <h3 class="text-2xl font-black text-on-background font-headline mb-4">Fair Judging (No Favorites)</h3>
+                <p class="text-on-surface-variant leading-relaxed text-lg">
+                    Our AI evaluates every product using objective data, not human bias. Whether a farm is large or small, our system ensures everyone is judged by the same high standards of quality and sustainability.
+                </p>
+            </div>
+
+            <!-- 2. Data Privacy -->
+            <div class="bg-white p-12 rounded-[40px] shadow-xl shadow-emerald-900/5 border border-outline-variant/10 group hover:scale-[1.02] transition-all duration-500">
+                <div class="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mb-8 group-hover:rotate-6 transition-transform">
+                    <span class="material-symbols-outlined text-4xl text-primary" style="font-variation-settings: 'FILL' 1;">lock</span>
+                </div>
+                <h3 class="text-2xl font-black text-on-background font-headline mb-4">Your Data is Private</h3>
+                <p class="text-on-surface-variant leading-relaxed text-lg">
+                    We use "Local Intelligence." Your shopping habits and chat history stay on our private local servers. We never sell your data to third parties or use it for intrusive tracking.
+                </p>
+            </div>
+
+            <!-- 3. Clear Explanations -->
+            <div class="bg-white p-12 rounded-[40px] shadow-xl shadow-emerald-900/5 border border-outline-variant/10 group hover:scale-[1.02] transition-all duration-500">
+                <div class="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mb-8 group-hover:rotate-6 transition-transform">
+                    <span class="material-symbols-outlined text-4xl text-primary" style="font-variation-settings: 'FILL' 1;">emoji_objects</span>
+                </div>
+                <h3 class="text-2xl font-black text-on-background font-headline mb-4">Clear Explanations</h3>
+                <p class="text-on-surface-variant leading-relaxed text-lg">
+                    Our AI doesn't just make decisions—it explains them. Whether it's a personalized product pick or a quality grade, we provide the reasoning behind it so you can trust the results.
+                </p>
+            </div>
+
+            <!-- 4. Reducing Waste -->
+            <div class="bg-white p-12 rounded-[40px] shadow-xl shadow-emerald-900/5 border border-outline-variant/10 group hover:scale-[1.02] transition-all duration-500">
+                <div class="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mb-8 group-hover:rotate-6 transition-transform">
+                    <span class="material-symbols-outlined text-4xl text-primary" style="font-variation-settings: 'FILL' 1;">eco</span>
+                </div>
+                <h3 class="text-2xl font-black text-on-background font-headline mb-4">Reducing Food Waste</h3>
+                <p class="text-on-surface-variant leading-relaxed text-lg">
+                    Precision matters. By accurately assessing produce quality, we help route perfectly good food to the right kitchens, ensuring that natural variations don't lead to unnecessary waste.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conclusion Section -->
+    <div class="bg-surface-container-high py-24">
+        <div class="max-w-screen-md mx-auto px-6 text-center">
+            <h2 class="text-3xl font-black text-on-background font-headline mb-6">Putting people first.</h2>
+            <p class="text-lg text-on-surface-variant leading-relaxed mb-10">
+                Our technology is a tool designed to serve the community. We are constantly auditing our models to ensure they remain fair, transparent, and aligned with our mission of sustainability.
+            </p>
+            <a href="{% url 'home' %}" class="inline-flex items-center gap-2 text-primary font-bold hover:gap-4 transition-all">
+                Back to Market
+                <span class="material-symbols-outlined">arrow_forward</span>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
