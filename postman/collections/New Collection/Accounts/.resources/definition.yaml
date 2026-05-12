@@ -1,9 +1,0 @@
-$kind: collection
-name: Accounts
-auth:
-  - id: c73dc5bf-665e-4744-b29e-e27c7adb9a4b
-    type: apikey
-    name: API Key
-    credentials:
-      key: Authorization
-      value: Token {{auth_token}}
