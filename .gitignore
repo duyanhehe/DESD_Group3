@@ -37,3 +37,8 @@ notebooks/dataset/*
 
 # rule
 .agents/rules/rule.md
+
+# pytest
+.coverage
+htmlcov/
+.pytest_cache/

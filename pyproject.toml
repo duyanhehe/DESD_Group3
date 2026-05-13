@@ -34,4 +34,9 @@ dev = [
     "psycopg2-binary>=2.9.11",
     "python-dotenv>=1.2.2",
     "scikit-learn>=1.8.0",
+    "pytest>=8.0.0",
+    "pytest-django>=5.0.0",
+    "pytest-cov>=6.0.0",
+    "factory-boy>=3.3.0",
+    "responses>=0.25.0",
 ]

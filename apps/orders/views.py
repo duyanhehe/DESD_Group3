@@ -35,6 +35,7 @@ def cart_page(request):
 def order_success_page(request):
     return render(request, "orders/success.html")
 
+
 @login_required
 def producer_orders_page(request):
     if not request.user.is_producer:
@@ -68,6 +69,13 @@ class AddToCartView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        # Only customers can add to cart
+        if not request.user.is_customer:
+            return Response(
+                {"error": "Only customers can add items to cart."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         product_id = request.data.get("product_id")
         quantity = int(request.data.get("quantity", 1))
 
@@ -318,20 +326,24 @@ class ReorderView(APIView):
 
         for item in items:
             product = item.product
-            
+
             if not product.is_active() or product.stock_quantity == 0:
-                unavailable_items.append({"name": product.name, "reason": "Out of stock or off-season"})
+                unavailable_items.append(
+                    {"name": product.name, "reason": "Out of stock or off-season"}
+                )
                 continue
-                
+
             qty_to_add = item.quantity
             if qty_to_add > product.stock_quantity:
                 qty_to_add = product.stock_quantity
-                partial_items.append({
-                    "name": product.name, 
-                    "requested": item.quantity, 
-                    "added": qty_to_add, 
-                    "reason": f"Only {qty_to_add} left in stock"
-                })
+                partial_items.append(
+                    {
+                        "name": product.name,
+                        "requested": item.quantity,
+                        "added": qty_to_add,
+                        "reason": f"Only {qty_to_add} left in stock",
+                    }
+                )
             else:
                 added_items.append({"name": product.name, "added": qty_to_add})
 
@@ -352,20 +364,29 @@ class ReorderView(APIView):
         # Generate summary message
         msg_parts = []
         if added_items or partial_items:
-            msg_parts.append(f"Successfully added {len(added_items) + len(partial_items)} items to your cart.")
+            msg_parts.append(
+                f"Successfully added {len(added_items) + len(partial_items)} items to your cart."
+            )
         if unavailable_items:
-            msg_parts.append(f"{len(unavailable_items)} items were unavailable and skipped.")
-            
-        summary = " ".join(msg_parts) if msg_parts else "No items were available to reorder."
+            msg_parts.append(
+                f"{len(unavailable_items)} items were unavailable and skipped."
+            )
 
-        return Response({
-            "message": summary,
-            "details": {
-                "added": added_items,
-                "partial": partial_items,
-                "unavailable": unavailable_items
-            }
-        }, status=status.HTTP_200_OK)
+        summary = (
+            " ".join(msg_parts) if msg_parts else "No items were available to reorder."
+        )
+
+        return Response(
+            {
+                "message": summary,
+                "details": {
+                    "added": added_items,
+                    "partial": partial_items,
+                    "unavailable": unavailable_items,
+                },
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class UpdateOrderStatusView(APIView):
@@ -434,26 +455,26 @@ class UpdateOrderStatusView(APIView):
         if order.parent_order:
             parent = order.parent_order
             sub_statuses = [so.status for so in parent.sub_orders.all()]
-            
+
             # Only update master when ALL sub-orders reach the same status
             if all(s == new_status for s in sub_statuses):
                 new_parent_status = new_status
             else:
                 new_parent_status = parent.status  # don't change yet
-            
+
             if parent.status != new_parent_status:
                 old_p_status = parent.status
                 parent.status = new_parent_status
                 if new_parent_status == Order.DELIVERED and not parent.delivered_at:
                     parent.delivered_at = now()
                 parent.save()
-                
+
                 OrderStatusLog.objects.create(
                     order=parent,
                     old_status=old_p_status,
                     new_status=new_parent_status,
                     changed_by=request.user,
-                    note=f"Auto-synced from sub-order"
+                    note=f"Auto-synced from sub-order",
                 )
 
         serializer = OrderSerializer(order)
@@ -540,6 +561,7 @@ class ProducerOrderDetailView(APIView):
 
 # ─── Refund Views ──────────────────────────────────────────
 
+
 class CustomerRefundRequestView(APIView):
     """POST — Customer requests a refund."""
 
@@ -553,39 +575,72 @@ class CustomerRefundRequestView(APIView):
         evidence_image = request.FILES.get("evidence_image")
 
         if not order_id or not reason_category:
-            return Response({"error": "Missing order_id or reason_category"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Missing order_id or reason_category"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         order = get_object_or_404(Order, id=order_id, customer=request.user)
-        
+
         if not order.can_transition_to(Order.REFUND_REQUESTED):
-            return Response({"error": f"Cannot request refund for order in status {order.status}."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": f"Cannot request refund for order in status {order.status}."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         # Prevent duplicate pending refund requests for the same order
-        if RefundRequest.objects.filter(order=order, status=RefundRequest.STATUS_PENDING).exists():
-            return Response({"error": "A refund request is already pending for this order."}, status=status.HTTP_400_BAD_REQUEST)
+        if RefundRequest.objects.filter(
+            order=order, status=RefundRequest.STATUS_PENDING
+        ).exists():
+            return Response(
+                {"error": "A refund request is already pending for this order."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         order_item = None
         if order_item_id:
             # OrderItem belongs to a sub-order, so we filter by order__parent_order=order
-            order_item = get_object_or_404(OrderItem, id=order_item_id, order__parent_order=order)
+            order_item = get_object_or_404(
+                OrderItem, id=order_item_id, order__parent_order=order
+            )
 
         # Validate delivery rules
-        if reason_category in [RefundRequest.REASON_SPOILED, RefundRequest.REASON_FRESH_RETURN]:
+        if reason_category in [
+            RefundRequest.REASON_SPOILED,
+            RefundRequest.REASON_FRESH_RETURN,
+        ]:
             if order.status != Order.DELIVERED:
-                return Response({"error": "Order must be delivered to return items."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"error": "Order must be delivered to return items."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             if order.delivered_at:
                 delta = now() - order.delivered_at
                 if delta.days > 2:
-                    return Response({"error": "Return window (2 days) has expired."}, status=status.HTTP_400_BAD_REQUEST)
-                    
-            if reason_category == RefundRequest.REASON_SPOILED and not evidence_image:
-                 return Response({"error": "Evidence image is required for spoiled items."}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response(
+                        {"error": "Return window (2 days) has expired."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
 
-        if reason_category == RefundRequest.REASON_NOT_DELIVERED and order.status == Order.DELIVERED:
-             return Response({"error": "Order is already delivered."}, status=status.HTTP_400_BAD_REQUEST)
+            if reason_category == RefundRequest.REASON_SPOILED and not evidence_image:
+                return Response(
+                    {"error": "Evidence image is required for spoiled items."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        if (
+            reason_category == RefundRequest.REASON_NOT_DELIVERED
+            and order.status == Order.DELIVERED
+        ):
+            return Response(
+                {"error": "Order is already delivered."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         try:
-            requested_amount = RefundService.calculate_refund_amount(order, order_item, reason_category)
+            requested_amount = RefundService.calculate_refund_amount(
+                order, order_item, reason_category
+            )
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -597,21 +652,21 @@ class CustomerRefundRequestView(APIView):
                 reason_category=reason_category,
                 reason_text=reason_text,
                 evidence_image=evidence_image,
-                requested_amount=requested_amount
+                requested_amount=requested_amount,
             )
-            
+
             old_status = order.status
             order.status = Order.REFUND_REQUESTED
             order.save()
-            
+
             OrderStatusLog.objects.create(
                 order=order,
                 old_status=old_status,
                 new_status=Order.REFUND_REQUESTED,
                 changed_by=request.user,
-                note="Customer requested a refund"
+                note="Customer requested a refund",
             )
-            
+
             # Sync sub-orders
             for sub_order in order.sub_orders.all():
                 if sub_order.can_transition_to(Order.REFUND_REQUESTED):
@@ -622,7 +677,7 @@ class CustomerRefundRequestView(APIView):
                         old_status=old_status,
                         new_status=Order.REFUND_REQUESTED,
                         changed_by=request.user,
-                        note="Customer requested a refund for Master Order"
+                        note="Customer requested a refund for Master Order",
                     )
 
         serializer = RefundRequestSerializer(refund_req)
@@ -636,24 +691,35 @@ class AdminRefundReviewView(APIView):
 
     def post(self, request, refund_id):
         if not request.user.is_staff:
-            return Response({"error": "Admin access required."}, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {"error": "Admin access required."}, status=status.HTTP_403_FORBIDDEN
+            )
 
         refund_req = get_object_or_404(RefundRequest, id=refund_id)
-        action = request.data.get("action") # 'approve' or 'reject'
+        action = request.data.get("action")  # 'approve' or 'reject'
         admin_note = request.data.get("admin_note", "")
 
         if action not in ["approve", "reject"]:
-            return Response({"error": "Action must be 'approve' or 'reject'"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Action must be 'approve' or 'reject'"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         try:
             if action == "approve":
-                refund_req = RefundService.process_refund_approval(refund_req, request.user, admin_note)
+                refund_req = RefundService.process_refund_approval(
+                    refund_req, request.user, admin_note
+                )
             else:
-                refund_req = RefundService.reject_refund(refund_req, request.user, admin_note)
-                
+                refund_req = RefundService.reject_refund(
+                    refund_req, request.user, admin_note
+                )
+
             serializer = RefundRequestSerializer(refund_req)
-            return Response({"message": f"Refund {action}d successfully", "data": serializer.data})
-            
+            return Response(
+                {"message": f"Refund {action}d successfully", "data": serializer.data}
+            )
+
         except RefundServiceError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -665,10 +731,12 @@ class AdminRefundListView(APIView):
 
     def get(self, request):
         if not request.user.is_staff:
-            return Response({"error": "Admin access required."}, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {"error": "Admin access required."}, status=status.HTTP_403_FORBIDDEN
+            )
 
         refunds = RefundRequest.objects.all().order_by("-created_at")
-        
+
         status_filter = request.query_params.get("status")
         if status_filter:
             refunds = refunds.filter(status=status_filter.lower())
@@ -679,6 +747,7 @@ class AdminRefundListView(APIView):
 
 class AdminRefundReviewPageView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     """TemplateView for the admin refund review dashboard. Staff-only access."""
+
     template_name = "orders/admin_refunds.html"
 
     def test_func(self):
@@ -688,4 +757,3 @@ class AdminRefundReviewPageView(LoginRequiredMixin, UserPassesTestMixin, Templat
         context = super().get_context_data(**kwargs)
         context["title"] = "Refund Review Dashboard"
         return context
-
