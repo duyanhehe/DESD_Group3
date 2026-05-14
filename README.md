@@ -306,7 +306,167 @@ Regular users (like Producers or Customers) cannot access the Treasury dashboard
 3. Fulfill items
 4. Get paid (settlement phase)
 
+---
 
+# Testing with pytest
+
+This project uses **pytest** for unit and integration testing with support for Django models, views, and API endpoints.
+
+## Running Tests
+
+Run all tests:
+```bash
+uv run pytest
+```
+
+Run tests in a specific app:
+```bash
+uv run pytest apps/products/
+```
+
+Run a specific test file:
+```bash
+uv run pytest apps/accounts/tests.py
+```
+
+Run a specific test:
+```bash
+uv run pytest apps/accounts/tests.py::TestUserModel::test_create_user
+```
+
+Run tests matching a pattern:
+```bash
+uv run pytest -k "payment" -v
+```
+
+## Test Coverage
+
+Generate coverage report:
+```bash
+uv run pytest --cov=apps --cov-report=html
+```
+
+View the report:
+```
+htmlcov/index.html
+```
+
+## Writing Tests
+
+### Basic Test Structure
+
+Tests are typically organized in a `tests.py` file in each app:
+
+```python
+import pytest
+from django.contrib.auth import get_user_model
+from apps.products.models import Product
+
+User = get_user_model()
+
+@pytest.mark.django_db
+class TestProductModel:
+    def test_create_product(self):
+        product = Product.objects.create(
+            name="Organic Apple",
+            price=5.99,
+            description="Fresh organic apple"
+        )
+        assert product.name == "Organic Apple"
+        assert Product.objects.count() == 1
+```
+
+### Using Fixtures
+
+Define reusable fixtures in `conftest.py`:
+
+```python
+@pytest.fixture
+def user(db):
+    return User.objects.create_user(
+        username="testuser",
+        email="test@example.com",
+        password="testpass123"
+    )
+
+@pytest.fixture
+def authenticated_client(client, user):
+    client.force_login(user)
+    return client
+```
+
+Use fixtures in tests:
+```python
+@pytest.mark.django_db
+def test_product_view(authenticated_client):
+    response = authenticated_client.get('/products/')
+    assert response.status_code == 200
+```
+
+### Testing Views & API
+
+Test API endpoints:
+```python
+@pytest.mark.django_db
+def test_product_api_list(authenticated_client, product):
+    response = authenticated_client.get('/api/products/')
+    assert response.status_code == 200
+    assert len(response.json()) > 0
+```
+
+Test with different user types:
+```python
+@pytest.fixture
+def producer(db):
+    user = User.objects.create_user(username="producer")
+    user.user_type = "PRODUCER"
+    user.save()
+    return user
+
+@pytest.mark.django_db
+def test_only_producer_can_create(authenticated_client, producer):
+    client = authenticated_client
+    client.force_login(producer)
+    response = client.post('/api/products/', {"name": "Test"})
+    assert response.status_code == 201
+```
+
+## pytest Configuration
+
+Configuration is defined in `pytest.ini`:
+- Database transactions are rolled back after each test
+- Django settings module is configured
+- Markers are defined for organization
+
+Common pytest flags:
+```bash
+pytest -v                    # Verbose output
+pytest -s                    # Show print statements
+pytest --lf                  # Run last failed tests
+pytest --ff                  # Run failed tests first
+pytest -x                    # Stop on first failure
+pytest --tb=short            # Shorter traceback format
+pytest -k "test_" --collect-only  # List tests without running
+```
+
+## Best Practices
+
+1. **Use `@pytest.mark.django_db`** for tests that access the database
+2. **Keep tests independent** - don't rely on execution order
+3. **Use fixtures** for common setup (users, products, etc.)
+4. **Mock external services** (Stripe, Ollama) to avoid real API calls
+5. **Test edge cases** - empty results, invalid inputs, permissions
+6. **Use descriptive test names** - `test_create_product_with_valid_data` not `test1`
+7. **Separate unit and integration tests** using markers:
+   ```python
+   @pytest.mark.unit
+   def test_model_logic():
+       pass
+   
+   @pytest.mark.integration
+   def test_api_workflow():
+       pass
+   ```
 
 ---
 
