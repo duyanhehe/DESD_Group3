@@ -354,6 +354,7 @@ def refund_request(db, order):
     """Create a refund request."""
     return RefundRequest.objects.create(
         order=order,
+        customer=order.customer,
         status=RefundRequest.STATUS_PENDING,
         requested_amount=Decimal("25.00"),
         reason_category=RefundRequest.REASON_NOT_DELIVERED,

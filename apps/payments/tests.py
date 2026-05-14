@@ -544,7 +544,7 @@ class TestAdminSettlementAPI:
 
         response = client.post(
             f"/payments/api/v1/admin/settlements/{settlement.id}/fail/",
-            {"failure_reason": "Producer account invalid", "notes": ""},
+            {"reason": "Producer account invalid"},
             format="json",
         )
 
@@ -674,7 +674,9 @@ class TestStripeWebhookHandling:
         # Create a payment transaction for the order first
         payment = PaymentTransaction.objects.create(
             order=order,
+            customer=order.customer,
             stripe_payment_intent_id="pi_test123",
+            stripe_session_id="cs_test123",
             total_amount=order.total_price,
             network_commission=order.total_price * Decimal("0.05"),
             producer_payout=order.total_price * Decimal("0.95"),

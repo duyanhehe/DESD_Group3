@@ -164,6 +164,8 @@ class TestPostcodeGeocoding:
         """
         Test: API error (timeout, 500, etc.) returns None gracefully.
         """
+        cache.clear()  # Clear any cached results from previous tests
+
         responses.add(
             responses.GET,
             NOMINATIM_URL,

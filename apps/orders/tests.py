@@ -586,8 +586,12 @@ class TestRefundLogic:
 
         payment = PaymentTransaction.objects.create(
             order=refund_request.order,
+            customer=refund_request.order.customer,
             stripe_payment_intent_id="pi_test123",
+            stripe_session_id="cs_test123",
             total_amount=refund_request.order.total_price,
+            network_commission=refund_request.order.total_price * Decimal("0.05"),
+            producer_payout=refund_request.order.total_price * Decimal("0.95"),
             status=PaymentTransaction.STATUS_SUCCEEDED,
         )
 
@@ -652,7 +656,7 @@ class TestCartAPI:
 
     def test_remove_from_cart_endpoint(self, customer_user, cart_with_items):
         """
-        Test: DELETE /orders/api/v1/cart/item/<id>/ removes item.
+        Test: DELETE /orders/api/v1/cart/item/<id>/remove/ removes item.
         """
         client = APIClient()
         client.force_authenticate(user=customer_user)
@@ -660,7 +664,7 @@ class TestCartAPI:
         item = cart_with_items.items.first()
 
         response = client.delete(
-            f"/orders/api/v1/cart/item/{item.id}/",
+            f"/orders/api/v1/cart/item/{item.id}/remove/",
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -748,8 +752,7 @@ class TestOrderAPI:
             "/orders/api/v1/refund/request/",
             {
                 "order_id": delivered_order.id,
-                "reason_category": RefundRequest.REASON_NOT_DELIVERED,
-                "requested_amount": delivered_order.total_price,
+                "reason_category": RefundRequest.REASON_FRESH_RETURN,
             },
         )
 

@@ -298,7 +298,15 @@ class CustomerOrderDetailView(APIView):
 
     def get(self, request, order_id):
         # A customer can view their Master Order or Sub-Orders
-        order = get_object_or_404(Order, id=order_id, customer=request.user)
+        order = get_object_or_404(Order, id=order_id)
+
+        # Check if customer owns this order
+        if order.customer != request.user:
+            return Response(
+                {"error": "You do not have permission to view this order."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         serializer = OrderSerializer(order)
         return Response(serializer.data)
 
