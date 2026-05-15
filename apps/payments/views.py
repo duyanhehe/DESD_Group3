@@ -742,10 +742,8 @@ class StripeWebhookView(APIView):
                 return
 
             with transaction.atomic():
-                # Calculate total from actual cart items
-                total = sum(
-                    item.product.price * item.quantity for item in cart_items
-                )
+                # Calculate total from actual cart items (respecting discounts TC-017)
+                total = sum(item.subtotal for item in cart_items)
 
                 # 1. Create Master Order (status=CONFIRMED because payment succeeded)
                 master_order = Order.objects.create(
@@ -809,7 +807,7 @@ class StripeWebhookView(APIView):
                             product=item.product,
                             producer=producer,
                             quantity=item.quantity,
-                            unit_price=item.product.price,
+                            unit_price=item.product.effective_price,
                         )
                         # Deduct stock
                         item.product.stock_quantity -= item.quantity
@@ -839,4 +837,55 @@ class AdminSettlementsPageView(TemplateView):
         context = super().get_context_data(**kwargs)
         context["title"] = "Admin Settlement Management"
         return context
+
+
+# ─── Producer Settlement Views (TC-012) ─────────────────────
+
+class ProducerSettlementListView(APIView):
+    """GET — Producer view of their own weekly settlements."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if not request.user.is_producer:
+            return Response({"error": "Producer access only."}, status=status.HTTP_403_FORBIDDEN)
+        
+        from .models import ProducerWeeklySettlement
+        from .serializers import ProducerWeeklySettlementSerializer
+        settlements = ProducerWeeklySettlement.objects.filter(producer=request.user).order_by("-week_start")
+        serializer = ProducerWeeklySettlementSerializer(settlements, many=True)
+        return Response(serializer.data)
+
+
+class ProducerSettlementCSVView(APIView):
+    """GET — Download a CSV report of a settlement."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, settlement_id):
+        import csv
+        from django.http import HttpResponse
+        from .models import ProducerWeeklySettlement
+        
+        settlement = get_object_or_404(ProducerWeeklySettlement, id=settlement_id)
+        
+        # Security: only the owner or staff
+        if not request.user.is_staff and settlement.producer != request.user:
+            return Response({"error": "Access denied."}, status=status.HTTP_403_FORBIDDEN)
+            
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="settlement_{settlement.id}.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow(['Order ID', 'Date', 'Total Value', 'Network Commission (5%)', 'Producer Share (95%)'])
+        
+        # Fetch related orders
+        for order in settlement.orders.all():
+            writer.writerow([
+                order.id,
+                order.created_at.strftime('%Y-%m-%d'),
+                order.total_price,
+                float(order.total_price) * 0.05,
+                float(order.total_price) * 0.95
+            ])
+            
+        return response
 

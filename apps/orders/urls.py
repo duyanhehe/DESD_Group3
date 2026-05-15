@@ -5,6 +5,7 @@ from .views import (
     order_success_page,
     producer_orders_page,
     order_history_page,
+    recurring_orders_page,
     # cart
     CartDetailView,
     AddToCartView,
@@ -26,6 +27,9 @@ from .views import (
     AdminRefundReviewView,
     AdminRefundListView,
     AdminRefundReviewPageView,
+    # recurring
+    RecurringOrderListView,
+    RecurringOrderCancelView,
 )
 
 app_name = "orders"
@@ -35,6 +39,7 @@ urlpatterns = [
     path("cart/", cart_page, name="cart_page"),
     path("success/", order_success_page, name="order_success_page"),
     path("history/", order_history_page, name="order_history_page"),
+    path("recurring/manage/", recurring_orders_page, name="recurring_orders_page"),
     path("producer/", producer_orders_page, name="producer_orders_page"),
     path("admin/refunds/", AdminRefundReviewPageView.as_view(), name="admin_refunds_page"),
 
@@ -61,4 +66,8 @@ urlpatterns = [
     path("api/v1/refund/request/", CustomerRefundRequestView.as_view(), name="refund_request"),
     path("api/v1/refund/review/list/", AdminRefundListView.as_view(), name="refund_review_list"),
     path("api/v1/refund/review/<int:refund_id>/", AdminRefundReviewView.as_view(), name="refund_review"),
+
+    # -- Recurring Orders (TC-018) --
+    path("api/v1/recurring/", RecurringOrderListView.as_view(), name="recurring_list"),
+    path("api/v1/recurring/<int:pk>/cancel/", RecurringOrderCancelView.as_view(), name="recurring_cancel"),
 ]

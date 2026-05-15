@@ -213,6 +213,17 @@ document.addEventListener('DOMContentLoaded', () => {
                         ${!isSafe ? '<p class="text-[11px] text-amber-600 font-medium mt-3">Please exercise caution if you have severe food allergies.</p>' : ''}
                     </div>
 
+                    <!-- Food Miles (TC-013) -->
+                    ${product.food_miles !== null ? `
+                    <div class="inline-flex items-center gap-2 bg-emerald-50 px-4 py-2 rounded-2xl border border-emerald-100">
+                        <span class="material-symbols-outlined text-emerald-600 text-lg">eco</span>
+                        <div>
+                            <p class="text-[9px] font-black text-emerald-800 uppercase tracking-widest">Local Impact</p>
+                            <p class="text-xs font-bold text-emerald-700">${Number(product.food_miles).toFixed(1)} food miles from farm to you</p>
+                        </div>
+                    </div>
+                    ` : ''}
+
                     <!-- Add to Cart -->
                     <button
                         onclick="window.addToCart(${product.id})"
@@ -223,6 +234,54 @@ document.addEventListener('DOMContentLoaded', () => {
                     </button>
                 </div>
             </div>
+
+            <!-- Educational Content (TC-020) -->
+            ${(product.recipes.length > 0 || product.farm_stories.length > 0) ? `
+            <div class="mt-24 space-y-16">
+                <div class="grid md:grid-cols-2 gap-12">
+                    ${product.recipes.length > 0 ? `
+                    <div class="space-y-8">
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-primary">menu_book</span>
+                            <h3 class="font-headline text-2xl font-extrabold">Recipe Suggestions</h3>
+                        </div>
+                        <div class="grid grid-cols-1 gap-4">
+                            ${product.recipes.map(r => `
+                                <a href="/education/" class="flex items-center gap-4 p-4 bg-surface-container-low rounded-[24px] border border-outline-variant/10 hover:border-primary/20 transition-all group">
+                                    <div class="w-16 h-16 rounded-xl overflow-hidden bg-surface-container flex-shrink-0">
+                                        ${r.image ? `<img src="${r.image}" class="w-full h-full object-cover">` : '<div class="w-full h-full flex items-center justify-center text-xl">🥗</div>'}
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-sm group-hover:text-primary transition-colors">${r.title}</h4>
+                                        <p class="text-[9px] font-bold text-outline uppercase tracking-widest mt-1">View Recipe</p>
+                                    </div>
+                                </a>
+                            `).join('')}
+                        </div>
+                    </div>` : ''}
+
+                    ${product.farm_stories.length > 0 ? `
+                    <div class="space-y-8">
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-primary">potted_plant</span>
+                            <h3 class="font-headline text-2xl font-extrabold">Farm Stories</h3>
+                        </div>
+                        <div class="grid grid-cols-1 gap-4">
+                            ${product.farm_stories.map(s => `
+                                <a href="/education/" class="flex items-center gap-4 p-4 bg-surface-container-low rounded-[24px] border border-outline-variant/10 hover:border-primary/20 transition-all group">
+                                    <div class="w-16 h-16 rounded-xl overflow-hidden bg-surface-container flex-shrink-0">
+                                        ${s.image ? `<img src="${s.image}" class="w-full h-full object-cover">` : '<div class="w-full h-full flex items-center justify-center text-2xl">🚜</div>'}
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-sm group-hover:text-primary transition-colors">${s.title}</h4>
+                                        <p class="text-[9px] font-bold text-outline uppercase tracking-widest mt-1">Meet the Producer</p>
+                                    </div>
+                                </a>
+                            `).join('')}
+                        </div>
+                    </div>` : ''}
+                </div>
+            </div>` : ''}
 
             <!-- Reviews Section (TC-024) -->
             <div class="mt-32 pt-20 border-t border-outline-variant/10">

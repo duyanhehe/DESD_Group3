@@ -20,6 +20,7 @@ from .views import (
     ProducerPaymentsView,
     CreateCheckoutSessionView,
     StripeWebhookView,
+    ProducerSettlementCSVView,
 )
 
 urlpatterns = [
@@ -32,6 +33,7 @@ urlpatterns = [
     path("api/v1/settlements/<uuid:settlement_id>/", ProducerSettlementDetailView.as_view(), name="producer_settlement_detail"),
     path("api/v1/settlements/<uuid:settlement_id>/items/", ProducerSettlementItemsView.as_view(), name="producer_settlement_items"),
     path("api/v1/settlements/<uuid:settlement_id>/audit/", ProducerSettlementAuditView.as_view(), name="producer_settlement_audit"),
+    path("api/v1/settlements/<uuid:settlement_id>/export/", ProducerSettlementCSVView.as_view(), name="producer_settlement_export"),
 
     # ═══════════════════════════════════════════════════════════════
     # Admin Endpoints

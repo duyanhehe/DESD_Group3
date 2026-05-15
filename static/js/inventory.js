@@ -103,3 +103,22 @@ function getCookie(name) {
     }
     return cookieValue;
 }
+
+window.filterLowStock = function() {
+    const rows = document.querySelectorAll('tbody tr');
+    let found = 0;
+    rows.forEach(row => {
+        const lowStockBadge = row.querySelector('.bg-error');
+        if (lowStockBadge) {
+            row.style.display = '';
+            found++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+    
+    if (found === 0) {
+        alert("No critical stock alerts at the moment.");
+        rows.forEach(row => row.style.display = '');
+    }
+};

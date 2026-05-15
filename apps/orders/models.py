@@ -59,16 +59,36 @@ class CartItem(models.Model):
 
     @property
     def subtotal(self):
-        # Use effective price: discount_price if surplus, otherwise base price
-        price = self.product.effective_price
+        """
+        Tiered Bulk Discount Logic:
+        - > 5 units: 10% off
+        - > 7 units: 15% off
+        - > 10 units: 20% off
+        - Community Groups: +10% extra discount (additive)
+        """
+        price = self.product.effective_price  # includes surplus discount if any
+        qty = self.quantity
         
-        # TC-017: Community Group 10% discount for bulk (>= 10)
-        if self.cart.customer.is_community_group and self.quantity >= 10:
-            return (price * Decimal("0.9")) * self.quantity
-        # New Requirement: Regular customer discount for bulk (> 20)
-        elif not self.cart.customer.is_community_group and self.quantity > 20:
-            return (price * Decimal("0.9")) * self.quantity
-        return price * self.quantity
+        # Base bulk discount
+        bulk_rate = Decimal("0.00")
+        if qty > 10:
+            bulk_rate = Decimal("0.20")
+        elif qty > 7:
+            bulk_rate = Decimal("0.15")
+        elif qty > 5:
+            bulk_rate = Decimal("0.10")
+            
+        # Group bonus
+        group_rate = Decimal("0.00")
+        if self.cart.customer.is_community_group:
+            group_rate = Decimal("0.10")
+            
+        total_discount = bulk_rate + group_rate
+        multiplier = Decimal("1.00") - total_discount
+        # Floor discount at 50% max
+        multiplier = max(multiplier, Decimal("0.50"))
+        
+        return (price * multiplier) * qty
 
     @property
     def food_miles(self):
@@ -183,17 +203,29 @@ class OrderItem(models.Model):
 
     @property
     def subtotal(self):
-        # In OrderItem, unit_price is already captured at checkout.
-        # However, we should check if we should apply the bulk discount on it.
+        # In OrderItem, unit_price is already captured at checkout (might include surplus discount).
         price = self.unit_price
+        qty = self.quantity
         
-        # TC-017: Community Group 10% discount for bulk (>= 10)
-        if self.order.customer.is_community_group and self.quantity >= 10:
-            return (price * Decimal("0.9")) * self.quantity
-        # New Requirement: Regular customer discount for bulk (> 20)
-        elif not self.order.customer.is_community_group and self.quantity > 20:
-            return (price * Decimal("0.9")) * self.quantity
-        return price * self.quantity
+        # Base bulk discount rate
+        bulk_rate = Decimal("0.00")
+        if qty > 10:
+            bulk_rate = Decimal("0.20")
+        elif qty > 7:
+            bulk_rate = Decimal("0.15")
+        elif qty > 5:
+            bulk_rate = Decimal("0.10")
+            
+        # Group bonus
+        group_rate = Decimal("0.00")
+        if self.order.customer.is_community_group:
+            group_rate = Decimal("0.10")
+            
+        total_discount = bulk_rate + group_rate
+        multiplier = Decimal("1.00") - total_discount
+        multiplier = max(multiplier, Decimal("0.50"))
+        
+        return (price * multiplier) * qty
 
     def __str__(self):
         return f"{self.quantity}x {self.product.name} (Order #{self.order.pk})"

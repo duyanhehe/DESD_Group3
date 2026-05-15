@@ -385,37 +385,44 @@ async function renderCartPage() {
 
         let html = '<div class="space-y-12">';
         
-        if (data.is_community_group) {
-            html += `
-                <div class="bg-emerald-50 border border-emerald-200 p-6 rounded-[32px] flex items-center gap-6 mb-8">
-                    <div class="w-12 h-12 bg-emerald-500 text-white rounded-2xl flex items-center justify-center">
+        // Tiered Discount Notices (TC-017)
+        html += `
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                <div class="bg-blue-50 border border-blue-200 p-6 rounded-[32px] flex items-center gap-6">
+                    <div class="w-12 h-12 bg-blue-500 text-white rounded-2xl flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined">trending_down</span>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-blue-900">Tiered Bulk Savings</h4>
+                        <p class="text-[11px] text-blue-700 leading-tight">Buy more, save more: <strong>10% (>5)</strong>, <strong>15% (>7)</strong>, or <strong>20% (>10)</strong> off!</p>
+                    </div>
+                </div>
+                ${data.is_community_group ? `
+                <div class="bg-emerald-50 border border-emerald-200 p-6 rounded-[32px] flex items-center gap-6">
+                    <div class="w-12 h-12 bg-emerald-500 text-white rounded-2xl flex items-center justify-center shrink-0">
                         <span class="material-symbols-outlined">group</span>
                     </div>
                     <div>
-                        <h4 class="font-bold text-emerald-900">Community Group Account</h4>
-                        <p class="text-sm text-emerald-700">A 10% bulk discount is automatically applied to any item with quantity 10 or more.</p>
+                        <h4 class="font-bold text-emerald-900">Community Group Bonus</h4>
+                        <p class="text-[11px] text-emerald-700 leading-tight">Your account receives an <strong>additional 10% discount</strong> on all bulk tiers!</p>
                     </div>
                 </div>
-            `;
-        } else {
-             html += `
-                <div class="bg-blue-50 border border-blue-200 p-6 rounded-[32px] flex items-center gap-6 mb-8">
-                    <div class="w-12 h-12 bg-blue-500 text-white rounded-2xl flex items-center justify-center">
-                        <span class="material-symbols-outlined">shopping_bag</span>
-                    </div>
-                    <div>
-                        <h4 class="font-bold text-blue-900">Bulk Savings Available</h4>
-                        <p class="text-sm text-blue-700">Receive a 10% discount on any single product when you purchase more than 20 units.</p>
-                    </div>
-                </div>
-            `;
-        }
+                ` : ''}
+            </div>
+        `;
         
         data.grouped_by_producer.forEach(group => {
             let itemsHtml = group.items.map(item => {
-                const isGroupDiscount = data.is_community_group && item.quantity >= 10;
-                const isRegularDiscount = !data.is_community_group && item.quantity > 20;
-                const hasDiscount = isGroupDiscount || isRegularDiscount;
+                const qty = item.quantity;
+                let bulkRate = 0;
+                if (qty > 10) bulkRate = 0.20;
+                else if (qty > 7) bulkRate = 0.15;
+                else if (qty > 5) bulkRate = 0.10;
+                
+                const groupRate = data.is_community_group ? 0.10 : 0;
+                const totalDiscount = bulkRate + groupRate;
+                const multiplier = Math.max(1.0 - totalDiscount, 0.5);
+                const hasDiscount = totalDiscount > 0;
                 
                 return `
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center py-8 border-b border-outline-variant/5 last:border-0 group">
@@ -426,11 +433,11 @@ async function renderCartPage() {
                         <div>
                             <h4 class="font-headline font-bold text-lg text-on-background">
                                 ${item.product_name}
-                                ${hasDiscount ? `<span class="ml-2 px-2 py-0.5 ${isGroupDiscount ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'} text-[10px] font-black rounded uppercase tracking-widest">10% Bulk Discount Applied</span>` : ''}
+                                ${hasDiscount ? `<span class="ml-2 px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-black rounded uppercase tracking-widest">${(totalDiscount * 100).toFixed(0)}% Discount Applied</span>` : ''}
                             </h4>
                             <div class="flex items-center gap-3">
                                 <p class="text-sm font-bold text-primary">
-                                    ${hasDiscount ? `<span class="line-through text-outline opacity-50 mr-2">$${item.unit_price}</span>$${(item.unit_price * 0.9).toFixed(2)}` : `$${item.unit_price}`}
+                                    ${hasDiscount ? `<span class="line-through text-outline opacity-50 mr-2">$${item.unit_price}</span>$${(item.unit_price * multiplier).toFixed(2)}` : `$${item.unit_price}`}
                                     <span class="text-xs text-outline font-medium tracking-tight">/ ${item.unit}</span>
                                 </p>
                                 ${(item.food_miles !== null && item.food_miles !== undefined) ? `

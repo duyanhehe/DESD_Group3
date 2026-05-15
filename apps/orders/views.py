@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404
 from django.db import transaction
 from django.utils.timezone import now
 
-from .models import Cart, CartItem, Order, OrderItem, OrderStatusLog
+from .models import Cart, CartItem, Order, OrderItem, OrderStatusLog, RecurringOrder, RecurringOrderItem
 from .serializers import (
     CartSerializer,
     CartItemSerializer,
@@ -46,6 +46,11 @@ def producer_orders_page(request):
 @login_required
 def order_history_page(request):
     return render(request, "orders/order_history.html")
+
+
+@login_required
+def recurring_orders_page(request):
+    return render(request, "orders/recurring_orders.html")
 
 
 # ─── Cart Views (DESD-55, 56, 57, 58) ──────────────────────
@@ -798,3 +803,27 @@ class AdminRefundReviewPageView(LoginRequiredMixin, UserPassesTestMixin, Templat
         context = super().get_context_data(**kwargs)
         context["title"] = "Refund Review Dashboard"
         return context
+
+
+# ─── Recurring Orders (TC-018) ──────────────────────────────
+
+class RecurringOrderListView(APIView):
+    """GET — list all recurring subscriptions for the logged in customer."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        recurring_orders = RecurringOrder.objects.filter(customer=request.user)
+        from .serializers import RecurringOrderSerializer
+        serializer = RecurringOrderSerializer(recurring_orders, many=True)
+        return Response(serializer.data)
+
+
+class RecurringOrderCancelView(APIView):
+    """POST — cancel a recurring order."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        subscription = get_object_or_404(RecurringOrder, id=pk, customer=request.user)
+        subscription.is_active = False
+        subscription.save()
+        return Response({"message": "Recurring order cancelled successfully."})

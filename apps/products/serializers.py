@@ -21,6 +21,7 @@ class ProductSerializer(serializers.ModelSerializer):
     
     # Use image field directly but also provide image_url for frontend compatibility
     image_url = serializers.SerializerMethodField()
+    food_miles = serializers.SerializerMethodField()
     reviews = ReviewSerializer(many=True, read_only=True)
     can_review = serializers.SerializerMethodField()
 
@@ -52,8 +53,32 @@ class ProductSerializer(serializers.ModelSerializer):
             "low_stock_threshold",
             "reviews",
             "can_review",
+            "food_miles",
         )
         read_only_fields = ("producer", "created_at")
+
+    def get_food_miles(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return None
+        
+        try:
+            from apps.logistics.utils import calculate_distance_between_postcodes
+            customer_profile = getattr(request.user, "customer_profile", None)
+            producer_profile = getattr(obj.producer, "producer_profile", None)
+
+            if not customer_profile or not producer_profile:
+                return None
+                
+            c_pc = customer_profile.postcode
+            p_pc = producer_profile.postcode
+            
+            if not c_pc or not p_pc:
+                return None
+                
+            return calculate_distance_between_postcodes(p_pc, c_pc)
+        except ImportError:
+            return None
 
     def get_can_review(self, obj):
         request = self.context.get("request")
@@ -117,3 +142,20 @@ class ProductSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("Product is out of season.")
 
         return data
+
+
+class ProductDetailSerializer(ProductSerializer):
+    recipes = serializers.SerializerMethodField()
+    farm_stories = serializers.SerializerMethodField()
+
+    class Meta(ProductSerializer.Meta):
+        fields = ProductSerializer.Meta.fields + (
+            "recipes",
+            "farm_stories",
+        )
+
+    def get_recipes(self, obj):
+        return [{"id": r.id, "title": r.title, "image": r.image.url if r.image else None} for r in obj.recipes.all()]
+
+    def get_farm_stories(self, obj):
+        return [{"id": s.id, "title": s.title, "image": s.image.url if s.image else None} for s in obj.farm_stories.all()]

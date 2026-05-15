@@ -175,7 +175,7 @@ class FarmStory(models.Model):
     title = models.CharField(max_length=255)
     content = models.TextField()
     image = models.ImageField(upload_to="stories/", null=True, blank=True)
-    products = models.ManyToManyField(Product, blank=True, related_name="stories")
+    products = models.ManyToManyField(Product, blank=True, related_name="farm_stories")
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

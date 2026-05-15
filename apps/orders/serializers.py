@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Cart, CartItem, Order, OrderItem, OrderStatusLog, RefundRequest
+from .models import Cart, CartItem, Order, OrderItem, OrderStatusLog, RefundRequest, RecurringOrder, RecurringOrderItem
 
 
 # ─── Cart ───────────────────────────────────────────────────
@@ -221,5 +221,23 @@ class RefundRequestSerializer(serializers.ModelSerializer):
             "requested_amount", "status", "admin_note",
             "created_at", "resolved_at"
         ]
-        read_only_fields = ["id", "order_id", "customer_name", "item_name", "requested_amount", "status", "admin_note", "resolved_at", "created_at"]
+
+# ─── Recurring Orders (TC-018) ──────────────────────────────
+
+class RecurringOrderItemSerializer(serializers.ModelSerializer):
+    product_name = serializers.CharField(source="product.name", read_only=True)
+    unit_price = serializers.DecimalField(source="product.price", max_digits=10, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = RecurringOrderItem
+        fields = ["id", "product", "product_name", "quantity", "unit_price"]
+
+
+class RecurringOrderSerializer(serializers.ModelSerializer):
+    items = RecurringOrderItemSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = RecurringOrder
+        fields = ["id", "customer", "is_active", "frequency_days", "next_delivery_date", "items", "created_at"]
+        read_only_fields = ["customer", "next_delivery_date", "created_at"]
 

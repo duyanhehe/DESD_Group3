@@ -12,6 +12,12 @@
             <h1 class="font-headline text-4xl lg:text-6xl font-extrabold text-on-background mb-4 tracking-tight">Order History</h1>
             <p class="text-on-surface-variant text-lg font-medium leading-relaxed">Track your seasonal harvests and reorder your favorite farm-direct products.</p>
         </div>
+
+        <!-- Tabs (TC-018) -->
+        <div class="flex bg-surface-container-high p-1.5 rounded-2xl border border-outline-variant/10">
+            <a href="{% url 'orders:order_history_page' %}" class="px-6 py-2 bg-white text-primary rounded-xl font-bold text-xs shadow-sm shadow-black/5 transition-all">Past Orders</a>
+            <a href="{% url 'orders:recurring_orders_page' %}" class="px-6 py-2 text-outline hover:text-on-surface-variant rounded-xl font-bold text-xs transition-all">Recurring Orders</a>
+        </div>
     </div>
 
     <!-- Orders List -->

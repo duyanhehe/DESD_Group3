@@ -12,7 +12,7 @@ from django.contrib import messages
 
 from .models import Product, Recipe, FarmStory, Review
 from apps.orders.models import OrderItem
-from .serializers import ProductSerializer
+from .serializers import ProductSerializer, ProductDetailSerializer
 from .forms import ProductForm
 
 from django.db import transaction
@@ -66,7 +66,7 @@ class ProductDetailView(APIView):
 
         product = get_object_or_404(Product.objects.active(), id=id)
 
-        serializer = ProductSerializer(product, context={"request": request})
+        serializer = ProductDetailSerializer(product, context={"request": request})
         return Response(serializer.data)
 
 
