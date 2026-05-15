@@ -17,9 +17,11 @@ Allocation:
 
 import os
 import sys
+import json
 import django
 from datetime import date, timedelta
 from decimal import Decimal
+from pathlib import Path
 
 # ── Django Setup ──
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
@@ -30,6 +32,20 @@ from apps.accounts.models import User, CustomerProfile, ProducerProfile
 from apps.categories.models import Category
 from apps.allergens.models import Allergen
 from apps.products.models import Product
+
+
+CATEGORY_FIXTURE_PATH = (
+    Path(__file__).resolve().parent / "apps" / "categories" / "fixtures" / "categories.json"
+)
+CATEGORY_SLUGS = [
+    "fruits",
+    "vegetables",
+    "dairy",
+    "bakery",
+    "meat",
+    "seafood",
+    "drinks",
+]
 
 
 def seed():
@@ -157,21 +173,43 @@ def seed():
     # ================================================================
     print("\n[2/4] Creating Categories...")
 
-    cat_apple, _ = Category.objects.get_or_create(name="Apple", defaults={"slug": "apple"})
-    cat_banana, _ = Category.objects.get_or_create(name="Banana", defaults={"slug": "banana"})
-    cat_bellpepper, _ = Category.objects.get_or_create(name="Bellpepper", defaults={"slug": "bellpepper"})
-    cat_carrot, _ = Category.objects.get_or_create(name="Carrot", defaults={"slug": "carrot"})
-    cat_cucumber, _ = Category.objects.get_or_create(name="Cucumber", defaults={"slug": "cucumber"})
-    cat_grape, _ = Category.objects.get_or_create(name="Grape", defaults={"slug": "grape"})
-    cat_guava, _ = Category.objects.get_or_create(name="Guava", defaults={"slug": "guava"})
-    cat_jujube, _ = Category.objects.get_or_create(name="Jujube", defaults={"slug": "jujube"})
-    cat_mango, _ = Category.objects.get_or_create(name="Mango", defaults={"slug": "mango"})
-    cat_orange, _ = Category.objects.get_or_create(name="Orange", defaults={"slug": "orange"})
-    cat_pomegranate, _ = Category.objects.get_or_create(name="Pomegranate", defaults={"slug": "pomegranate"})
-    cat_potato, _ = Category.objects.get_or_create(name="Potato", defaults={"slug": "potato"})
-    cat_strawberry, _ = Category.objects.get_or_create(name="Strawberry", defaults={"slug": "strawberry"})
-    cat_tomato, _ = Category.objects.get_or_create(name="Tomato", defaults={"slug": "tomato"})
-    print(f"  ✓ Categories: Apple, Banana, Bellpepper, Carrot, Cucumber, Grape, Guava, Jujube, Mango, Orange, Pomegranate, Potato, Strawberry, Tomato")
+    with CATEGORY_FIXTURE_PATH.open(encoding="utf-8") as fixture_file:
+        category_fixture = json.load(fixture_file)
+
+    categories_by_slug = {}
+    for item in category_fixture:
+        fields = item["fields"]
+        category, _ = Category.objects.update_or_create(
+            slug=fields["slug"],
+            defaults={"name": fields["name"]},
+        )
+        categories_by_slug[category.slug] = category
+
+    missing_slugs = sorted(set(CATEGORY_SLUGS) - set(categories_by_slug))
+    if missing_slugs:
+        raise ValueError(
+            f"{CATEGORY_FIXTURE_PATH} is missing category slugs: {', '.join(missing_slugs)}"
+        )
+
+    fruit_category = categories_by_slug["fruits"]
+    vegetable_category = categories_by_slug["vegetables"]
+
+    cat_apple = fruit_category
+    cat_banana = fruit_category
+    cat_grape = fruit_category
+    cat_guava = fruit_category
+    cat_jujube = fruit_category
+    cat_mango = fruit_category
+    cat_orange = fruit_category
+    cat_pomegranate = fruit_category
+    cat_strawberry = fruit_category
+
+    cat_bellpepper = vegetable_category
+    cat_carrot = vegetable_category
+    cat_cucumber = vegetable_category
+    cat_potato = vegetable_category
+    cat_tomato = vegetable_category
+    print(f"  -> Categories: {', '.join(c.name for c in categories_by_slug.values())}")
 
     # ================================================================
     # 3. ALLERGENS — Use existing 14 from fixtures
