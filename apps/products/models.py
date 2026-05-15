@@ -52,6 +52,10 @@ class Product(models.Model):
     available_from = models.DateField(null=True, blank=True)
     available_to = models.DateField(null=True, blank=True)
 
+    # TC-016: Explicit seasonal months (1-12)
+    season_start_month = models.PositiveSmallIntegerField(null=True, blank=True)
+    season_end_month = models.PositiveSmallIntegerField(null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     # allergens
@@ -90,7 +94,20 @@ class Product(models.Model):
 
     def is_in_season(self):
         today = now().date()
-        # if no dates are set then its in season
+        current_month = today.month
+
+        # TC-016: Month-based season check
+        if self.season_start_month and self.season_end_month and self.season_start_month > 0 and self.season_end_month > 0:
+            start = int(self.season_start_month)
+            end = int(self.season_end_month)
+            if start <= end:
+                if not (start <= current_month <= end):
+                    return False
+            else:  # Wraps around new year (e.g. Nov to Feb)
+                if not (current_month >= start or current_month <= end):
+                    return False
+
+        # Existing Date-based season check
         if not self.available_from and not self.available_to:
             return True
         if self.available_from and self.available_to:

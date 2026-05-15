@@ -25,6 +25,18 @@ class ProducerPaymentsView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = "My Payments"
+        
+        # TC-012: Calculate Tax Year Running Total
+        from django.db.models import Sum
+        from django.utils.timezone import now
+        year = now().year
+        tax_year_total = ProducerWeeklySettlement.objects.filter(
+            producer=self.request.user,
+            status=ProducerWeeklySettlement.STATUS_PAID,
+            week_start__year=year
+        ).aggregate(total=Sum('payout_amount'))['total'] or 0
+        context["tax_year_total"] = tax_year_total
+        
         return context
 
 

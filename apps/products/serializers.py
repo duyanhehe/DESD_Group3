@@ -45,6 +45,8 @@ class ProductSerializer(serializers.ModelSerializer):
             "is_available",
             "available_from",
             "available_to",
+            "season_start_month",
+            "season_end_month",
             "unit",
             "created_at",
             "is_organic",

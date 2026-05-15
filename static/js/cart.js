@@ -286,6 +286,11 @@ async function getCartData() {
 }
 
 async function refreshCartBadge() {
+    // Only fetch if user is logged in to avoid 401 errors in console/logs
+    if (!isAuthenticated()) {
+        updateCartBadge(0);
+        return;
+    }
     try {
         const data = await getCartData();
         // Show total quantity, not distinct product count

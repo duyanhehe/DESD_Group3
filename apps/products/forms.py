@@ -31,6 +31,30 @@ class ProductForm(forms.ModelForm):
         widget=forms.DateInput(attrs={"type": "date", "class": "form-control"}),
     )
 
+    MONTH_CHOICES = [
+        (0, "Not Seasonal"),
+        (1, "January"), (2, "February"), (3, "March"), (4, "April"),
+        (5, "May"), (6, "June"), (7, "July"), (8, "August"),
+        (9, "September"), (10, "October"), (11, "November"), (12, "December")
+    ]
+
+    season_start_month = forms.TypedChoiceField(
+        choices=MONTH_CHOICES,
+        coerce=int,
+        required=False,
+        initial=0,
+        widget=forms.Select(attrs={"class": "form-control"}),
+        label="Season Starts"
+    )
+    season_end_month = forms.TypedChoiceField(
+        choices=MONTH_CHOICES,
+        coerce=int,
+        required=False,
+        initial=0,
+        widget=forms.Select(attrs={"class": "form-control"}),
+        label="Season Ends"
+    )
+
     class Meta:
         model = Product
         fields = [
@@ -42,7 +66,10 @@ class ProductForm(forms.ModelForm):
             "image",
             "available_from",
             "available_to",
+            "season_start_month",
+            "season_end_month",
             "stock_quantity",
+            "is_available",
             "is_organic",
             "is_surplus",
             "discount_price",

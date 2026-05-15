@@ -185,6 +185,25 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="text-sm font-bold text-outline uppercase tracking-tighter">/ ${product.unit || 'item'}</span>
                     </div>
 
+                    <!-- Seasonal Availability (TC-016) -->
+                    ${(product.season_start_month && product.season_end_month) ? `
+                    <div class="inline-flex items-center gap-3 bg-amber-50 px-5 py-3 rounded-2xl border border-amber-200">
+                        <div class="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600">
+                            <span class="material-symbols-outlined text-xl">calendar_today</span>
+                        </div>
+                        <div>
+                            <p class="text-[9px] font-black text-amber-800 uppercase tracking-widest">Seasonal Availability</p>
+                            <p class="text-xs font-bold text-amber-700">Available: ${[
+                                "January", "February", "March", "April", "May", "June",
+                                "July", "August", "September", "October", "November", "December"
+                            ][product.season_start_month - 1]} - ${[
+                                "January", "February", "March", "April", "May", "June",
+                                "July", "August", "September", "October", "November", "December"
+                            ][product.season_end_month - 1]}</p>
+                        </div>
+                    </div>
+                    ` : ''}
+
                     <!-- Stock indicator -->
                     <div class="inline-flex items-center gap-2">
                         <div class="w-2 h-2 rounded-full ${isInStock ? 'bg-emerald-500 animate-pulse' : 'bg-error'}"></div>

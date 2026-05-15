@@ -96,6 +96,20 @@
                     </div>
                 </div>
 
+                <!-- TC-016: Explicit Seasonal Months -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="form-group space-y-3">
+                        <label class="farmer-form-label" for="{{ form.season_start_month.id_for_label }}">Season Starts (Month)</label>
+                        {{ form.season_start_month }}
+                        <p class="text-[10px] text-outline-variant font-medium">e.g. June</p>
+                    </div>
+                    <div class="form-group space-y-3">
+                        <label class="farmer-form-label" for="{{ form.season_end_month.id_for_label }}">Season Ends (Month)</label>
+                        {{ form.season_end_month }}
+                        <p class="text-[10px] text-outline-variant font-medium">e.g. August</p>
+                    </div>
+                </div>
+
                 <!-- Seasonal date warning -->
                 <div class="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-2xl">
                     <span class="material-symbols-outlined text-amber-500 text-lg flex-shrink-0 mt-0.5">info</span>
@@ -111,6 +125,10 @@
                 <!-- Organic & Surplus Options -->
                 <div class="bg-surface-container-low/30 rounded-[32px] p-8 space-y-6">
                     <div class="flex flex-wrap gap-8">
+                        <div class="flex items-center gap-3">
+                            {{ form.is_available }}
+                            <label class="text-sm font-bold text-on-surface" for="{{ form.is_available.id_for_label }}">Available for Sale</label>
+                        </div>
                         <div class="flex items-center gap-3">
                             {{ form.is_organic }}
                             <label class="text-sm font-bold text-on-surface" for="{{ form.is_organic.id_for_label }}">Certified Organic</label>
