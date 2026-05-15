@@ -241,6 +241,8 @@ class PaymentTransaction(models.Model):
     )
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    delivery_date = models.DateField(null=True, blank=True)
+    is_recurring = models.BooleanField(default=False)
 
     # Per-producer breakdown stored as JSON for transparency
     # Format: [{"producer_id": 1, "username": "farm_a", "subtotal": "100.00", "commission": "5.00", "payout": "95.00"}, ...]

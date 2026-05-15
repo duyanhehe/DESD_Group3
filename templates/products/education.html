@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Education - Farm Stories & Recipes{% endblock %}
+
+{% block content %}
+<div class="max-w-screen-xl mx-auto px-6 py-12 lg:py-20">
+    <div class="mb-16">
+        <span class="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-3 block">Knowledge Hub</span>
+        <h1 class="font-headline text-5xl lg:text-7xl font-extrabold text-on-background mb-8 tracking-tight">Recipes & <span class="text-primary">Farm Stories</span></h1>
+        <p class="text-on-surface-variant text-lg max-w-2xl leading-relaxed">Learn about where your food comes from and how to make the most of your seasonal harvest.</p>
+    </div>
+
+    <!-- Recipes Section -->
+    <section class="mb-24">
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-10 border-b border-outline-variant/10 pb-6">
+            <div class="flex items-center gap-4">
+                <span class="material-symbols-outlined text-3xl text-primary">menu_book</span>
+                <h2 class="font-headline text-3xl font-extrabold">Seasonal Recipes</h2>
+            </div>
+            {% if user.is_producer %}
+            <a href="{% url 'add_recipe' %}" class="inline-flex items-center gap-2 px-6 py-3 bg-primary text-on-primary rounded-full font-bold shadow-lg hover:bg-primary-container transition-all">
+                <span class="material-symbols-outlined text-sm">add</span>
+                Post Recipe
+            </a>
+            {% endif %}
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for recipe in recipes %}
+            <div class="bg-white rounded-[32px] overflow-hidden shadow-sm border border-outline-variant/10 group hover:shadow-xl transition-all">
+                <div class="aspect-video bg-surface-container relative">
+                    {% if recipe.image %}
+                    <img src="{{ recipe.image.url }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="{{ recipe.title }}">
+                    {% else %}
+                    <div class="w-full h-full flex items-center justify-center text-4xl opacity-20">🍳</div>
+                    {% endif %}
+                </div>
+                <div class="p-8">
+                    <p class="text-[10px] font-bold text-primary uppercase tracking-widest mb-2">By {{ recipe.producer.username }}</p>
+                    <h3 class="text-2xl font-bold mb-4 group-hover:text-primary transition-colors">{{ recipe.title }}</h3>
+                    <p class="text-on-surface-variant text-sm line-clamp-3 mb-6">{{ recipe.content }}</p>
+                    <div class="flex flex-wrap gap-2 mb-6">
+                        {% for product in recipe.products.all %}
+                        <a href="{% url 'product_detail_page' product.id %}" class="px-3 py-1 bg-surface-container-high rounded-full text-[10px] font-bold text-on-surface-variant hover:bg-primary hover:text-white transition-all">
+                            {{ product.name }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-span-full py-20 text-center bg-surface-container-low rounded-3xl border border-dashed border-outline-variant">
+                <p class="text-on-surface-variant font-medium">No recipes shared yet. Check back soon!</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Farm Stories Section -->
+    <section>
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-10 border-b border-outline-variant/10 pb-6">
+            <div class="flex items-center gap-4">
+                <span class="material-symbols-outlined text-3xl text-primary">potted_plant</span>
+                <h2 class="font-headline text-3xl font-extrabold">Farm Stories</h2>
+            </div>
+            {% if user.is_producer %}
+            <a href="{% url 'add_story' %}" class="inline-flex items-center gap-2 px-6 py-3 bg-primary text-on-primary rounded-full font-bold shadow-lg hover:bg-primary-container transition-all">
+                <span class="material-symbols-outlined text-sm">add</span>
+                Post Story
+            </a>
+            {% endif %}
+        </div>
+        <div class="space-y-12">
+            {% for story in stories %}
+            <div class="grid md:grid-cols-2 gap-12 items-center bg-surface-container-low/30 rounded-[48px] p-8 md:p-12 border border-outline-variant/5">
+                <div class="rounded-[32px] overflow-hidden aspect-video shadow-2xl">
+                    {% if story.image %}
+                    <img src="{{ story.image.url }}" class="w-full h-full object-cover" alt="{{ story.title }}">
+                    {% else %}
+                    <div class="w-full h-full bg-emerald-100 flex items-center justify-center text-6xl">🚜</div>
+                    {% endif %}
+                </div>
+                <div>
+                    <span class="text-[10px] font-bold text-primary uppercase tracking-widest mb-3 block">From the Fields</span>
+                    <h3 class="font-headline text-4xl font-extrabold mb-6 leading-tight">{{ story.title }}</h3>
+                    <p class="text-on-surface-variant leading-relaxed mb-8">{{ story.content }}</p>
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-bold">
+                            {{ story.producer.username|slice:":1" }}
+                        </div>
+                        <div>
+                            <p class="font-bold text-on-background">{{ story.producer.username }}</p>
+                            <p class="text-xs text-outline font-medium">Verified Partner Producer</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="py-20 text-center bg-surface-container-low rounded-3xl border border-dashed border-outline-variant">
+                <p class="text-on-surface-variant font-medium">No farm stories shared yet. Our producers are busy in the fields!</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+{% endblock %}

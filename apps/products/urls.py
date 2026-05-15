@@ -14,6 +14,10 @@ from .views import (
     delete_product,
     ProductSearchView,
     search_results_page,
+    education_list_page,
+    add_recipe,
+    add_story,
+    add_review,
 )
 
 urlpatterns = [
@@ -25,11 +29,16 @@ urlpatterns = [
     path("producer/add/", add_product, name="add_product"),
     path("producer/edit/<int:id>/", edit_product, name="edit_product"),
     path("producer/delete/<int:id>/", delete_product, name="delete_product"),
+    path("education/", education_list_page, name="education_page"),
+    path("education/add_recipe/", add_recipe, name="add_recipe"),
+    path("education/add_story/", add_story, name="add_story"),
+    
     # API endpoints
     path("api/v1/", ProductListView.as_view(), name="product_list"),
     path("api/v1/create/", CreateProductView.as_view(), name="product_create"),
     path("api/v1/<int:id>/", ProductDetailView.as_view(), name="product_detail"),
     path("api/v1/<int:id>/edit/", EditProductView.as_view(), name="product_edit"),
+    path("api/v1/<int:product_id>/add_review/", add_review, name="add_review"),
     path(
         "api/v1/<int:id>/delete/",
         DeleteProductView.as_view(),

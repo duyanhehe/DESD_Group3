@@ -105,7 +105,8 @@
                     Food Network
                 </a>
                 <div class="hidden md:flex gap-8">
-                    <a class="font-['Plus_Jakarta_Sans'] font-semibold {% if request.path == '/' %}text-emerald-700 dark:text-emerald-400 border-b-2 border-emerald-600{% else %}text-zinc-500 dark:text-zinc-400 hover:text-emerald-600{% endif %} transition-colors" href="/">Market</a>
+                    <a class="font-['Plus_Jakarta_Sans'] font-semibold {% if request.path == '/' %}text-emerald-700 dark:text-emerald-400 border-b-2 border-emerald-600{% else %}text-zinc-500 dark:text-zinc-400 hover:text-emerald-600{% endif %} transition-colors" href="/">Marketplace</a>
+                    <a class="font-['Plus_Jakarta_Sans'] font-semibold {% if 'education' in request.path %}text-emerald-700 dark:text-emerald-400 border-b-2 border-emerald-600{% else %}text-zinc-500 dark:text-zinc-400 hover:text-emerald-600{% endif %} transition-colors" href="{% url 'education_page' %}">Education</a>
 
                     {% if user.is_authenticated %}
                     <a class="font-['Plus_Jakarta_Sans'] font-semibold {% if 'orders/history' in request.path %}text-emerald-700 dark:text-emerald-400 border-b-2 border-emerald-600{% else %}text-zinc-500 dark:text-zinc-400 hover:text-emerald-600{% endif %} transition-colors" href="{% url 'orders:order_history_page' %}">Orders</a>

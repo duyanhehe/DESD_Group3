@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error('Product not found');
             const product = await response.json();
             renderProductDetail(product);
-            
+
             // Fetch related products
             fetchRelatedProducts();
         } catch (error) {
@@ -112,6 +112,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const prodIcon = categoryIcons[product.category_name] || '🛒';
         const isInStock = product.stock_quantity > 0;
+        const isOrganic = product.is_organic;
+        const isSurplus = product.is_surplus;
+        const hasDiscount = isSurplus && product.discount_price;
 
         detailContent.innerHTML = `
             <div class="grid lg:grid-cols-2 gap-16 items-start">
@@ -124,11 +127,22 @@ document.addEventListener('DOMContentLoaded', () => {
                         ${(product.image_url || product.image) ? `<img src="${product.image_url || product.image}" class="w-full h-full object-cover relative z-10 group-hover:scale-105 transition-transform duration-700" alt="${product.name}">` : ''}
                     </div>
                     <!-- Category Badge -->
-                    <div class="absolute top-6 left-6">
+                    <div class="absolute top-6 left-6 flex flex-col gap-2">
                         <span class="px-4 py-1.5 bg-white/90 backdrop-blur-md text-primary text-[10px] font-black rounded-full uppercase tracking-widest border border-white/20 shadow-sm">
                             ${product.category_name || 'Fresh Produce'}
                         </span>
+                        ${isOrganic ? `
+                        <span class="px-4 py-1.5 bg-emerald-600 text-white text-[10px] font-black rounded-full uppercase tracking-widest shadow-sm flex items-center gap-2">
+                            <span class="material-symbols-outlined text-xs">verified</span> Organic
+                        </span>` : ''}
                     </div>
+                    
+                    ${isSurplus ? `
+                    <div class="absolute bottom-6 right-6">
+                        <span class="px-4 py-2 bg-amber-400 text-amber-950 text-[11px] font-black rounded-2xl uppercase tracking-widest shadow-xl border-2 border-white flex items-center gap-2 rotate-3">
+                            <span class="material-symbols-outlined text-sm">local_fire_department</span> Surplus Deal
+                        </span>
+                    </div>` : ''}
                 </div>
 
                 <!-- Info Panel -->
@@ -144,9 +158,30 @@ document.addEventListener('DOMContentLoaded', () => {
                         ${product.name}
                     </h1>
 
+                    <!-- Rating -->
+                    ${product.reviews && product.reviews.length > 0 ? `
+                        <div class="flex items-center gap-2 cursor-pointer" onclick="document.getElementById('reviews-list').scrollIntoView({behavior: 'smooth'})">
+                            <div class="flex text-amber-400">
+                                <span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">star</span>
+                            </div>
+                            <span class="text-sm font-bold text-on-surface">${(product.reviews.reduce((sum, r) => sum + r.rating, 0) / product.reviews.length).toFixed(1)}</span>
+                            <span class="text-sm font-medium text-outline-variant underline decoration-outline-variant/30 hover:text-primary transition-colors">(${product.reviews.length} reviews)</span>
+                        </div>
+                    ` : `
+                        <div class="flex items-center gap-2 cursor-pointer" onclick="document.getElementById('reviews-list').scrollIntoView({behavior: 'smooth'})">
+                            <span class="material-symbols-outlined text-lg text-zinc-300">star</span>
+                            <span class="text-sm font-medium text-outline-variant hover:text-primary transition-colors">No reviews yet. Be the first!</span>
+                        </div>
+                    `}
+
                     <!-- Price -->
                     <div class="flex items-baseline gap-2">
-                        <span class="text-3xl font-black text-primary">$${product.price}</span>
+                        ${hasDiscount ? `
+                            <span class="text-3xl font-black text-emerald-600">$${product.discount_price}</span>
+                            <span class="text-lg font-bold text-outline line-through">$${product.price}</span>
+                        ` : `
+                            <span class="text-3xl font-black text-primary">$${product.price}</span>
+                        `}
                         <span class="text-sm font-bold text-outline uppercase tracking-tighter">/ ${product.unit || 'item'}</span>
                     </div>
 
@@ -188,7 +223,128 @@ document.addEventListener('DOMContentLoaded', () => {
                     </button>
                 </div>
             </div>
+
+            <!-- Reviews Section (TC-024) -->
+            <div class="mt-32 pt-20 border-t border-outline-variant/10">
+                <div class="grid lg:grid-cols-12 gap-16">
+                    <div class="lg:col-span-4">
+                        <span class="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-2 block">Customer Voice</span>
+                        <h2 class="font-headline text-3xl font-extrabold text-on-background mb-4">Community Reviews</h2>
+                        <p class="text-on-surface-variant font-medium text-sm leading-relaxed mb-8">
+                            Only verified purchasers can leave reviews to ensure the highest quality feedback for our community.
+                        </p>
+                        
+                        <!-- Review Form (Hidden by default, shown if can_review) -->
+                        ${product.can_review ? `
+                        <div id="review-form-container" class="bg-surface-container-low p-8 rounded-[32px] border border-outline-variant/5">
+                            <h4 class="font-bold text-sm mb-4">Share your experience</h4>
+                            <form id="review-form" class="space-y-4">
+                                <div>
+                                    <label class="text-[10px] font-bold text-outline uppercase mb-2 block">Rating</label>
+                                    <div class="flex gap-2" id="star-rating">
+                                        ${[1, 2, 3, 4, 5].map(i => `<span class="material-symbols-outlined cursor-pointer text-zinc-300 hover:text-amber-400 transition-colors" data-value="${i}">star</span>`).join('')}
+                                    </div>
+                                    <input type="hidden" name="rating" id="rating-input" value="5">
+                                </div>
+                                <div>
+                                    <label class="text-[10px] font-bold text-outline uppercase mb-2 block">Your Comment</label>
+                                    <textarea name="comment" rows="3" class="w-full px-5 py-3 bg-white border-none rounded-2xl focus:ring-2 focus:ring-primary/20 font-medium text-sm resize-none" placeholder="What did you think of this harvest?"></textarea>
+                                </div>
+                                <button type="submit" class="w-full py-3 bg-secondary-container text-on-secondary-container rounded-full font-bold text-sm hover:bg-secondary transition-all">Submit Review</button>
+                            </form>
+                            <p id="review-feedback" class="text-[10px] font-bold mt-4 text-center hidden"></p>
+                        </div>
+                        ` : ''}
+                    </div>
+
+                    <div class="lg:col-span-8">
+                        <div class="space-y-6" id="reviews-list">
+                            ${product.reviews && product.reviews.length > 0 ? product.reviews.map(r => `
+                                <div class="p-8 bg-white/50 border border-outline-variant/10 rounded-[32px] space-y-4">
+                                    <div class="flex justify-between items-start">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-black text-primary text-xs">${r.customer_name[0].toUpperCase()}</div>
+                                            <div>
+                                                <p class="font-bold text-sm">${r.customer_name}</p>
+                                                <p class="text-[10px] text-outline font-medium">${new Date(r.created_at).toLocaleDateString()}</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex text-amber-400">
+                                            ${Array(r.rating).fill('<span class="material-symbols-outlined text-sm">star</span>').join('')}
+                                        </div>
+                                    </div>
+                                    <p class="text-on-surface-variant text-sm font-medium leading-relaxed italic">"${r.comment}"</p>
+                                </div>
+                            `).join('') : `
+                                <div class="flex flex-col items-center justify-center py-20 text-center bg-surface-container-low/30 rounded-[32px] border border-dashed border-outline-variant/20">
+                                    <span class="material-symbols-outlined text-4xl text-outline mb-4">chat_bubble</span>
+                                    <p class="text-sm font-bold text-outline-variant uppercase tracking-widest">No reviews yet</p>
+                                    <p class="text-xs text-on-surface-variant mt-2 font-medium">Be the first to share your thoughts on this harvest.</p>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                </div>
+            </div>
         `;
+
+        setupReviewForm(product.id);
+    }
+
+    function setupReviewForm(productId) {
+        const stars = document.querySelectorAll('#star-rating span');
+        const ratingInput = document.getElementById('rating-input');
+        const form = document.getElementById('review-form');
+        const feedback = document.getElementById('review-feedback');
+
+        stars.forEach(star => {
+            star.addEventListener('click', () => {
+                const val = star.dataset.value;
+                ratingInput.value = val;
+                stars.forEach(s => {
+                    s.classList.toggle('text-amber-400', s.dataset.value <= val);
+                    s.classList.toggle('text-zinc-300', s.dataset.value > val);
+                    s.style.fontVariationSettings = s.dataset.value <= val ? "'FILL' 1" : "'FILL' 0";
+                });
+            });
+        });
+
+        if (form) {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(form);
+                const data = {
+                    rating: parseInt(formData.get('rating')),
+                    comment: formData.get('comment')
+                };
+
+                try {
+                    const response = await fetch(`/products/api/v1/${productId}/add_review/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': window.getCookie('csrftoken') || ''
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    const result = await response.json();
+                    if (response.ok) {
+                        feedback.innerText = 'Review submitted successfully!';
+                        feedback.className = 'text-[10px] font-bold mt-4 text-center text-emerald-600';
+                        feedback.classList.remove('hidden');
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        feedback.innerText = result.error || 'Failed to submit review.';
+                        feedback.className = 'text-[10px] font-bold mt-4 text-center text-error';
+                        feedback.classList.remove('hidden');
+                    }
+                } catch (error) {
+                    feedback.innerText = 'Connection error.';
+                    feedback.classList.remove('hidden');
+                }
+            });
+        }
     }
 
     fetchProductDetail();

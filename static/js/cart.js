@@ -202,6 +202,7 @@ async function checkout() {
     try {
         const token = localStorage.getItem('auth_token');
         const headers = {
+            'Content-Type': 'application/json',
             'X-CSRFToken': getCookie('csrftoken')
         };
         
@@ -209,9 +210,16 @@ async function checkout() {
             headers['Authorization'] = `Token ${token}`;
         }
 
+        const deliveryDate = document.getElementById('delivery-date-input')?.value;
+        const isRecurring = document.getElementById('is-recurring-input')?.checked || false;
+
         const res = await fetch('/payments/api/v1/checkout/', {
             method: 'POST',
-            headers: headers
+            headers: headers,
+            body: JSON.stringify({
+                delivery_date: deliveryDate,
+                is_recurring: isRecurring
+            })
         });
         
         const data = await res.json();
@@ -377,17 +385,54 @@ async function renderCartPage() {
 
         let html = '<div class="space-y-12">';
         
+        if (data.is_community_group) {
+            html += `
+                <div class="bg-emerald-50 border border-emerald-200 p-6 rounded-[32px] flex items-center gap-6 mb-8">
+                    <div class="w-12 h-12 bg-emerald-500 text-white rounded-2xl flex items-center justify-center">
+                        <span class="material-symbols-outlined">group</span>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-emerald-900">Community Group Account</h4>
+                        <p class="text-sm text-emerald-700">A 10% bulk discount is automatically applied to any item with quantity 10 or more.</p>
+                    </div>
+                </div>
+            `;
+        } else {
+             html += `
+                <div class="bg-blue-50 border border-blue-200 p-6 rounded-[32px] flex items-center gap-6 mb-8">
+                    <div class="w-12 h-12 bg-blue-500 text-white rounded-2xl flex items-center justify-center">
+                        <span class="material-symbols-outlined">shopping_bag</span>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-blue-900">Bulk Savings Available</h4>
+                        <p class="text-sm text-blue-700">Receive a 10% discount on any single product when you purchase more than 20 units.</p>
+                    </div>
+                </div>
+            `;
+        }
+        
         data.grouped_by_producer.forEach(group => {
-            let itemsHtml = group.items.map(item => `
+            let itemsHtml = group.items.map(item => {
+                const isGroupDiscount = data.is_community_group && item.quantity >= 10;
+                const isRegularDiscount = !data.is_community_group && item.quantity > 20;
+                const hasDiscount = isGroupDiscount || isRegularDiscount;
+                
+                return `
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center py-8 border-b border-outline-variant/5 last:border-0 group">
                     <div class="flex gap-6 items-center flex-1">
                         <div class="w-16 h-16 bg-surface-container rounded-2xl flex items-center justify-center text-3xl opacity-40 group-hover:scale-110 transition-transform">
                             🛒
                         </div>
                         <div>
-                            <h4 class="font-headline font-bold text-lg text-on-background">${item.product_name}</h4>
+                            <h4 class="font-headline font-bold text-lg text-on-background">
+                                ${item.product_name}
+                                ${hasDiscount ? `<span class="ml-2 px-2 py-0.5 ${isGroupDiscount ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'} text-[10px] font-black rounded uppercase tracking-widest">10% Bulk Discount Applied</span>` : ''}
+                            </h4>
                             <div class="flex items-center gap-3">
-                                <p class="text-sm font-bold text-primary">$${item.unit_price} <span class="text-xs text-outline font-medium tracking-tight">/ ${item.unit}</span></p>
+                                <p class="text-sm font-bold text-primary">
+                                    ${hasDiscount ? `<span class="line-through text-outline opacity-50 mr-2">$${item.unit_price}</span>$${(item.unit_price * 0.9).toFixed(2)}` : `$${item.unit_price}`}
+                                    <span class="text-xs text-outline font-medium tracking-tight">/ ${item.unit}</span>
+                                </p>
                                 ${(item.food_miles !== null && item.food_miles !== undefined) ? `
                                 <div class="flex items-center gap-1 text-xs text-outline group-hover:text-emerald-600 transition-colors px-2 py-0.5 bg-surface-container-high rounded-full cursor-help" title="Food Miles = distance from the farm to you">
                                     <span class="material-symbols-outlined text-[14px]">location_on</span>
@@ -425,7 +470,7 @@ async function renderCartPage() {
                         </button>
                     </div>
                 </div>
-            `).join('');
+            `;}).join('');
 
             html += `
                 <div class="bg-surface-container-lowest rounded-[32px] overflow-hidden shadow-sm border border-outline-variant/5">
@@ -451,10 +496,33 @@ async function renderCartPage() {
 
         html += `
             <div class="mt-20 p-12 bg-zinc-900 rounded-[48px] text-white flex flex-col md:flex-row justify-between items-center gap-8 relative overflow-hidden shadow-2xl">
-                <div class="relative z-10">
+                <div class="relative z-10 w-full lg:w-1/2">
                     <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-[0.3em] mb-3 block">Final Calculation</span>
                     <h3 class="font-headline text-3xl font-extrabold mb-1">Order Summary</h3>
-                    <p class="text-zinc-400 text-sm font-medium mb-3">Includes all service fees and local delivery.</p>
+                    <p class="text-zinc-400 text-sm font-medium mb-6">Includes all service fees and local delivery.</p>
+                    
+                    <!-- TC-007 & TC-018: Delivery & Recurring -->
+                    <div class="grid grid-cols-1 gap-4 mb-6">
+                        <div class="bg-white/5 border border-white/10 rounded-2xl p-4">
+                            <label class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2 block flex items-center gap-2">
+                                <span class="material-symbols-outlined text-xs">calendar_month</span>
+                                Delivery Date (Min 48h Lead Time)
+                            </label>
+                            <input type="date" id="delivery-date-input" 
+                                   class="bg-transparent text-white border-b border-white/20 focus:border-emerald-400 outline-none w-full py-1 text-sm font-bold"
+                                   min="${new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString().split('T')[0]}"
+                                   value="${new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString().split('T')[0]}">
+                        </div>
+                        
+                        <div class="flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl p-4 cursor-pointer hover:bg-white/10 transition-colors" onclick="document.getElementById('is-recurring-input').click()">
+                            <input type="checkbox" id="is-recurring-input" class="w-5 h-5 accent-emerald-500">
+                            <div>
+                                <p class="text-xs font-bold text-white">Setup Recurring Order</p>
+                                <p class="text-[10px] text-zinc-400 font-medium">Auto-repeat this basket every 7 days</p>
+                            </div>
+                        </div>
+                    </div>
+
                     ${(data.total_food_miles !== null && data.total_food_miles !== undefined) ? `
                     <div class="inline-flex items-center gap-2 bg-emerald-900/40 border border-emerald-500/20 px-3 py-1.5 rounded-full cursor-help" title="Food Miles = distance from the farm to you">
                         <span class="material-symbols-outlined text-emerald-400 text-sm">eco</span>

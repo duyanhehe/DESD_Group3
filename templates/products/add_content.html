@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} - Food Network{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-6 py-12 lg:py-20">
+    <div class="mb-10">
+        <a href="{% url 'education_page' %}" class="inline-flex items-center gap-2 text-sm font-bold text-outline hover:text-primary transition-colors mb-6">
+            <span class="material-symbols-outlined text-sm">arrow_back</span>
+            Back to Knowledge Hub
+        </a>
+        <h1 class="font-headline text-4xl lg:text-5xl font-extrabold text-on-background tracking-tight">{{ title }}</h1>
+    </div>
+
+    <div class="bg-surface-container-low p-8 lg:p-12 rounded-[40px] border border-outline-variant/10 shadow-sm">
+        <form method="POST" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+            <div class="p-4 bg-error-container text-on-error-container rounded-2xl mb-6 font-medium text-sm">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+
+            {% for field in form %}
+            <div class="space-y-2">
+                <label for="{{ field.id_for_label }}" class="block text-xs font-bold text-outline uppercase tracking-widest">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}
+                <p class="text-xs text-on-surface-variant">{{ field.help_text }}</p>
+                {% endif %}
+                {% if field.errors %}
+                <p class="text-xs text-error font-bold mt-1">{{ field.errors.0 }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <div class="pt-6 border-t border-outline-variant/10">
+                <button type="submit" class="w-full lg:w-auto px-8 py-4 bg-primary text-on-primary rounded-full font-bold shadow-lg hover:bg-primary-container hover:shadow-xl transition-all">
+                    Publish Content
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Styling for the generic form-control class */
+    .form-control {
+        width: 100%;
+        padding: 12px 16px;
+        border-radius: 16px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        background-color: #fff;
+        font-family: inherit;
+        font-size: 14px;
+        transition: all 0.2s ease;
+    }
+    .form-control:focus {
+        outline: none;
+        border-color: rgba(var(--primary-rgb), 0.5);
+        box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.1);
+    }
+    select[multiple].form-control {
+        min-height: 120px;
+    }
+</style>
+{% endblock %}

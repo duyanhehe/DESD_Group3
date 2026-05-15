@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Helper to get CSRF token from cookies
-    function getCookie(name) {
+    window.getCookie = function(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
             const cookies = document.cookie.split(';');
@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return cookieValue;
     }
 
-    const csrftoken = getCookie('csrftoken');
+    const csrftoken = window.getCookie('csrftoken');
 
     // Validation Helpers
     function validateEmail(email) {
@@ -163,6 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 phone_number: rawData.phone_number,
                 is_customer: isCustomer,
                 is_producer: isProducer,
+                is_community_group: rawData.is_community_group === 'on',
             };
 
             if (isCustomer) {

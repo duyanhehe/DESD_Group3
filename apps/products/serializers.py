@@ -1,11 +1,19 @@
 from rest_framework import serializers
 from django.utils.timezone import now
-from .models import Product, Allergen
+from .models import Product, Allergen, Review
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    customer_name = serializers.CharField(source="customer.username", read_only=True)
+
+    class Meta:
+        model = Review
+        fields = ("id", "customer_name", "rating", "comment", "created_at")
 
 
 # Serializer for Product model
 class ProductSerializer(serializers.ModelSerializer):
-    producer_name = serializers.CharField(source="producer.username", read_only=True)
+    producer_name = serializers.SerializerMethodField()
     status = serializers.SerializerMethodField()
     category_name = serializers.CharField(source="category.name", read_only=True)
     category_slug = serializers.CharField(source="category.slug", read_only=True)
@@ -13,6 +21,8 @@ class ProductSerializer(serializers.ModelSerializer):
     
     # Use image field directly but also provide image_url for frontend compatibility
     image_url = serializers.SerializerMethodField()
+    reviews = ReviewSerializer(many=True, read_only=True)
+    can_review = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -36,8 +46,31 @@ class ProductSerializer(serializers.ModelSerializer):
             "available_to",
             "unit",
             "created_at",
+            "is_organic",
+            "is_surplus",
+            "discount_price",
+            "low_stock_threshold",
+            "reviews",
+            "can_review",
         )
         read_only_fields = ("producer", "created_at")
+
+    def get_can_review(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return False
+            
+        from apps.orders.models import OrderItem, Order
+        has_bought = OrderItem.objects.filter(
+            order__customer=request.user,
+            product=obj
+        ).exclude(
+            order__status__in=[Order.CANCELLED, Order.REFUNDED, Order.REFUND_REQUESTED]
+        ).exists()
+        
+        has_reviewed = obj.reviews.filter(customer=request.user).exists()
+        
+        return has_bought and not has_reviewed
 
     def get_status(self, obj):
         return obj.get_status()
@@ -52,6 +85,11 @@ class ProductSerializer(serializers.ModelSerializer):
                 return request.build_absolute_uri(obj.image.url)
             return obj.image.url
         return None
+
+    def get_producer_name(self, obj):
+        if hasattr(obj.producer, "producer_profile") and obj.producer.producer_profile.business_name:
+            return obj.producer.producer_profile.business_name
+        return obj.producer.username
 
     def validate_stock_quantity(self, value):
         if value < 0:

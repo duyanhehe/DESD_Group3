@@ -56,6 +56,27 @@ class Product(models.Model):
 
     # allergens
     allergens = models.ManyToManyField(Allergen, blank=True, related_name="products")
+
+    # TC-014: Organic certification
+    is_organic = models.BooleanField(default=False)
+
+    # TC-019: Surplus/Discount logic
+    is_surplus = models.BooleanField(default=False)
+    discount_price = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True,
+        help_text="Sale price when item is surplus or on discount"
+    )
+
+    # TC-023: Low stock threshold for notifications
+    low_stock_threshold = models.PositiveIntegerField(default=5)
+
+    @property
+    def effective_price(self):
+        """Returns the current price, considering surplus discounts."""
+        if self.is_surplus and self.discount_price:
+            return self.discount_price
+        return self.price
+
     objects = ProductManager()
 
     class Meta:
@@ -63,6 +84,8 @@ class Product(models.Model):
         indexes = [
             models.Index(fields=["category"]),
             models.Index(fields=["is_available"]),
+            models.Index(fields=["is_organic"]),
+            models.Index(fields=["is_surplus"]),
         ]
 
     def is_in_season(self):
@@ -115,3 +138,45 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Review(models.Model):
+    """TC-024: Product reviews and ratings."""
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="reviews")
+    customer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reviews")
+    rating = models.PositiveSmallIntegerField(choices=[(i, i) for i in range(1, 6)])
+    comment = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("product", "customer")
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Review for {self.product.name} by {self.customer.username}"
+
+
+class Recipe(models.Model):
+    """TC-020: Producer-shared recipes."""
+    producer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="recipes")
+    title = models.CharField(max_length=255)
+    content = models.TextField()
+    image = models.ImageField(upload_to="recipes/", null=True, blank=True)
+    products = models.ManyToManyField(Product, blank=True, related_name="recipes")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+
+
+class FarmStory(models.Model):
+    """TC-020: Producer farm stories and educational content."""
+    producer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="stories")
+    title = models.CharField(max_length=255)
+    content = models.TextField()
+    image = models.ImageField(upload_to="stories/", null=True, blank=True)
+    products = models.ManyToManyField(Product, blank=True, related_name="stories")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title

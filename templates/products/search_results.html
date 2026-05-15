@@ -102,6 +102,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <div class="group bg-white rounded-[32px] p-4 border border-outline-variant/5 shadow-sm hover:shadow-xl transition-all duration-500 hover:-translate-y-2 cursor-pointer relative overflow-hidden" 
                              onclick="window.location.href='/products/${product.id}/'">
                             
+                            <!-- Badges -->
+                            <div class="absolute top-6 left-6 z-20 flex flex-col gap-1.5 pointer-events-none">
+                                ${product.is_organic ? `
+                                <span class="bg-emerald-600 text-white text-[8px] font-black px-2 py-1 rounded-full uppercase tracking-tighter flex items-center gap-1 shadow-sm">
+                                    <span class="material-symbols-outlined text-[10px]">verified</span> Organic
+                                </span>` : ''}
+                                ${product.is_surplus ? `
+                                <span class="bg-amber-400 text-amber-950 text-[8px] font-black px-2 py-1 rounded-full uppercase tracking-tighter flex items-center gap-1 shadow-sm">
+                                    <span class="material-symbols-outlined text-[10px]">local_fire_department</span> Surplus
+                                </span>` : ''}
+                            </div>
+
                             <!-- Large Floating Icon Placeholder -->
                             <div class="aspect-square bg-surface-container-low rounded-[24px] flex items-center justify-center text-5xl group-hover:scale-110 transition-transform duration-500 overflow-hidden relative">
                                 <div class="absolute inset-0 flex items-center justify-center opacity-20">
@@ -112,7 +124,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                             <!-- Add to Cart Badge -->
                             <button onclick="event.stopPropagation(); window.addToCart(${product.id})" 
-                                    class="absolute top-6 right-6 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center text-primary border border-outline-variant/10 hover:bg-primary hover:text-white transition-all scale-0 group-hover:scale-100 duration-300">
+                                    class="absolute top-6 right-6 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center text-primary border border-outline-variant/10 hover:bg-primary hover:text-white transition-all scale-0 group-hover:scale-100 duration-300 z-20">
                                 <span class="material-symbols-outlined text-sm font-bold">add_shopping_cart</span>
                             </button>
 
@@ -128,14 +140,32 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 
                                 <h3 class="font-headline font-extrabold text-on-background line-clamp-1 group-hover:text-primary transition-colors">${product.name}</h3>
                                 
+                                ${product.reviews && product.reviews.length > 0 ? `
+                                    <div class="flex items-center gap-1 mt-1">
+                                        <span class="material-symbols-outlined text-[10px] text-amber-400" style="font-variation-settings: 'FILL' 1;">star</span>
+                                        <span class="text-[10px] font-bold text-on-surface-variant">${(product.reviews.reduce((sum, r) => sum + r.rating, 0) / product.reviews.length).toFixed(1)}</span>
+                                        <span class="text-[9px] font-medium text-outline">(${product.reviews.length})</span>
+                                    </div>
+                                ` : `
+                                    <div class="flex items-center gap-1 mt-1">
+                                        <span class="material-symbols-outlined text-[10px] text-zinc-300">star</span>
+                                        <span class="text-[9px] font-medium text-outline">No reviews</span>
+                                    </div>
+                                `}
+                                
                                 <div class="flex items-end justify-between pt-2">
                                     <div>
                                         <p class="text-[9px] font-bold text-outline uppercase tracking-widest mb-1">Origin</p>
                                         <p class="text-[10px] font-bold text-on-surface-variant truncate w-24">${product.producer_name}</p>
                                     </div>
                                     <div class="text-right">
-                                        <span class="text-xl font-black text-on-background">$${product.price}</span>
-                                        <span class="text-[10px] font-bold text-outline-variant uppercase">/${product.unit || 'ea'}</span>
+                                        ${product.is_surplus && product.discount_price ? `
+                                            <p class="text-xs font-bold text-outline line-through">$${product.price}</p>
+                                            <p class="text-xl font-black text-emerald-600">$${product.discount_price}</p>
+                                        ` : `
+                                            <p class="text-xl font-black text-on-background">$${product.price}</p>
+                                        `}
+                                        <p class="text-[10px] font-bold text-outline-variant uppercase">/${product.unit || 'ea'}</p>
                                     </div>
                                 </div>
                             </div>

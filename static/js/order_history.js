@@ -192,8 +192,13 @@ async function viewOrderDetails(orderId) {
                                             </div>
                                         </div>
                                         <div class="text-right">
-                                            <p class="text-sm font-black text-on-background">${item.quantity} × $${item.unit_price}</p>
-                                            <p class="text-xs font-bold text-outline">$${(item.quantity * item.unit_price).toFixed(2)}</p>
+                                            <p class="text-sm font-black text-on-background">
+                                                ${Number(item.subtotal) < (item.quantity * item.unit_price) ? `
+                                                    <span class="line-through text-outline opacity-50 mr-2">$${(item.quantity * item.unit_price).toFixed(2)}</span>
+                                                    <span class="text-emerald-600">$${Number(item.subtotal).toFixed(2)}</span>
+                                                ` : `$${Number(item.subtotal).toFixed(2)}`}
+                                            </p>
+                                            <p class="text-[10px] font-bold text-outline uppercase tracking-widest">${item.quantity} × $${item.unit_price}</p>
                                         </div>
                                     </div>
                                 `).join('')}

@@ -214,23 +214,52 @@ class CreateOrderView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
+        delivery_date_str = request.data.get("delivery_date")
+        is_recurring = request.data.get("is_recurring", False)
+
+        if not delivery_date_str:
+            return Response({"error": "Delivery date is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            from datetime import datetime, timedelta
+            delivery_date = datetime.strptime(delivery_date_str, "%Y-%m-%d").date()
+            if delivery_date < (now().date() + timedelta(days=2)):
+                return Response({"error": "Minimum lead time is 48 hours. Please select a later date."}, status=status.HTTP_400_BAD_REQUEST)
+        except ValueError:
+            return Response({"error": "Invalid date format. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
+
         with transaction.atomic():
-            # calculate total
-            total = sum(item.product.price * item.quantity for item in cart_items)
+            # calculate total using the subtotal property which includes bulk/group/surplus discounts
+            total = sum(item.subtotal for item in cart_items)
 
             # 1. Create Master Order
             master_order = Order.objects.create(
                 customer=request.user,
                 status=Order.PENDING,
                 total_price=total,
+                delivery_date=delivery_date
             )
+
+            if is_recurring:
+                from .models import RecurringOrder, RecurringOrderItem
+                rec_order = RecurringOrder.objects.create(
+                    customer=request.user,
+                    next_delivery_date=delivery_date + timedelta(days=7),
+                    frequency_days=7
+                )
+                for item in cart_items:
+                    RecurringOrderItem.objects.create(
+                        recurring_order=rec_order,
+                        product=item.product,
+                        quantity=item.quantity
+                    )
 
             OrderStatusLog.objects.create(
                 order=master_order,
                 old_status="",
                 new_status=Order.PENDING,
                 changed_by=request.user,
-                note="Master Order placed",
+                note=f"Master Order placed for delivery on {delivery_date_str}" + (" (Recurring setup)" if is_recurring else ""),
             )
 
             # Group items by producer
@@ -243,13 +272,15 @@ class CreateOrderView(APIView):
 
             # 2. Create Sub-Orders
             for producer, items in items_by_producer.items():
-                sub_total = sum(i.product.price * i.quantity for i in items)
+                # sub_total should use the calculated subtotal from CartItem (includes all discounts)
+                sub_total = sum(i.subtotal for i in items)
                 sub_order = Order.objects.create(
                     customer=request.user,
                     parent_order=master_order,
                     producer=producer,
                     status=Order.PENDING,
                     total_price=sub_total,
+                    delivery_date=delivery_date
                 )
 
                 OrderStatusLog.objects.create(
@@ -257,16 +288,18 @@ class CreateOrderView(APIView):
                     old_status="",
                     new_status=Order.PENDING,
                     changed_by=request.user,
-                    note="Sub-order created from Master Order",
+                    note=f"Sub-order created from Master Order for {delivery_date_str}",
                 )
 
                 for item in items:
+                    # Calculate actual unit price paid (total / quantity) to handle bulk discounts
+                    actual_unit_price = item.subtotal / item.quantity
                     OrderItem.objects.create(
                         order=sub_order,
                         product=item.product,
                         producer=producer,
                         quantity=item.quantity,
-                        unit_price=item.product.price,
+                        unit_price=actual_unit_price,
                     )
                     # deduct stock
                     item.product.stock_quantity -= item.quantity

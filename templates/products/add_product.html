@@ -104,8 +104,27 @@
                         <p class="text-xs text-amber-600 font-medium leading-relaxed">
                             Leave both dates <strong>blank</strong> for a year-round listing (recommended).
                             If you set a <strong>Start date in the future</strong>, your product will be <strong>hidden from the marketplace</strong> until that date.
-                            If you set an <strong>End date in the past</strong>, your product will be hidden immediately.
                         </p>
+                    </div>
+                </div>
+
+                <!-- Organic & Surplus Options -->
+                <div class="bg-surface-container-low/30 rounded-[32px] p-8 space-y-6">
+                    <div class="flex flex-wrap gap-8">
+                        <div class="flex items-center gap-3">
+                            {{ form.is_organic }}
+                            <label class="text-sm font-bold text-on-surface" for="{{ form.is_organic.id_for_label }}">Certified Organic</label>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            {{ form.is_surplus }}
+                            <label class="text-sm font-bold text-on-surface" for="{{ form.is_surplus.id_for_label }}">Mark as Surplus</label>
+                        </div>
+                    </div>
+                    
+                    <div id="surplus-price-wrapper" class="hidden animate-in fade-in slide-in-from-top-2">
+                        <label class="farmer-form-label" for="{{ form.discount_price.id_for_label }}">Discount Price ($)</label>
+                        {{ form.discount_price }}
+                        <p class="text-[10px] text-outline-variant font-medium mt-2">Set a lower price for surplus items to attract quick buyers.</p>
                     </div>
                 </div>
 
@@ -177,6 +196,22 @@
         const form = document.querySelector('form');
         const fromDateInput = document.querySelector('input[name="available_from"]');
         const toDateInput = document.querySelector('input[name="available_to"]');
+        
+        // Surplus Toggle Logic
+        const surplusCheckbox = document.querySelector('input[name="is_surplus"]');
+        const surplusWrapper = document.getElementById('surplus-price-wrapper');
+        
+        if (surplusCheckbox && surplusWrapper) {
+            const toggleSurplus = () => {
+                if (surplusCheckbox.checked) {
+                    surplusWrapper.classList.remove('hidden');
+                } else {
+                    surplusWrapper.classList.add('hidden');
+                }
+            };
+            surplusCheckbox.addEventListener('change', toggleSurplus);
+            toggleSurplus(); // Init state
+        }
 
         form.addEventListener('submit', function(e) {
             const fromDate = fromDateInput.value ? new Date(fromDateInput.value) : null;

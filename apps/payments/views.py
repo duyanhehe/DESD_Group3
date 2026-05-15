@@ -538,6 +538,19 @@ class CreateCheckoutSessionView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        delivery_date_str = request.data.get("delivery_date")
+        is_recurring = request.data.get("is_recurring", False)
+
+        if not delivery_date_str:
+            return Response({"error": "Delivery date is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            delivery_date = datetime.strptime(delivery_date_str, "%Y-%m-%d").date()
+            if delivery_date < (now().date() + timedelta(days=2)):
+                return Response({"error": "Minimum lead time is 48 hours."}, status=status.HTTP_400_BAD_REQUEST)
+        except ValueError:
+            return Response({"error": "Invalid date format."}, status=status.HTTP_400_BAD_REQUEST)
+
         # Validate cart exists and has items
         try:
             cart = Cart.objects.get(customer=request.user)
@@ -567,7 +580,7 @@ class CreateCheckoutSessionView(APIView):
         producer_totals = {}  # {producer_id: {"username": ..., "subtotal": Decimal}}
 
         for item in cart_items:
-            subtotal = item.product.price * item.quantity
+            subtotal = item.subtotal # Use property to include TC-017 discount logic
             total_amount += subtotal
             producer = item.product.producer
 
@@ -579,6 +592,7 @@ class CreateCheckoutSessionView(APIView):
             producer_totals[producer.id]["subtotal"] += subtotal
 
         # Commission calculation: 5% platform, 95% producers
+        # Note: Commission is calculated on the AFTER-DISCOUNT price (fairer for producers)
         network_commission = (total_amount * COMMISSION_RATE).quantize(Decimal("0.01"))
         producer_payout_total = (total_amount - network_commission).quantize(Decimal("0.01"))
 
@@ -598,13 +612,15 @@ class CreateCheckoutSessionView(APIView):
         # Build Stripe line items
         line_items = []
         for item in cart_items:
+            # Calculate effective unit price (after discount)
+            effective_unit_price = (item.subtotal / item.quantity)
             line_items.append({
                 "price_data": {
                     "currency": "usd",
                     "product_data": {
                         "name": item.product.name,
                     },
-                    "unit_amount": int(item.product.price * 100),  # Stripe uses cents
+                    "unit_amount": int(effective_unit_price * 100),  # Stripe uses cents
                 },
                 "quantity": item.quantity,
             })
@@ -625,6 +641,8 @@ class CreateCheckoutSessionView(APIView):
                     "total_amount": str(total_amount.quantize(Decimal("0.01"))),
                     "network_commission": str(network_commission),
                     "producer_payout": str(producer_payout_total),
+                    "delivery_date": delivery_date_str,
+                    "is_recurring": "true" if is_recurring else "false",
                 },
             )
 
@@ -637,6 +655,8 @@ class CreateCheckoutSessionView(APIView):
                 producer_payout=producer_payout_total,
                 producer_breakdown=producer_breakdown,
                 status=PaymentTransaction.STATUS_PENDING,
+                delivery_date=delivery_date,
+                is_recurring=is_recurring,
             )
 
             return Response({"checkout_url": checkout_session.url})
@@ -732,13 +752,28 @@ class StripeWebhookView(APIView):
                     customer=user,
                     status=Order.CONFIRMED,
                     total_price=total,
+                    delivery_date=payment_txn.delivery_date,
                 )
+
+                if payment_txn.is_recurring:
+                    from apps.orders.models import RecurringOrder, RecurringOrderItem
+                    rec_order = RecurringOrder.objects.create(
+                        customer=user,
+                        next_delivery_date=payment_txn.delivery_date + timedelta(days=7),
+                        frequency_days=7
+                    )
+                    for item in cart_items:
+                        RecurringOrderItem.objects.create(
+                            recurring_order=rec_order,
+                            product=item.product,
+                            quantity=item.quantity
+                        )
 
                 OrderStatusLog.objects.create(
                     order=master_order,
                     old_status="",
                     new_status=Order.CONFIRMED,
-                    note="Paid via Stripe Checkout",
+                    note=f"Paid via Stripe Checkout for delivery on {payment_txn.delivery_date}" + (" (Recurring setup)" if payment_txn.is_recurring else ""),
                 )
 
                 # 2. Group items by producer and create Sub-Orders
@@ -750,7 +785,7 @@ class StripeWebhookView(APIView):
                     items_by_producer[producer].append(item)
 
                 for producer, items in items_by_producer.items():
-                    sub_total = sum(i.product.price * i.quantity for i in items)
+                    sub_total = sum(i.subtotal for i in items)
 
                     sub_order = Order.objects.create(
                         customer=user,
@@ -758,6 +793,7 @@ class StripeWebhookView(APIView):
                         producer=producer,
                         status=Order.CONFIRMED,
                         total_price=sub_total,
+                        delivery_date=payment_txn.delivery_date,
                     )
 
                     OrderStatusLog.objects.create(

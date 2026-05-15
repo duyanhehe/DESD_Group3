@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.db import models
 from django.conf import settings
 from apps.products.models import Product
@@ -58,7 +59,16 @@ class CartItem(models.Model):
 
     @property
     def subtotal(self):
-        return self.product.price * self.quantity
+        # Use effective price: discount_price if surplus, otherwise base price
+        price = self.product.effective_price
+        
+        # TC-017: Community Group 10% discount for bulk (>= 10)
+        if self.cart.customer.is_community_group and self.quantity >= 10:
+            return (price * Decimal("0.9")) * self.quantity
+        # New Requirement: Regular customer discount for bulk (> 20)
+        elif not self.cart.customer.is_community_group and self.quantity > 20:
+            return (price * Decimal("0.9")) * self.quantity
+        return price * self.quantity
 
     @property
     def food_miles(self):
@@ -138,6 +148,7 @@ class Order(models.Model):
     )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PENDING)
     total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    delivery_date = models.DateField(null=True, blank=True)
     delivered_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -172,7 +183,17 @@ class OrderItem(models.Model):
 
     @property
     def subtotal(self):
-        return self.unit_price * self.quantity
+        # In OrderItem, unit_price is already captured at checkout.
+        # However, we should check if we should apply the bulk discount on it.
+        price = self.unit_price
+        
+        # TC-017: Community Group 10% discount for bulk (>= 10)
+        if self.order.customer.is_community_group and self.quantity >= 10:
+            return (price * Decimal("0.9")) * self.quantity
+        # New Requirement: Regular customer discount for bulk (> 20)
+        elif not self.order.customer.is_community_group and self.quantity > 20:
+            return (price * Decimal("0.9")) * self.quantity
+        return price * self.quantity
 
     def __str__(self):
         return f"{self.quantity}x {self.product.name} (Order #{self.order.pk})"
@@ -247,4 +268,25 @@ class RefundRequest(models.Model):
 
     def __str__(self):
         return f"Refund #{self.pk} for Order #{self.order.pk} ({self.status})"
+
+
+class RecurringOrder(models.Model):
+    """TC-018: Simple recurring order template."""
+    customer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="recurring_orders")
+    is_active = models.BooleanField(default=True)
+    frequency_days = models.PositiveIntegerField(default=7, help_text="Delivery interval in days")
+    next_delivery_date = models.DateField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Recurring Order for {self.customer.username} (Every {self.frequency_days} days)"
+
+
+class RecurringOrderItem(models.Model):
+    recurring_order = models.ForeignKey(RecurringOrder, on_delete=models.CASCADE, related_name="items")
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField()
+
+    def __str__(self):
+        return f"{self.quantity}x {self.product.name} in Recurring Order"
 

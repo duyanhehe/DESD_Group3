@@ -6,6 +6,7 @@ from django.db import models
 class User(AbstractUser):
     is_customer = models.BooleanField(default=True)
     is_producer = models.BooleanField(default=False)
+    is_community_group = models.BooleanField(default=False)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
 
 

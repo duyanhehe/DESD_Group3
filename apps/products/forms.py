@@ -43,6 +43,9 @@ class ProductForm(forms.ModelForm):
             "available_from",
             "available_to",
             "stock_quantity",
+            "is_organic",
+            "is_surplus",
+            "discount_price",
             "allergens",
         ]
         widgets = {
@@ -73,3 +76,43 @@ class ProductForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['allergens'].required = False
+
+
+from .models import Recipe, FarmStory
+
+class RecipeForm(forms.ModelForm):
+    class Meta:
+        model = Recipe
+        fields = ["title", "content", "image", "products"]
+        widgets = {
+            "title": forms.TextInput(attrs={"class": "form-control", "placeholder": "Recipe Title"}),
+            "content": forms.Textarea(attrs={"class": "form-control", "rows": 5, "placeholder": "Ingredients and instructions..."}),
+            "products": forms.SelectMultiple(attrs={"class": "form-control"}),
+            "image": forms.FileInput(attrs={"id": "image-upload", "accept": "image/*"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        producer = kwargs.pop('producer', None)
+        super().__init__(*args, **kwargs)
+        if producer:
+            self.fields['products'].queryset = Product.objects.filter(producer=producer)
+        self.fields['products'].required = False
+
+
+class FarmStoryForm(forms.ModelForm):
+    class Meta:
+        model = FarmStory
+        fields = ["title", "content", "image", "products"]
+        widgets = {
+            "title": forms.TextInput(attrs={"class": "form-control", "placeholder": "Story Title"}),
+            "content": forms.Textarea(attrs={"class": "form-control", "rows": 5, "placeholder": "Share your story..."}),
+            "products": forms.SelectMultiple(attrs={"class": "form-control"}),
+            "image": forms.FileInput(attrs={"id": "image-upload", "accept": "image/*"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        producer = kwargs.pop('producer', None)
+        super().__init__(*args, **kwargs)
+        if producer:
+            self.fields['products'].queryset = Product.objects.filter(producer=producer)
+        self.fields['products'].required = False

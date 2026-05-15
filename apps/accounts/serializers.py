@@ -15,7 +15,7 @@ class ProducerProfileSerializer(serializers.ModelSerializer):
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=False)
+    password = serializers.CharField(write_only=True, required=True, min_length=8)
     customer_profile = CustomerProfileSerializer(required=False)
     producer_profile = ProducerProfileSerializer(required=False)
 
@@ -30,6 +30,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             "phone_number",
             "is_customer",
             "is_producer",
+            "is_community_group",
             "customer_profile",
             "producer_profile",
         ]
@@ -53,6 +54,11 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             ProducerProfile.objects.create(user=user, **producer_data)
 
         return user
+
+    def validate_password(self, value):
+        if len(value) < 8:
+            raise serializers.ValidationError("Password must be at least 8 characters long.")
+        return value
 
     def update(self, instance, validated_data):
         customer_data = validated_data.pop("customer_profile", None)

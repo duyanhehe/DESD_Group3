@@ -162,6 +162,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span class="material-symbols-outlined text-sm">grid_view</span>
                 All Items
             </div>
+            <div class="${pillClass} ${inactiveClass}" data-id="organic">
+                <span class="material-symbols-outlined text-base text-emerald-500" style="font-variation-settings: 'FILL' 1;">eco</span>
+                Organic
+            </div>
+            <div class="${pillClass} ${inactiveClass}" data-id="surplus">
+                <span class="material-symbols-outlined text-base text-amber-500" style="font-variation-settings: 'FILL' 1;">bolt</span>
+                Surplus
+            </div>
             ${categories.map(cat => `
                 <div class="${pillClass} ${inactiveClass}" data-id="${cat.id}">
                     <span class="text-base">${categoryIcons[cat.name] || '🛒'}</span>
@@ -187,6 +195,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (categoryId === 'all') {
                     renderMarketplace(allCategories, allProducts);
+                } else if (categoryId === 'organic') {
+                    // Show all organic products
+                    const filteredProd = allProducts.filter(p => p.is_organic);
+                    renderMarketplace(allCategories, filteredProd);
+                } else if (categoryId === 'surplus') {
+                    const filteredProd = allProducts.filter(p => p.is_surplus);
+                    renderMarketplace(allCategories, filteredProd);
                 } else {
                     const filteredCat = allCategories.filter(c => c.id == categoryId);
                     const filteredProd = allProducts.filter(p => p.category == categoryId);
@@ -250,10 +265,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     ${(product.image_url || product.image) ? `<img src="${product.image_url || product.image}" class="w-full h-full object-cover relative z-10 group-hover:scale-105 transition-transform duration-500" alt="${product.name}">` : ''}
 
-                    <div class="absolute top-4 left-4 z-20">
+                    <div class="absolute top-4 left-4 z-20 flex flex-col gap-2">
                         <span class="px-3 py-1 bg-white/80 backdrop-blur-md text-primary text-[10px] font-bold rounded-full uppercase tracking-widest border border-white/20">
                             ${product.category_name || 'Stock'}
                         </span>
+                        ${product.is_organic ? `
+                            <span class="px-3 py-1 bg-emerald-500/90 backdrop-blur-md text-white text-[10px] font-bold rounded-full uppercase tracking-widest flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[10px]" style="font-variation-settings: 'FILL' 1;">eco</span>
+                                Organic
+                            </span>
+                        ` : ''}
+                        ${product.is_surplus ? `
+                            <span class="px-3 py-1 bg-amber-500/90 backdrop-blur-md text-white text-[10px] font-bold rounded-full uppercase tracking-widest flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[10px]" style="font-variation-settings: 'FILL' 1;">bolt</span>
+                                Surplus
+                            </span>
+                        ` : ''}
                     </div>
 
                     <!-- Quick-add button: stopPropagation so card click doesn't also fire -->
@@ -266,9 +293,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 <div class="p-6 flex-grow flex flex-col">
                     <div class="flex justify-between items-start mb-2">
-                        <h3 class="font-headline font-bold text-on-background leading-tight text-lg group-hover:text-primary transition-colors">${product.name}</h3>
+                        <div>
+                            <h3 class="font-headline font-bold text-on-background leading-tight text-lg group-hover:text-primary transition-colors">${product.name}</h3>
+                            ${product.reviews && product.reviews.length > 0 ? `
+                                <div class="flex items-center gap-1 mt-1">
+                                    <span class="material-symbols-outlined text-[12px] text-amber-400" style="font-variation-settings: 'FILL' 1;">star</span>
+                                    <span class="text-[10px] font-bold text-on-surface-variant">${(product.reviews.reduce((sum, r) => sum + r.rating, 0) / product.reviews.length).toFixed(1)}</span>
+                                    <span class="text-[10px] font-medium text-outline">(${product.reviews.length})</span>
+                                </div>
+                            ` : `
+                                <div class="flex items-center gap-1 mt-1">
+                                    <span class="material-symbols-outlined text-[12px] text-zinc-300">star</span>
+                                    <span class="text-[10px] font-medium text-outline">No reviews</span>
+                                </div>
+                            `}
+                        </div>
                         <div class="text-right flex-shrink-0 ml-4">
-                            <span class="text-lg font-extrabold text-primary">$${product.price}</span>
+                            ${product.is_surplus && product.discount_price ? `
+                                <span class="text-xs text-outline line-through block font-bold">$${product.price}</span>
+                                <span class="text-lg font-extrabold text-error">$${product.discount_price}</span>
+                            ` : `
+                                <span class="text-lg font-extrabold text-primary">$${product.price}</span>
+                            `}
                             <span class="block text-[10px] text-outline font-bold uppercase tracking-tighter">/ ${product.unit || 'item'}</span>
                         </div>
                     </div>

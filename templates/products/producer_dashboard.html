@@ -28,6 +28,20 @@
                     <h1 class="font-headline text-4xl lg:text-5xl font-extrabold text-on-background mb-3 tracking-tight">Stock Dashboard</h1>
                     <p class="text-on-surface-variant font-medium">Review your real-time inventory and market performance.</p>
                 </div>
+                <div class="flex flex-wrap gap-3">
+                    <a href="{% url 'add_recipe' %}" class="inline-flex items-center gap-2 px-6 py-3 bg-secondary-container text-on-secondary-container rounded-full font-bold text-sm hover:bg-secondary transition-all active:scale-95">
+                        <span class="material-symbols-outlined text-sm">menu_book</span>
+                        Post Recipe
+                    </a>
+                    <a href="{% url 'add_story' %}" class="inline-flex items-center gap-2 px-6 py-3 bg-tertiary-container text-on-tertiary-container rounded-full font-bold text-sm hover:bg-tertiary hover:text-white transition-all active:scale-95">
+                        <span class="material-symbols-outlined text-sm">potted_plant</span>
+                        Post Farm Story
+                    </a>
+                    <a href="{% url 'add_product' %}" class="inline-flex items-center gap-2 px-6 py-3 bg-primary text-on-primary rounded-full font-bold text-sm hover:bg-primary-container transition-all active:scale-95 shadow-lg shadow-primary/20">
+                        <span class="material-symbols-outlined text-sm">add</span>
+                        New Product
+                    </a>
+                </div>
             </div>
         </div>
 
@@ -65,12 +79,34 @@
             <div class="bg-tertiary-container rounded-3xl p-8 text-on-tertiary-container flex flex-col justify-between relative overflow-hidden shadow-lg shadow-tertiary/10">
                 <div class="relative z-10">
                     <p class="font-bold text-[10px] uppercase tracking-widest mb-1 opacity-80">Action Needed</p>
-                    <h3 class="text-4xl font-extrabold">Stock Alerts</h3>
+                    <h3 class="text-4xl font-extrabold">{{ low_stock_alerts|length }} Critical Alerts</h3>
                 </div>
                 <div class="relative z-10 mt-6">
-                    <button class="bg-white/30 backdrop-blur-md px-6 py-2.5 rounded-full text-xs font-extrabold hover:bg-white/40 active:scale-95 transition-all">Review Now</button>
+                    <button onclick="filterLowStock()" class="bg-white/30 backdrop-blur-md px-6 py-2.5 rounded-full text-xs font-extrabold hover:bg-white/40 active:scale-95 transition-all">Review Now</button>
                 </div>
                 <div class="absolute right-0 top-0 w-24 h-24 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+            </div>
+        </div>
+
+        <!-- Discount Policy Notice -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+            <div class="bg-emerald-50 border border-emerald-100 p-8 rounded-[40px] flex items-start gap-6">
+                <div class="w-14 h-14 bg-emerald-500 text-white rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-emerald-200">
+                    <span class="material-symbols-outlined text-3xl">group</span>
+                </div>
+                <div>
+                    <h4 class="font-headline font-bold text-xl text-emerald-900 mb-2">Community Group Policy</h4>
+                    <p class="text-emerald-700 leading-relaxed font-medium">Community groups receive an automatic <strong>10% discount</strong> on any product when ordering <strong>10 units or more</strong>.</p>
+                </div>
+            </div>
+            <div class="bg-blue-50 border border-blue-100 p-8 rounded-[40px] flex items-start gap-6">
+                <div class="w-14 h-14 bg-blue-500 text-white rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-blue-200">
+                    <span class="material-symbols-outlined text-3xl">shopping_bag</span>
+                </div>
+                <div>
+                    <h4 class="font-headline font-bold text-xl text-blue-900 mb-2">Retail Bulk Policy</h4>
+                    <p class="text-blue-700 leading-relaxed font-medium">Regular customers receive a <strong>10% discount</strong> on any product when ordering <strong>more than 20 units</strong>.</p>
+                </div>
             </div>
         </div>
 
@@ -111,7 +147,12 @@
                                         {% endif %}
                                     </div>
                                     <div>
-                                        <p class="font-extrabold text-on-background text-sm group-hover:text-primary transition-colors">{{ product.name }}</p>
+                                        <p class="font-extrabold text-on-background text-sm group-hover:text-primary transition-colors">
+                                            {{ product.name }}
+                                            {% if product.stock_quantity <= product.low_stock_threshold %}
+                                            <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black bg-error text-on-error animate-pulse">LOW STOCK</span>
+                                            {% endif %}
+                                        </p>
                                         <p class="text-[10px] font-bold text-outline-variant uppercase tracking-wider mt-1">{{ product.category.name|default:"General" }}</p>
                                     </div>
                                 </div>
@@ -130,8 +171,25 @@
                                     <span class="text-[10px] text-zinc-400 font-bold uppercase tracking-tighter">{{ product.unit }}</span>
                                 </div>
                             </td>
-                            <td class="px-8 py-6 text-center">
-                                <span class="text-[10px] font-bold text-outline-variant uppercase tracking-widest">—</span>
+                            <td class="px-8 py-6">
+                                <div class="flex flex-col gap-1">
+                                    {% if product.is_organic %}
+                                    <span class="inline-flex items-center gap-1 text-[9px] font-black text-emerald-600 uppercase tracking-tighter">
+                                        <span class="material-symbols-outlined text-[10px]" style="font-variation-settings: 'FILL' 1;">eco</span>
+                                        Organic
+                                    </span>
+                                    {% endif %}
+                                    {% if product.is_surplus %}
+                                    <span class="inline-flex items-center gap-1 text-[9px] font-black text-amber-600 uppercase tracking-tighter">
+                                        <span class="material-symbols-outlined text-[10px]" style="font-variation-settings: 'FILL' 1;">bolt</span>
+                                        Surplus
+                                    </span>
+                                    <span class="text-[9px] font-bold text-outline-variant italic">Deal: ${{ product.discount_price }}</span>
+                                    {% endif %}
+                                    {% if not product.is_organic and not product.is_surplus %}
+                                    <span class="text-[9px] font-bold text-outline-variant uppercase tracking-widest">—</span>
+                                    {% endif %}
+                                </div>
                             </td>
 
                             <td class="px-8 py-6">
