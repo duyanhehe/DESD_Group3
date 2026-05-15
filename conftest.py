@@ -388,6 +388,8 @@ def payment_transaction(db, order, producer_user):
     """Create a payment transaction."""
     return PaymentTransaction.objects.create(
         order=order,
+        customer=order.customer,
+        stripe_session_id="cs_test123",
         stripe_payment_intent_id="pi_test123",
         total_amount=order.total_price,
         network_commission=order.total_price * Decimal("0.05"),
@@ -401,7 +403,7 @@ def settlement_audit_log(db, settlement, admin_user):
     """Create a settlement audit log."""
     return SettlementAuditLog.objects.create(
         settlement=settlement,
-        action="CREATED",
+        action=SettlementAuditLog.ACTION_CALCULATED,
         performed_by=admin_user,
     )
 

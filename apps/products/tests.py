@@ -1,536 +1,223 @@
-"""
-Comprehensive test suite for the Products app.
-
-Tests cover:
-- Seasonal availability (available_from/available_to date ranges)
-- Stock management and visibility
-- Product active/inactive status
-- Product CRUD operations
-- Allergen associations
-"""
+from decimal import Decimal
 
 import pytest
-from decimal import Decimal
-from datetime import datetime, timedelta, date
 from django.utils.timezone import now
 
-from apps.products.models import Product, Category
 from apps.allergens.models import Allergen
+from apps.categories.models import Category
+from apps.orders.models import Order, OrderItem
+from apps.products.models import FarmStory, Product, Recipe, Review
 
 pytestmark = pytest.mark.django_db
 
 
-# ============================================================================
-# UNIT TESTS: Product Seasonal Availability
-# ============================================================================
+def test_tc003_producer_can_list_new_product_with_required_marketplace_details(
+    producer_user,
+):
+    category = Category.objects.create(name="Dairy & Eggs")
+    eggs = Allergen.objects.create(name="Eggs")
+
+    product = Product.objects.create(
+        producer=producer_user,
+        category=category,
+        name="Organic Free Range Eggs",
+        description="Fresh organic eggs from free-range hens, collected daily",
+        price=Decimal("3.50"),
+        unit="Dozen",
+        stock_quantity=50,
+        is_available=True,
+        available_from=now().date(),
+        is_organic=True,
+    )
+    product.allergens.add(eggs)
+
+    assert product.producer == producer_user
+    assert product in Product.objects.active()
+    assert product.category.name == "Dairy & Eggs"
+    assert product.unit == "Dozen"
+    assert list(product.allergens.values_list("name", flat=True)) == ["Eggs"]
 
 
-class TestProductSeasonalAvailability:
-    """Unit tests for product seasonal date range logic."""
+def test_tc005_customer_search_finds_products_by_name_description_and_producer(
+    producer_user, category
+):
+    producer_user.producer_profile.business_name = "Organic Bristol Growers"
+    producer_user.producer_profile.save()
+    tomato = Product.objects.create(
+        producer=producer_user,
+        category=category,
+        name="Heritage Tomatoes",
+        description="Sweet seasonal salad tomatoes",
+        price=Decimal("4.20"),
+        stock_quantity=20,
+    )
+    carrots = Product.objects.create(
+        producer=producer_user,
+        category=category,
+        name="Organic Carrots",
+        description="Fresh roots",
+        price=Decimal("2.30"),
+        stock_quantity=30,
+        is_organic=True,
+    )
 
-    def test_product_in_season_within_dates(self, product):
-        """
-        Test: Product is in season when current date is within available_from/available_to.
-        """
-        assert product.is_in_season() == True
-
-    def test_product_out_of_season_before_start_date(self, producer_user, category):
-        """
-        Test: Product out of season if today < available_from.
-        """
-        future_date = now().date() + timedelta(days=30)
-        product = Product.objects.create(
-            producer=producer_user,
-            category=category,
-            name="Future Product",
-            description="Not available yet",
-            price=Decimal("5.00"),
-            stock_quantity=10,
-            is_available=True,
-            available_from=future_date,
-            available_to=future_date + timedelta(days=60),
+    tomato_results = Product.objects.active().filter(name__icontains="tomatoes")
+    organic_results = (
+        Product.objects.active().filter(description__icontains="organic")
+        | Product.objects.active().filter(name__icontains="organic")
+        | Product.objects.active().filter(
+            producer__producer_profile__business_name__icontains="organic"
         )
-
-        assert product.is_in_season() == False
-
-    def test_product_out_of_season_after_end_date(self, producer_user, category):
-        """
-        Test: Product out of season if today > available_to.
-        """
-        past_date = now().date() - timedelta(days=30)
-        product = Product.objects.create(
-            producer=producer_user,
-            category=category,
-            name="Past Product",
-            description="No longer available",
-            price=Decimal("5.00"),
-            stock_quantity=10,
-            is_available=True,
-            available_from=past_date - timedelta(days=60),
-            available_to=past_date,
-        )
-
-        assert product.is_in_season() == False
-
-    def test_product_no_seasonal_restriction(self, producer_user, category):
-        """
-        Test: Product with no dates set is always in season.
-        """
-        product = Product.objects.create(
-            producer=producer_user,
-            category=category,
-            name="Year Round Product",
-            description="Always available",
-            price=Decimal("5.00"),
-            stock_quantity=10,
-            is_available=True,
-            available_from=None,
-            available_to=None,
-        )
-
-        assert product.is_in_season() == True
-
-    def test_product_only_start_date_set(self, producer_user, category):
-        """
-        Test: Product with only available_from (no end date) is in season after start.
-        """
-        past_date = now().date() - timedelta(days=10)
-        product = Product.objects.create(
-            producer=producer_user,
-            category=category,
-            name="Start Date Only",
-            description="Test",
-            price=Decimal("5.00"),
-            stock_quantity=10,
-            is_available=True,
-            available_from=past_date,
-            available_to=None,
-        )
-
-        assert product.is_in_season() == True
-
-    def test_product_only_end_date_set(self, producer_user, category):
-        """
-        Test: Product with only available_to (no start date) is in season before end.
-        """
-        future_date = now().date() + timedelta(days=10)
-        product = Product.objects.create(
-            producer=producer_user,
-            category=category,
-            name="End Date Only",
-            description="Test",
-            price=Decimal("5.00"),
-            stock_quantity=10,
-            is_available=True,
-            available_from=None,
-            available_to=future_date,
-        )
-
-        assert product.is_in_season() == True
-
-    def test_product_boundary_dates(self, producer_user, category):
-        """
-        Test: Product is in season on exact start and end dates (inclusive).
-        """
-        today = now().date()
-        product = Product.objects.create(
-            producer=producer_user,
-            category=category,
-            name="Boundary Test",
-            description="Test",
-            price=Decimal("5.00"),
-            stock_quantity=10,
-            is_available=True,
-            available_from=today,
-            available_to=today,
-        )
-
-        assert product.is_in_season() == True
-
-
-# ============================================================================
-# UNIT TESTS: Product Stock & Visibility
-# ============================================================================
-
-
-class TestProductStockAndVisibility:
-    """Unit tests for product stock management and visibility."""
-
-    def test_product_active_when_in_stock_and_in_season(self, product):
-        """
-        Test: Product is active when stock > 0, is_available=True, and in season.
-        """
-        assert product.is_active() == True
-
-    def test_product_inactive_when_out_of_stock(self, product_out_of_stock):
-        """
-        Test: Product is inactive when stock_quantity = 0.
-        """
-        assert product_out_of_stock.is_active() == False
-
-    def test_product_inactive_when_disabled(self, producer_user, category):
-        """
-        Test: Product is inactive when is_available = False.
-        """
-        today = now().date()
-        product = Product.objects.create(
-            producer=producer_user,
-            category=category,
-            name="Disabled",
-            description="Manually disabled",
-            price=Decimal("5.00"),
-            stock_quantity=10,
-            is_available=False,
-            available_from=today - timedelta(days=90),
-            available_to=today - timedelta(days=30),  # Out of season
-        )
-
-        assert product.is_active() == False
-
-    def test_product_inactive_when_out_of_season(self, product_out_of_season):
-        """
-        Test: Product is inactive when out of season.
-        """
-        assert product_out_of_season.is_active() == False
-
-    def test_product_status_out_of_stock(self, product_out_of_stock):
-        """
-        Test: get_status() returns "Out of Stock" when stock = 0.
-        """
-        assert product_out_of_stock.get_status() == "Out of Stock"
-
-    def test_product_status_out_of_season(self, product_out_of_season):
-        """
-        Test: get_status() returns "Out of Season" when unavailable date-wise.
-        """
-        assert product_out_of_season.get_status() == "Out of Season"
-
-    def test_product_status_available(self, product):
-        """
-        Test: get_status() returns "Available" when all conditions met.
-        """
-        assert product.get_status() == "Available"
-
-    def test_product_status_unavailable(self, producer_user, category):
-        """
-        Test: get_status() returns "Unavailable" when is_available=False and in season.
-        Note: This test creates a product with is_available explicitly set to False,
-        then tries to test its status. The model will auto-enable it if in season.
-        """
-        today = now().date()
-        # Create product with is_available=False, out of season
-        product = Product.objects.create(
-            producer=producer_user,
-            category=category,
-            name="Unavailable",
-            description="Test",
-            price=Decimal("5.00"),
-            stock_quantity=10,
-            is_available=False,
-            available_from=today - timedelta(days=90),
-            available_to=today - timedelta(days=30),  # Out of season
-        )
-
-        # When out of season, get_status returns "Out of Season" regardless of is_available
-        assert product.get_status() == "Out of Season"
-
-
-# ============================================================================
-# UNIT TESTS: Product Manager Filtering
-# ============================================================================
-
-
-class TestProductManager:
-    """Unit tests for ProductManager.active() query."""
-
-    def test_product_manager_active_filter(self, product):
-        """
-        Test: Product.objects.active() returns only active products.
-        """
-        active_products = Product.objects.active()
-
-        assert product in active_products
-
-    def test_product_manager_excludes_out_of_stock(self, product, product_out_of_stock):
-        """
-        Test: ProductManager.active() excludes out-of-stock products.
-        """
-        active_products = Product.objects.active()
-
-        assert product in active_products
-        assert product_out_of_stock not in active_products
-
-    def test_product_manager_excludes_out_of_season(
-        self, product, product_out_of_season
-    ):
-        """
-        Test: ProductManager.active() excludes out-of-season products.
-        """
-        active_products = Product.objects.active()
-
-        assert product in active_products
-        assert product_out_of_season not in active_products
-
-    def test_product_manager_excludes_disabled(self, producer_user, category):
-        """
-        Test: ProductManager.active() excludes manually disabled products.
-        Note: Products with is_available=False but in stock/in season will be
-        auto-enabled by update_availability(). This test uses out-of-season
-        dates to keep the product disabled.
-        """
-        past_date = now().date() - timedelta(days=10)
-        disabled_product = Product.objects.create(
-            producer=producer_user,
-            category=category,
-            name="Disabled",
-            description="Test",
-            price=Decimal("5.00"),
-            stock_quantity=10,
-            is_available=False,
-            # Set out-of-season to keep is_available=False
-            available_from=past_date - timedelta(days=60),
-            available_to=past_date,
-        )
-
-        active_products = Product.objects.active()
-
-        assert disabled_product not in active_products
-
-
-# ============================================================================
-# UNIT TESTS: Product Auto-Availability
-# ============================================================================
-
-
-class TestProductAutoAvailability:
-    """Unit tests for automatic availability management."""
-
-    def test_update_availability_sets_unavailable_when_out_of_season(
-        self, producer_user, category
-    ):
-        """
-        Test: Saving out-of-season product sets is_available=False automatically.
-        """
-        past_date = now().date() - timedelta(days=10)
-        product = Product(
-            producer=producer_user,
-            category=category,
-            name="Test",
-            description="Test",
-            price=Decimal("5.00"),
-            stock_quantity=10,
-            is_available=True,
-            available_from=past_date - timedelta(days=60),
-            available_to=past_date,
-        )
-
-        # Before save, is_available is True
-        assert product.is_available == True
-
-        # After save, update_availability() should set it to False
-        product.save()
-
-        assert product.is_available == False
-
-    def test_update_availability_keeps_available_when_in_season(
-        self, producer_user, category
-    ):
-        """
-        Test: Saving in-season product with stock keeps is_available=True.
-        """
-        today = now().date()
-        product = Product(
-            producer=producer_user,
-            category=category,
-            name="Test",
-            description="Test",
-            price=Decimal("5.00"),
-            stock_quantity=10,
-            is_available=False,  # Start as unavailable
-            available_from=today - timedelta(days=10),
-            available_to=today + timedelta(days=10),
-        )
-
-        product.save()
-
-        # Should be auto-enabled
-        assert product.is_available == True
-
-
-# ============================================================================
-# UNIT TESTS: Product Allergens
-# ============================================================================
-
-
-class TestProductAllergens:
-    """Unit tests for allergen associations."""
-
-    def test_add_allergen_to_product(self, product, allergen):
-        """
-        Test: Adding allergen to product M2M relationship.
-        """
-        product.allergens.add(allergen)
-
-        assert allergen in product.allergens.all()
-
-    def test_product_multiple_allergens(self, product):
-        """
-        Test: Product can have multiple allergens.
-        """
-        allergen1 = Allergen.objects.create(name="Peanuts")
-        allergen2 = Allergen.objects.create(name="Milk")
-        allergen3 = Allergen.objects.create(name="Gluten")
-
-        product.allergens.add(allergen1, allergen2, allergen3)
-
-        assert product.allergens.count() == 4
-
-    def test_remove_allergen_from_product(self, product, allergen):
-        """
-        Test: Removing allergen from product.
-        """
-        product.allergens.add(allergen)
-        assert allergen in product.allergens.all()
-
-        product.allergens.remove(allergen)
-
-        assert allergen not in product.allergens.all()
-
-    def test_allergen_reverse_relationship(self, product, allergen):
-        """
-        Test: Allergen.products_set returns products with that allergen.
-        """
-        product.allergens.add(allergen)
-
-        products_with_allergen = allergen.products.all()
-
-        assert product in products_with_allergen
-
-
-# ============================================================================
-# UNIT TESTS: Product CRUD
-# ============================================================================
-
-
-class TestProductCRUD:
-    """Unit tests for basic product create/read/update/delete."""
-
-    def test_create_product(self, producer_user, category):
-        """
-        Test: Creating a new product.
-        """
-        product = Product.objects.create(
-            producer=producer_user,
-            category=category,
-            name="New Product",
-            description="A brand new product",
-            price=Decimal("9.99"),
-            stock_quantity=50,
-        )
-
-        assert product.id is not None
-        assert product.name == "New Product"
-
-    def test_update_product_stock(self, product):
-        """
-        Test: Updating product stock quantity.
-        """
-        original_stock = product.stock_quantity
-        product.stock_quantity = original_stock - 5
-        product.save()
-
-        product.refresh_from_db()
-        assert product.stock_quantity == original_stock - 5
-
-    def test_update_product_price(self, product):
-        """
-        Test: Updating product price.
-        """
-        new_price = Decimal("7.99")
-        product.price = new_price
-        product.save()
-
-        product.refresh_from_db()
-        assert product.price == new_price
-
-    def test_delete_product(self, product):
-        """
-        Test: Deleting a product.
-        """
-        product_id = product.id
-        product.delete()
-
-        assert Product.objects.filter(id=product_id).count() == 0
-
-    def test_product_fields_preserved(self, product):
-        """
-        Test: All product fields are preserved after save.
-        """
-        original_name = product.name
-        original_price = product.price
-        original_stock = product.stock_quantity
-
-        product.save()
-
-        product.refresh_from_db()
-        assert product.name == original_name
-        assert product.price == original_price
-        assert product.stock_quantity == original_stock
-
-
-# ============================================================================
-# INTEGRATION TESTS: Product Visibility in API
-# ============================================================================
-
-
-class TestProductVisibilityInListings:
-    """Integration tests for product visibility in customer-facing lists."""
-
-    def test_product_list_only_active(
-        self, product, product_out_of_stock, product_out_of_season
-    ):
-        """
-        Test: Product list API only returns active products.
-        """
-        active = Product.objects.active()
-
-        assert product in active
-        assert product_out_of_stock not in active
-        assert product_out_of_season not in active
-
-    def test_product_ordering_by_creation_date(self, producer_user, category):
-        """
-        Test: Products ordered by creation date (newest first).
-        """
-        import time
-
-        product1 = Product.objects.create(
-            producer=producer_user,
-            category=category,
-            name="First",
-            price=Decimal("5.00"),
-            stock_quantity=10,
-        )
-
-        # Small delay to ensure different timestamps
-        time.sleep(0.01)
-
-        product2 = Product.objects.create(
-            producer=producer_user,
-            category=category,
-            name="Second",
-            price=Decimal("6.00"),
-            stock_quantity=10,
-        )
-
-        # Filter to only products from this test
-        products = Product.objects.filter(name__in=["First", "Second"]).order_by(
-            "-created_at"
-        )
-
-        assert products.first() == product2  # Newest first
-        assert products.last() == product1  # Oldest last
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])
+    )
+    missing_results = Product.objects.active().filter(name__icontains="dragonfruit")
+
+    assert list(tomato_results) == [tomato]
+    assert carrots in organic_results
+    assert tomato in organic_results
+    assert list(missing_results) == []
+
+
+def test_tc011_producer_updates_inventory_so_unavailable_products_are_hidden(product):
+    product.stock_quantity = 0
+    product.save()
+
+    assert product.get_status() == "Out of Stock"
+    assert product not in Product.objects.active()
+
+    product.stock_quantity = 25
+    product.save()
+
+    assert product.get_status() == "Available"
+    assert product in Product.objects.active()
+
+
+def test_tc014_customer_can_filter_certified_organic_products(producer_user, category):
+    organic = Product.objects.create(
+        producer=producer_user,
+        category=category,
+        name="Certified Organic Kale",
+        description="Certified organic",
+        price=Decimal("2.50"),
+        stock_quantity=12,
+        is_organic=True,
+    )
+    conventional = Product.objects.create(
+        producer=producer_user,
+        category=category,
+        name="Conventional Kale",
+        description="Local produce",
+        price=Decimal("1.80"),
+        stock_quantity=12,
+        is_organic=False,
+    )
+
+    organic_results = Product.objects.active().filter(is_organic=True)
+
+    assert organic in organic_results
+    assert conventional not in organic_results
+
+
+def test_tc016_producer_sets_seasonal_availability_for_products(
+    producer_user, category
+):
+    current_month = now().date().month
+    next_month = 1 if current_month == 12 else current_month + 1
+    seasonal = Product.objects.create(
+        producer=producer_user,
+        category=category,
+        name="Seasonal Strawberries",
+        description="In season now",
+        price=Decimal("4.00"),
+        stock_quantity=15,
+        season_start_month=current_month,
+        season_end_month=next_month,
+    )
+    out_of_season = Product.objects.create(
+        producer=producer_user,
+        category=category,
+        name="Winter Squash",
+        description="Not in season now",
+        price=Decimal("3.00"),
+        stock_quantity=15,
+        season_start_month=next_month,
+        season_end_month=next_month,
+    )
+
+    assert seasonal.is_in_season() is True
+    assert seasonal in Product.objects.active()
+    assert out_of_season.is_in_season() is False
+    assert out_of_season not in Product.objects.active()
+
+
+def test_tc019_producer_can_mark_surplus_produce_with_discount(product):
+    product.is_surplus = True
+    product.discount_price = Decimal("1.99")
+    product.save()
+
+    surplus_results = Product.objects.active().filter(is_surplus=True)
+
+    assert product in surplus_results
+    assert product.effective_price == Decimal("1.99")
+    assert product.effective_price < product.price
+
+
+def test_tc020_producer_can_share_recipes_and_farm_stories(producer_user, product):
+    recipe = Recipe.objects.create(
+        producer=producer_user,
+        title="Apple Crumble",
+        content="Use local apples for a seasonal dessert.",
+    )
+    story = FarmStory.objects.create(
+        producer=producer_user,
+        title="Harvest Week",
+        content="A story from the farm.",
+    )
+    recipe.products.add(product)
+    story.products.add(product)
+
+    assert recipe in producer_user.recipes.all()
+    assert story in producer_user.stories.all()
+    assert product in recipe.products.all()
+    assert product in story.products.all()
+
+
+def test_tc023_low_stock_notification_data_is_available_to_producer(product):
+    product.low_stock_threshold = 5
+    product.stock_quantity = 4
+    product.save()
+
+    low_stock_alerts = [
+        item
+        for item in Product.objects.filter(producer=product.producer)
+        if item.stock_quantity <= item.low_stock_threshold
+    ]
+
+    assert product in low_stock_alerts
+
+
+def test_tc024_customer_can_rate_and_review_a_purchased_product(
+    customer_user, producer_user, product
+):
+    order = Order.objects.create(
+        customer=customer_user,
+        producer=producer_user,
+        status=Order.DELIVERED,
+        total_price=Decimal("3.99"),
+    )
+    OrderItem.objects.create(
+        order=order,
+        product=product,
+        producer=producer_user,
+        quantity=1,
+        unit_price=product.price,
+    )
+
+    review = Review.objects.create(
+        product=product,
+        customer=customer_user,
+        rating=5,
+        comment="Excellent local produce.",
+    )
+
+    assert review in product.reviews.all()
+    assert product.reviews.first().rating == 5

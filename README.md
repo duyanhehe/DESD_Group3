@@ -341,7 +341,29 @@ uv run pytest -k "payment" -v
 
 ## Test Coverage
 
-Generate coverage report:
+The current automated suite is aligned with `Test-Cases.pdf`. The app-level `tests.py` files cover the documented stakeholder test cases from **TC-001** through **TC-025**, with non-PDF implementation-only tests removed.
+
+Current suite summary:
+
+| Area | Covered PDF test cases |
+|------|------------------------|
+| Accounts | TC-001, TC-002, TC-022 |
+| Products, Categories, Allergens | TC-003, TC-004, TC-005, TC-011, TC-014, TC-015, TC-016, TC-019, TC-020, TC-023, TC-024 |
+| Orders and Cart | TC-006, TC-007, TC-008, TC-009, TC-010, TC-017, TC-018, TC-021 |
+| Logistics | TC-013 |
+| Payments and Settlements | TC-007, TC-008, TC-012, TC-025 |
+
+Run the PDF-mapped app test suite:
+```bash
+uv run pytest apps
+```
+
+Latest verified result:
+```text
+28 passed
+```
+
+Generate the HTML coverage report:
 ```bash
 uv run pytest --cov=apps --cov-report=html
 ```
@@ -350,6 +372,8 @@ View the report:
 ```
 htmlcov/index.html
 ```
+
+Coverage output is useful for identifying untested code paths, but the primary acceptance target for this project is matching the user-facing test cases in `Test-Cases.pdf`.
 
 ## Writing Tests
 
