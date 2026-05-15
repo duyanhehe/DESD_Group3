@@ -208,5 +208,103 @@ class RefundService:
                 changed_by=admin_user,
                 note=f"Refund rejected for Master Order. Note: {admin_note}"
             )
-
         return refund_request
+
+
+class RecurringOrderService:
+    @staticmethod
+    @transaction.atomic
+    def process_due_subscriptions():
+        """
+        TC-018: Finds all active recurring orders due today or earlier,
+        and generates a new Order for the customer.
+        """
+        from datetime import date, timedelta
+        from decimal import Decimal
+        from .models import RecurringOrder, Order, OrderItem, OrderStatusLog
+        
+        today = date.today()
+        due_subscriptions = RecurringOrder.objects.filter(
+            is_active=True,
+            next_delivery_date__lte=today
+        ).prefetch_related('items', 'items__product')
+        
+        results = {
+            "processed": 0,
+            "failed": 0,
+            "details": []
+        }
+        
+        for sub in due_subscriptions:
+            try:
+                # 1. Create Master Order
+                delivery_date = sub.next_delivery_date
+                master_order = Order.objects.create(
+                    customer=sub.customer,
+                    status=Order.PENDING,
+                    total_price=0, # Calculated below
+                    delivery_date=delivery_date,
+                    is_recurring=True
+                )
+                
+                total_amount = Decimal("0.00")
+                items_by_producer = {}
+                
+                # 2. Process Items
+                for sub_item in sub.items.all():
+                    product = sub_item.product
+                    if not product.is_active() or product.stock_quantity < sub_item.quantity:
+                        continue # Skip unavailable items for this cycle
+                    
+                    subtotal = product.effective_price * sub_item.quantity
+                    total_amount += subtotal
+                    
+                    producer = product.producer
+                    if producer not in items_by_producer:
+                        items_by_producer[producer] = []
+                    items_by_producer[producer].append((sub_item, subtotal))
+                
+                if total_amount == 0:
+                    # No items could be fulfilled
+                    master_order.delete()
+                    continue
+
+                master_order.total_price = total_amount
+                master_order.save()
+
+                # 3. Create Sub-Orders
+                for producer, items in items_by_producer.items():
+                    sub_total = sum(subtotal for _, subtotal in items)
+                    sub_order = Order.objects.create(
+                        customer=sub.customer,
+                        parent_order=master_order,
+                        producer=producer,
+                        status=Order.PENDING,
+                        total_price=sub_total,
+                        delivery_date=delivery_date
+                    )
+                    
+                    for sub_item, item_subtotal in items:
+                        OrderItem.objects.create(
+                            order=sub_order,
+                            product=sub_item.product,
+                            producer=producer,
+                            quantity=sub_item.quantity,
+                            unit_price=sub_item.product.effective_price
+                        )
+                        # Deduct stock
+                        sub_item.product.stock_quantity -= sub_item.quantity
+                        sub_item.product.save()
+
+                # 4. Update Subscription for next cycle
+                sub.next_delivery_date = delivery_date + timedelta(days=sub.frequency_days)
+                sub.save()
+                
+                results["processed"] += 1
+                results["details"].append(f"Subscription {sub.id} -> Master Order {master_order.id}")
+
+            except Exception as e:
+                results["failed"] += 1
+                results["details"].append(f"Subscription {sub.id} FAILED: {str(e)}")
+                
+        return results

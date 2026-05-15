@@ -802,12 +802,14 @@ class StripeWebhookView(APIView):
                     )
 
                     for item in items:
+                        # Calculate actual unit price paid (subtotal / quantity) to handle bulk discounts
+                        actual_unit_price = item.subtotal / item.quantity
                         OrderItem.objects.create(
                             order=sub_order,
                             product=item.product,
                             producer=producer,
                             quantity=item.quantity,
-                            unit_price=item.product.effective_price,
+                            unit_price=actual_unit_price,
                         )
                         # Deduct stock
                         item.product.stock_quantity -= item.quantity

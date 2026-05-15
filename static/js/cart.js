@@ -521,11 +521,20 @@ async function renderCartPage() {
                                    value="${new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString().split('T')[0]}">
                         </div>
                         
-                        <div class="flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl p-4 cursor-pointer hover:bg-white/10 transition-colors" onclick="document.getElementById('is-recurring-input').click()">
-                            <input type="checkbox" id="is-recurring-input" class="w-5 h-5 accent-emerald-500">
-                            <div>
-                                <p class="text-xs font-bold text-white">Setup Recurring Order</p>
-                                <p class="text-[10px] text-zinc-400 font-medium">Auto-repeat this basket every 7 days</p>
+                        <div class="flex items-center justify-between bg-white/5 border border-white/10 rounded-2xl p-5 cursor-pointer hover:bg-white/10 transition-all group" onclick="const inp = document.getElementById('is-recurring-input'); inp.checked = !inp.checked;">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
+                                    <span class="material-symbols-outlined">sync</span>
+                                </div>
+                                <div>
+                                    <p class="text-xs font-bold text-white">Setup Recurring Order</p>
+                                    <p class="text-[10px] text-zinc-400 font-medium">Auto-repeat this basket every 7 days</p>
+                                </div>
+                            </div>
+                            <!-- Premium Toggle Switch -->
+                            <div class="relative inline-block w-12 h-6 transition duration-200 ease-in">
+                                <input type="checkbox" id="is-recurring-input" class="peer absolute w-0 h-0 opacity-0" onclick="event.stopPropagation()">
+                                <span class="absolute cursor-pointer top-0 left-0 right-0 bottom-0 bg-zinc-700 rounded-full transition-all duration-300 peer-checked:bg-emerald-500 before:absolute before:content-[''] before:h-4 before:w-4 before:left-1 before:bottom-1 before:bg-white before:rounded-full before:transition-all before:duration-300 peer-checked:before:translate-x-6"></span>
                             </div>
                         </div>
                     </div>

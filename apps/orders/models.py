@@ -203,29 +203,11 @@ class OrderItem(models.Model):
 
     @property
     def subtotal(self):
-        # In OrderItem, unit_price is already captured at checkout (might include surplus discount).
-        price = self.unit_price
-        qty = self.quantity
-        
-        # Base bulk discount rate
-        bulk_rate = Decimal("0.00")
-        if qty > 10:
-            bulk_rate = Decimal("0.20")
-        elif qty > 7:
-            bulk_rate = Decimal("0.15")
-        elif qty > 5:
-            bulk_rate = Decimal("0.10")
-            
-        # Group bonus
-        group_rate = Decimal("0.00")
-        if self.order.customer.is_community_group:
-            group_rate = Decimal("0.10")
-            
-        total_discount = bulk_rate + group_rate
-        multiplier = Decimal("1.00") - total_discount
-        multiplier = max(multiplier, Decimal("0.50"))
-        
-        return (price * multiplier) * qty
+        """
+        In OrderItem, unit_price is already the ACTUAL price paid per unit 
+        at the time of purchase (including surplus and tiered discounts).
+        """
+        return (self.unit_price * self.quantity).quantize(Decimal("0.01"))
 
     def __str__(self):
         return f"{self.quantity}x {self.product.name} (Order #{self.order.pk})"
