@@ -1,100 +1,58 @@
 [
   {
     "model": "categories.category",
+    "pk": 1,
     "fields": {
-      "name": "Apple",
-      "slug": "apple"
+      "name": "Fruits",
+      "slug": "fruits"
     }
   },
   {
     "model": "categories.category",
+    "pk": 2,
     "fields": {
-      "name": "Banana",
-      "slug": "banana"
+      "name": "Vegetables",
+      "slug": "vegetables"
     }
   },
   {
     "model": "categories.category",
+    "pk": 3,
     "fields": {
-      "name": "Bellpepper",
-      "slug": "bellpepper"
+      "name": "Dairy",
+      "slug": "dairy"
     }
   },
   {
     "model": "categories.category",
+    "pk": 4,
     "fields": {
-      "name": "Carrot",
-      "slug": "carrot"
+      "name": "Bakery",
+      "slug": "bakery"
     }
   },
   {
     "model": "categories.category",
+    "pk": 5,
     "fields": {
-      "name": "Cucumber",
-      "slug": "cucumber"
+      "name": "Meat",
+      "slug": "meat"
     }
   },
   {
     "model": "categories.category",
+    "pk": 6,
     "fields": {
-      "name": "Grape",
-      "slug": "grape"
+      "name": "Seafood",
+      "slug": "seafood"
     }
   },
   {
     "model": "categories.category",
+    "pk": 7,
     "fields": {
-      "name": "Guava",
-      "slug": "guava"
-    }
-  },
-  {
-    "model": "categories.category",
-    "fields": {
-      "name": "Jujube",
-      "slug": "jujube"
-    }
-  },
-  {
-    "model": "categories.category",
-    "fields": {
-      "name": "Mango",
-      "slug": "mango"
-    }
-  },
-  {
-    "model": "categories.category",
-    "fields": {
-      "name": "Orange",
-      "slug": "orange"
-    }
-  },
-  {
-    "model": "categories.category",
-    "fields": {
-      "name": "Pomegranate",
-      "slug": "pomegranate"
-    }
-  },
-  {
-    "model": "categories.category",
-    "fields": {
-      "name": "Potato",
-      "slug": "potato"
-    }
-  },
-  {
-    "model": "categories.category",
-    "fields": {
-      "name": "Strawberry",
-      "slug": "strawberry"
-    }
-  },
-  {
-    "model": "categories.category",
-    "fields": {
-      "name": "Tomato",
-      "slug": "tomato"
+      "name": "Drinks",
+      "slug": "drinks"
     }
   }
 ]
