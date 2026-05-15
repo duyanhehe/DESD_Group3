@@ -73,8 +73,7 @@ class HomepageRecommendationsView(APIView):
                 "trending": ProductSerializer(trending_products, many=True).data,
             }
 
-            # If user is authenticated, add personalized recommendations
-            print(f"DEBUG: User {request.user} is_authenticated: {request.user.is_authenticated}")
+            # If user is authenticated, add personalized recommendations.
             if request.user.is_authenticated:
                 personal = get_user_recommendations(request.user.id, limit=10)
                 if personal["recommendations"]:
@@ -82,9 +81,12 @@ class HomepageRecommendationsView(APIView):
                         personal["recommendations"]
                     )
                     response_data["personalized"] = ProductSerializer(
-                        personal_products, many=True
+                        personal_products, many=True, context={"request": request}
                     ).data
-                    response_data["personalized_explanation"] = personal["explanation"]
+                    response_data["personalized_explanation"] = personal.get(
+                        "explanation",
+                        "Based on your order history and local market trends.",
+                    )
 
             return Response(response_data, status=status.HTTP_200_OK)
 

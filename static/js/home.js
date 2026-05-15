@@ -2,6 +2,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const categoryPillsContainer = document.getElementById('category-pills');
     const marketplaceContent = document.getElementById('marketplace-content');
     const searchInput = document.getElementById('global-search');
+    const isAuthenticated = document.querySelector('meta[name="user-authenticated"]')?.content === 'true';
+    const loginUrl = document.querySelector('meta[name="login-url"]')?.content || '/accounts/login/';
 
     let allProducts = [];
     let allCategories = [];
@@ -123,11 +125,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!activePill || activePill.getAttribute('data-id') === 'all') {
                     personaContainer.classList.remove('hidden');
                 }
+            } else if (!isAuthenticated) {
+                renderPersonalizedSignInPrompt();
             }
 
         } catch (error) {
             console.error('Error fetching AI recommendations:', error);
         }
+    }
+
+    function renderPersonalizedSignInPrompt() {
+        const personaContainer = document.getElementById('personalized-recommendations');
+        if (!personaContainer) return;
+
+        personaContainer.innerHTML = `
+            <div class="bg-primary/5 p-8 md:p-10 rounded-[32px] border border-primary/10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                <div class="max-w-xl">
+                    <span class="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-2 block">Curated just for you</span>
+                    <h2 class="font-headline text-3xl font-extrabold text-on-background">Personalized Picks</h2>
+                    <p class="text-on-surface-variant text-sm font-medium mt-2 leading-relaxed">
+                        Sign in to see product picks shaped by your orders and local market trends.
+                    </p>
+                </div>
+                <a href="${loginUrl}" class="px-6 py-3 bg-primary text-on-primary rounded-full font-bold text-sm hover:bg-primary-container transition-all shadow-lg shadow-primary/20">
+                    Sign in
+                </a>
+            </div>
+        `;
+        personaContainer.classList.remove('hidden');
     }
 
     /**
